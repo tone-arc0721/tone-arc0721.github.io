@@ -35,6 +35,7 @@ button{font-family:inherit}
 .L-pc #secPrev .stage{flex:1;overflow:auto;display:flex}
 .L-pc #secPrev #scaler{margin:auto}
 .L-mo .wrap,.L-mo .top-in{max-width:560px}
+.L-mo .wrap{grid-template-areas:"log" "pick" "fmt" "style" "prev"}
 .sec{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
 .sec-h{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .sec-h .n{width:22px;height:22px;border-radius:50%;background:var(--ink);color:#fff;font-size:12px;font-weight:700;display:grid;place-items:center;flex:none}
@@ -416,6 +417,20 @@ html.ui-dark .modal{background:rgba(0,0,0,.6)}
 .sec.closed .sec-h .chev{transform:rotate(45deg)}
 .sec.closed>:not(.sec-h){display:none!important}
 .sec.closed .sec-h{margin-bottom:0}
+/* floating nav (mobile) */
+.fab{display:none}
+.L-mo .fab{display:flex;flex-direction:column;align-items:flex-end;gap:8px;position:fixed;right:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:34;transition:bottom .2s}
+.L-mo body.tb-on .fab{bottom:calc(118px + env(safe-area-inset-bottom))}
+.L-mo body.stk-on .fab{display:none}
+.L-mo body.tb-on #fabView{display:none}
+.L-mo body.tb-on .fabb{width:46px;height:46px;opacity:.92}
+.fabb{width:56px;height:56px;border-radius:50%;border:0;background:var(--ink);color:var(--card);font-size:11.5px;font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;box-shadow:0 6px 18px rgba(0,0,0,.22);cursor:pointer;font-family:inherit}
+.fabb span{font-size:16px;line-height:.8;margin-bottom:2px}
+.fabmenu{display:none;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:8px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
+.fabmenu.on{display:flex}
+body.whole .fm-pick{display:none}
+.fabmenu button{border:0;background:var(--soft);color:var(--ink);border-radius:10px;padding:9px 14px;font-size:13px;font-family:inherit;text-align:left;cursor:pointer}
+html.ui-dark .fabb{color:#111}
 /* modal */
 .modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 14px}
 .modal.on{display:flex}
@@ -724,6 +739,13 @@ html.ui-dark .modal{background:rgba(0,0,0,.6)}
   <div class="seg" id="uiSeg" style="max-width:360px;margin:0 auto"><button data-ui="system">시스템 설정 따라가기</button><button data-ui="light">라이트</button><button data-ui="dark">다크</button></div>
   <button class="btn ghost" id="chClose" style="margin-top:16px;max-width:360px">닫기</button>
 </div></div>
+<div class="fab" id="fab">
+  <div class="fabmenu" id="fabMenu">
+    <button data-go="secLog">로그 붙여넣기</button><button data-go="secPick" class="fm-pick">발췌할 메시지</button><button data-go="secFmt">발췌 형식</button><button data-go="secStyle">꾸미기</button><button data-go="top">맨 위로</button>
+  </div>
+  <button class="fabb" id="fabEdit"><span>⌃</span>편집</button>
+  <button class="fabb" id="fabView"><span>⌄</span>확인</button>
+</div>
 <div class="modal" id="modal"><div class="mbox" id="mbox"></div></div>
 <div class="toast" id="toast"></div>
 
@@ -1406,7 +1428,7 @@ window.addEventListener('resize',fitSoon);
 new ResizeObserver(fitSoon).observe(sheet);
 if(document.fonts&&document.fonts.addEventListener)document.fonts.addEventListener('loadingdone',fitSoon);
 // mobile toolbar: show while preview is on screen
-new IntersectionObserver(es=>es.forEach(e=>$('#toolbar').classList.toggle('show',e.isIntersecting)),{rootMargin:'-80px 0px -120px 0px'}).observe($('#stage'));
+new IntersectionObserver(es=>es.forEach(e=>{$('#toolbar').classList.toggle('show',e.isIntersecting);document.body.classList.toggle('tb-on',e.isIntersecting)}),{rootMargin:'-80px 0px -120px 0px'}).observe($('#stage'));
 
 /* ---------- formatting ---------- */
 let saved=null;
@@ -1684,6 +1706,17 @@ $('#importSet').onclick=()=>modal(`<b>설정 코드 붙여넣기</b><textarea id
 function modal(h,after){$('#mbox').innerHTML=h;$('#modal').classList.add('on');after&&after()}
 function closeModal(){$('#modal').classList.remove('on')}
 $('#modal').onclick=e=>{if(e.target.id==='modal'||e.target.closest('[data-close]'))closeModal()};
+
+/* ---------- floating nav ---------- */
+function goSec(id){const m=$('#fabMenu');m.classList.remove('on');
+  if(id==='top'){window.scrollTo({top:0,behavior:'smooth'});return}
+  const el=document.getElementById(id);if(!el||el.offsetParent===null){toast('지금은 숨겨진 항목이에요');return}
+  if(el.classList.contains('closed')){el.classList.remove('closed')}
+  const y=el.getBoundingClientRect().top+window.scrollY-66;window.scrollTo({top:y,behavior:'smooth'})}
+$('#fabEdit').onclick=()=>$('#fabMenu').classList.toggle('on');
+$('#fabView').onclick=()=>goSec('secPrev');
+$('#fabMenu').onclick=e=>{const b=e.target.closest('[data-go]');if(b)goSec(b.dataset.go)};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#fab'))$('#fabMenu').classList.remove('on')});
 
 /* ---------- collapsible sections ---------- */
 function foldInit(){let st={};try{st=JSON.parse(localStorage.getItem('excerpt-fold')||'{}')}catch(e){}
