@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" id="vp" content="width=device-width, initial-scale=1">
 <script>(function(){var p=null;try{p=localStorage.getItem('excerpt-layout')}catch(e){}var auto=(window.innerWidth||screen.width)<960?'mo':'pc';var m=p||auto;document.documentElement.className='L-'+m;var u='system';try{u=localStorage.getItem('excerpt-ui')||'system'}catch(e){}var dk=u==='dark'||(u==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches);if(dk)document.documentElement.classList.add('ui-dark');if(m==='pc'&&(screen.width<1000))document.getElementById('vp').setAttribute('content','width=1200');window.__layoutPref=p;window.__layoutAuto=auto})();</script>
-<title>로그 발췌 노트</title>
+<title>스크랩 · AI 채팅 발췌</title>
 <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/static/woff2/SUIT.css" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;700&family=Gowun+Dodum&family=Nanum+Myeongjo:wght@400;700&family=Gowun+Batang:wght@400;700&family=Nanum+Pen+Script&family=Nanum+Gothic:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;600&family=Gothic+A1:wght@400;700&family=Hahmlet:wght@400;700&display=swap" rel="stylesheet">
@@ -23,6 +23,7 @@ button{font-family:inherit}
 .logo i{width:22px;height:22px;border-radius:7px;background:var(--ink);display:inline-block;position:relative}
 .logo i::after{content:'';position:absolute;left:5px;right:5px;top:7px;height:2px;background:#fff;box-shadow:0 4px 0 #fff}
 .tbtn{border:1px solid var(--line2);background:#fff;color:var(--ink);border-radius:10px;padding:8px 12px;font-size:13.5px;cursor:pointer;font-weight:500}
+.logo-sub{font-size:11.5px;font-weight:500;color:var(--sub);margin-left:7px;letter-spacing:0}
 .tbtn:disabled{opacity:.35;cursor:default}
 @media(max-width:440px){.lg{display:none}.logo span{display:none}.tbtn{padding:8px 9px;font-size:13px}.top-in{gap:5px}}
 .tbtn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
@@ -427,7 +428,7 @@ html.ui-dark .modal{background:rgba(0,0,0,.6)}
 </head>
 <body>
 <div class="appbar"><div class="top-in">
-  <div class="logo"><i></i><span>로그 발췌 노트</span></div>
+  <div class="logo"><i></i><span>스크랩<small class="logo-sub">AI 채팅 발췌</small></span></div>
   <button class="tbtn" id="undoBtn" title="실행 취소 (Ctrl+Z)" disabled>↶</button><button class="tbtn" id="redoBtn" title="다시 실행 (Ctrl+Shift+Z)" disabled>↷</button>
   <button class="tbtn" id="layoutBtn" title="화면 설정 (PC/모바일 · 다크 모드)">💻/📱</button>
   <button class="tbtn" id="archBtn" title="작업 보관함 · 백업">🗂</button>
@@ -713,7 +714,7 @@ html.ui-dark .modal{background:rgba(0,0,0,.6)}
 <input type="file" id="fontIn" accept=".ttf,.otf,.woff,.woff2" hidden>
 <div class="chooser" id="chooser"><div class="ch-box">
   <div class="logo" style="justify-content:center"><i></i></div>
-  <h1>로그 발췌 노트</h1>
+  <h1>스크랩</h1><p style="margin:-2px 0 14px;font-size:13px;letter-spacing:.04em">AI 채팅 발췌</p>
   <p>어떤 화면으로 쓸까요?<br>나중에 위쪽 💻/📱 버튼으로 언제든 바꿀 수 있어요.</p>
   <div class="ch-opts">
     <button class="ch-opt" data-lay="pc"><span class="ic">💻</span><b>PC 버전</b><small>설정과 미리보기를<br>나란히 보기</small></button>
@@ -755,10 +756,10 @@ const DEF={raw:'',split:'blank',me:'나',ai:'캐릭터',blocks:[],mode:'text',
   title:'',subtitle:'',creditL:'',creditR:'',names:true,rule:true,star:true,keepStar:false,
   bgType:'theme',bgColor:'#fafafa',g1:'#ffffff',g2:'#eef1f6',gType:'linear',gAngle:160,pat:'dot',patColor:'#c8c8d0',patSize:22,patA:45,bgImg:'',ovColor:'#ffffff',ovA:60,
   ink:'theme',inkColor:'#1d1d1f',frame:'none',frameColor:'#c4c4cc',cornerChar:'✦',
-  photo:'',photoW:0,photoH:0,phPos:'top',phW:100,phR:8,phRatio:'orig',phHr:130,phGap:2,phZoom:100,phX:.5,phY:.5,creditAlign:'between',creditLabel:true,mix:{photo:true,chat:true,prose:true,quote:true},mixSplit:'star',dlg:'none',dlgColor:'#c2185b',dlgChar:false,ebSize:18,deco:'none',exp:{scale:2,fmt:'png',q:.92,name:'발췌'},freeH:640,noname:'last',talign:'left',dim:false,dimA:45,reps:[{a:'{{user}}',b:''},{a:'{{char}}',b:''}],repAuto:false,tlCard:'card',tlNode:'avatar',tlTime:'name',tlLine:'#d6d3df',panel:false,panelColor:'#ffffff',panelA:90,stickerLib:[],stickers:[],scaleW:true,showDate:true,chatDate:'',people:[],showMe:false,showTime:true,timeStart:'21:30',timeStep:1,timeFmt:'ko',unread:false,chatStyle:'bubble',prof:{},v4:1,whole:1};
+  photo:'',photoW:0,photoH:0,phPos:'top',phW:100,phR:8,phRatio:'orig',phHr:130,phGap:2,phZoom:100,phX:.5,phY:.5,creditAlign:'between',creditLabel:true,mix:{photo:true,chat:true,prose:true,quote:true},mixSplit:'star',dlg:'none',dlgColor:'#c2185b',dlgChar:false,ebSize:18,deco:'none',exp:{scale:2,fmt:'png',q:.92,name:'스크랩'},freeH:640,noname:'last',talign:'left',dim:false,dimA:45,reps:[{a:'{{user}}',b:''},{a:'{{char}}',b:''}],repAuto:false,tlCard:'card',tlNode:'avatar',tlTime:'name',tlLine:'#d6d3df',panel:false,panelColor:'#ffffff',panelA:90,stickerLib:[],stickers:[],scaleW:true,showDate:true,chatDate:'',people:[],showMe:false,showTime:true,timeStart:'21:30',timeStep:1,timeFmt:'ko',unread:false,chatStyle:'bubble',prof:{},v4:1,whole:1};
 let S=JSON.parse(JSON.stringify(DEF));
 try{const j=JSON.parse(localStorage.getItem('excerpt-v1')||'null');if(j){S=Object.assign(S,j);if(!j.v4){S.theme='paper';S.frameColor=DEF.frameColor;S.v4=1}}}catch(e){}
-if(!S.prof)S.prof={};if(!Array.isArray(S.reps))S.reps=[{a:'',b:''}];if(S.phGap==null)S.phGap=2;if(!S.mix)S.mix={photo:true,chat:true,prose:true,quote:true};if(!Array.isArray(S.stickerLib))S.stickerLib=[];if(!Array.isArray(S.stickers))S.stickers=[];if(!Array.isArray(S.people))S.people=[];if(!S.chatDate){const d=new Date();S.chatDate=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}if(S.whole===undefined)S.whole=S.blocks.length?0:1;if(!THEMES[S.theme])S.theme='paper';
+if(!S.prof)S.prof={};if(S.exp&&(S.exp.name==='발췌'||S.exp.name==='스크랩'))S.exp.name='스크랩';if(!Array.isArray(S.reps))S.reps=[{a:'',b:''}];if(S.phGap==null)S.phGap=2;if(!S.mix)S.mix={photo:true,chat:true,prose:true,quote:true};if(!Array.isArray(S.stickerLib))S.stickerLib=[];if(!Array.isArray(S.stickers))S.stickers=[];if(!Array.isArray(S.people))S.people=[];if(!S.chatDate){const d=new Date();S.chatDate=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}if(S.whole===undefined)S.whole=S.blocks.length?0:1;if(!THEMES[S.theme])S.theme='paper';
 let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{if(typeof record==='function')record();try{localStorage.setItem('excerpt-v1',JSON.stringify(S))}catch(e){try{localStorage.setItem('excerpt-v1',JSON.stringify(Object.assign({},S,{photo:'',bgImg:''})));toast('사진이 커서 사진은 저장되지 않았어요')}catch(_){toast('저장 공간이 가득 찼어요 · 안 쓰는 스티커를 지워주세요')}}},250)}
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let toastT;function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('on'),1900)}
@@ -897,7 +898,7 @@ async function archModal(){
     $('#bkOut').onclick=async()=>{let projects=[];try{projects=await projAll()}catch(e){}
       const data={app:'log-excerpt-note',v:1,date:Date.now(),work:curWork(),presets:getPresets(),projects};
       const blob=new Blob([JSON.stringify(data)],{type:'application/json'});const d=new Date(),pp=n=>String(n).padStart(2,'0');
-      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`로그발췌_백업_${d.getFullYear()}${pp(d.getMonth()+1)}${pp(d.getDate())}.json`;document.body.appendChild(a);a.click();a.remove();
+      const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`스크랩_백업_${d.getFullYear()}${pp(d.getMonth()+1)}${pp(d.getDate())}.json`;document.body.appendChild(a);a.click();a.remove();
       setTimeout(()=>URL.revokeObjectURL(a.href),4000);toast(`백업 파일을 만들었어요 (${(blob.size/1048576).toFixed(1)}MB)`)};
     $('#bkIn').onclick=()=>$('#bkFile').click();
   })}
@@ -1570,8 +1571,8 @@ $('#copyBtn').onclick=async()=>{
   catch(e){modal(`<b>아래 내용을 길게 눌러 복사하세요</b><textarea readonly style="margin-top:10px">${esc(t)}</textarea><button class="btn" style="margin-top:10px" data-close>닫기</button>`)}
 };
 let lastBlob=null;
-function expOpt(){return Object.assign({scale:2,fmt:'png',q:.92,name:'발췌'},S.exp||{})}
-function expName(i){const d=new Date(),p=n=>String(n).padStart(2,'0');const o=expOpt();return `${(o.name||'발췌').replace(/[\\/:*?"<>|]/g,'')}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${i?'_'+i:''}.${o.fmt==='jpg'?'jpg':'png'}`}
+function expOpt(){return Object.assign({scale:2,fmt:'png',q:.92,name:'스크랩'},S.exp||{})}
+function expName(i){const d=new Date(),p=n=>String(n).padStart(2,'0');const o=expOpt();return `${(o.name||'스크랩').replace(/[\\/:*?"<>|]/g,'')}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${i?'_'+i:''}.${o.fmt==='jpg'?'jpg':'png'}`}
 async function snapCanvas(){const o=expOpt();const w=sheet.offsetWidth,h=sheet.offsetHeight;let scale=o.scale;while(w*h*scale*scale>15e6&&scale>1)scale-=.25;
   const c=await html2canvas(sheet,{scale,backgroundColor:o.fmt==='jpg'?'#ffffff':null,logging:false,useCORS:true});
   return{c,url:o.fmt==='jpg'?c.toDataURL('image/jpeg',o.q):c.toDataURL('image/png'),w:c.width,h:c.height}}
@@ -1586,7 +1587,7 @@ function expOptHTML(){const o=expOpt();return `<div class="line" style="margin-t
 function bindExpOpt(redo){const o=expOpt();
   $('#exS').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;o.scale=+b.dataset.v;S.exp=o;save();redo()};
   $('#exF').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;o.fmt=b.dataset.v;S.exp=o;save();redo()};
-  $('#exN').onchange=()=>{o.name=$('#exN').value.trim()||'발췌';S.exp=o;save()};
+  $('#exN').onchange=()=>{o.name=$('#exN').value.trim()||'스크랩';S.exp=o;save()};
   $('#exQ').onchange=()=>{o.q=+$('#exQ').value;S.exp=o;save();redo()}}
 async function exportOne(){
   if(typeof html2canvas!=='function'){toast('이미지 도구를 불러오지 못했어요. 새로고침해 주세요');return}
