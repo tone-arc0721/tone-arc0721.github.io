@@ -1137,7 +1137,16 @@ function markSw(){$$('#themes .sw').forEach(x=>x.classList.toggle('on',x.dataset
     const vis=[...box.querySelectorAll('.sw')].map(x=>x.dataset.t);const all=themeKeys();const dk=isDarkT(vis[0]);
     const other=all.filter(k=>isDarkT(k)!==dk);saveTOrder(dk?other.concat(vis):vis.concat(other))};
   box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end)})();
-$('#themes').onclick=e=>{if(themeEdit)return;const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;save();applyStyle()};
+function hx(c){c=c.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');return[0,2,4].map(i=>parseInt(c.substr(i,2),16))}
+function mixC(a,b,p){const A=hx(a),B=hx(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*p).toString(16).padStart(2,'0')).join('')}
+function cdist(a,b){const A=hx(a),B=hx(b);return Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2])}
+function csat(c){const[r,g,b]=hx(c);const mx=Math.max(r,g,b),mn=Math.min(r,g,b);return(mx-mn)/255}
+function themeBg(k){const t=THEMES[k]||THEMES.paper,bg=t.bg;
+  let acc=[t.me,t.ai].sort((a,b)=>(csat(b)+cdist(b,bg)/442)-(csat(a)+cdist(a,bg)/442))[0];if(cdist(acc,bg)<30)acc=t.narrInk;
+  const dark=hx(bg).reduce((a,v)=>a+v,0)/765<.45;
+  if(/^(talk|insta|xdm)D?$/.test(k))acc=dark?'#ffffff':(k==='talk'?'#5b7a96':'#8e8e93');
+  return{bgColor:bg,g1:dark?mixC(bg,acc,.28):mixC(bg,'#ffffff',.6),g2:dark?mixC(bg,'#000000',.35):mixC(bg,acc,.22),patColor:mixC(bg,acc,.6),ovColor:bg}}
+$('#themes').onclick=e=>{if(themeEdit)return;const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;Object.assign(S,themeBg(S.theme));setters.forEach(f=>typeof f==='function'&&f());save();applyStyle()};
 function fillFonts(){const sel=$('#font');sel.innerHTML=FONTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');if(!FONTS.some(f=>f[0]===S.font))S.font='Noto Sans KR';sel.value=S.font}
 fillFonts();$('#font').onchange=()=>{S.font=$('#font').value;save();applyStyle();checkFont(S.font)};
 function checkFont(n){if(!document.fonts||!document.fonts.load)return;document.fonts.load(`16px '${n}'`,'가나다').then(l=>{if(!l.length&&!n.startsWith('MyFont'))toast('이 글꼴을 불러오지 못했어요 · GitHub 사이트에서는 보여요')}).catch(()=>{})}
