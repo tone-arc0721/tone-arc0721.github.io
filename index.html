@@ -1141,12 +1141,27 @@ function hx(c){c=c.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).joi
 function mixC(a,b,p){const A=hx(a),B=hx(b);return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*p).toString(16).padStart(2,'0')).join('')}
 function cdist(a,b){const A=hx(a),B=hx(b);return Math.hypot(A[0]-B[0],A[1]-B[1],A[2]-B[2])}
 function csat(c){const[r,g,b]=hx(c);const mx=Math.max(r,g,b),mn=Math.min(r,g,b);return(mx-mn)/255}
+function themeAcc(k){const t=THEMES[k]||THEMES.paper,bg=t.bg;let acc=[t.me,t.ai].sort((a,b)=>(csat(b)+cdist(b,bg)/442)-(csat(a)+cdist(a,bg)/442))[0];if(cdist(acc,bg)<30)acc=t.narrInk;return acc}
+function toHsl(c){let[r,g,b]=hx(c).map(v=>v/255);const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h*=60}return[h,s,l]}
+function fromHsl(h,s,l){h=((h%360)+360)%360;const f=n=>{const k=(n+h/30)%12,a=s*Math.min(l,1-l);return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1))))};return'#'+[f(0),f(8),f(4)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+function hlRec(k){const t=THEMES[k]||THEMES.paper,dark=hx(t.bg).reduce((a,v)=>a+v,0)/765<.45;let[h,s]=toHsl(themeAcc(k));
+  if(/^(talk|insta|xdm)D?$/.test(k)){h=k.startsWith('talk')?52:208;s=.9}
+  if(s<.12){return dark?['#5a5a5a','#6e6658','#4f5866','#6a5a62','#5b6655']:['#d9d9d9','#ece6c8','#d6dde8','#ead6dc','#dce6d3']}
+  const S2=Math.min(.85,Math.max(.45,s));
+  return dark?[fromHsl(h,S2*.7,.36),fromHsl(h,S2*.5,.28),fromHsl(h+35,S2*.6,.33),fromHsl(h-35,S2*.6,.33),fromHsl(52,.55,.32)]
+             :[fromHsl(h,S2,.84),fromHsl(h,S2*.9,.91),fromHsl(h+35,S2*.85,.86),fromHsl(h-35,S2*.85,.86),fromHsl(52,.95,.78)]}
+function tcRec(k){const t=THEMES[k]||THEMES.paper,dark=hx(t.bg).reduce((a,v)=>a+v,0)/765<.45;let[h,s]=toHsl(themeAcc(k));
+  if(/^(talk|insta|xdm)D?$/.test(k)){h=k.startsWith('talk')?40:208;s=.8}
+  if(s<.12)return dark?['#e8e8e8','#b8b8b8','#e6a5a5','#a9c3e6','#d9c58f']:['#2a2a2a','#6f6f6f','#a33a3a','#2f5b94','#7a6a3a'];
+  const S2=Math.min(.8,Math.max(.45,s));
+  return dark?[fromHsl(h,S2,.74),fromHsl(h,S2*.8,.86),fromHsl(h+40,S2*.8,.76),fromHsl(h-40,S2*.8,.76),fromHsl(h+180,S2*.6,.76)]
+             :(()=>{const off=k==='talk'?.1:0,L=(hh,l)=>{hh=((hh%360)+360)%360;return fromHsl(hh,S2*(hh>35&&hh<75?1:.85),l-off-(hh>35&&hh<75?.1:0))};return[L(h,.42),L(h,.28),L(h+40,.38),L(h-40,.38),L(h+180,.36)]})()}
 function themeBg(k){const t=THEMES[k]||THEMES.paper,bg=t.bg;
-  let acc=[t.me,t.ai].sort((a,b)=>(csat(b)+cdist(b,bg)/442)-(csat(a)+cdist(a,bg)/442))[0];if(cdist(acc,bg)<30)acc=t.narrInk;
+  let acc=themeAcc(k);
   const dark=hx(bg).reduce((a,v)=>a+v,0)/765<.45;
   if(/^(talk|insta|xdm)D?$/.test(k))acc=dark?'#ffffff':(k==='talk'?'#5b7a96':'#8e8e93');
   return{bgColor:bg,g1:dark?mixC(bg,acc,.28):mixC(bg,'#ffffff',.6),g2:dark?mixC(bg,'#000000',.35):mixC(bg,acc,.22),patColor:mixC(bg,acc,.6),ovColor:bg}}
-$('#themes').onclick=e=>{if(themeEdit)return;const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;Object.assign(S,themeBg(S.theme));setters.forEach(f=>typeof f==='function'&&f());save();applyStyle()};
+$('#themes').onclick=e=>{if(themeEdit)return;const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;Object.assign(S,themeBg(S.theme));S.hlLast=hlRec(S.theme)[0];S.tcLast=tcRec(S.theme)[0];typeof hlPop==='function'&&hlPop();typeof tcPop==='function'&&tcPop();setters.forEach(f=>typeof f==='function'&&f());save();applyStyle()};
 function fillFonts(){const sel=$('#font');sel.innerHTML=FONTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');if(!FONTS.some(f=>f[0]===S.font))S.font='Noto Sans KR';sel.value=S.font}
 fillFonts();$('#font').onchange=()=>{S.font=$('#font').value;save();applyStyle();checkFont(S.font)};
 function checkFont(n){if(!document.fonts||!document.fonts.load)return;document.fonts.load(`16px '${n}'`,'가나다').then(l=>{if(!l.length&&!n.startsWith('MyFont'))toast('이 글꼴을 불러오지 못했어요 · GitHub 사이트에서는 보여요')}).catch(()=>{})}
@@ -1669,6 +1684,7 @@ const HL_KP=[['#fe877f','주황+빨강'],['#ff8870','빨강+주황+주황'],['#d
  ['#e390aa','보라+주황'],['#c37582','연두+빨강+보라'],['#c4868b','빨강+연두+보라'],['#a65f65','브라운+빨강'],['#a06464','빨강+브라운'],['#a15f53','빨강+주황+브라운'],['#a67459','브라운+주황'],['#c0a699','연두+보라'],['#b29c87','빨강+파랑+주황'],['#beb089','보라+연두'],['#a2958d','초록+빨강'],['#71706c','빨강+파랑+갈색'],['#a49fb3','파랑+빨강'],['#9d9bb1','빨강+빨강+파랑']];
 function hlPop(){const cur=S.hlLast||'#fff07a';const btn=(c,n)=>`<button data-cmd="hl" data-v="${c}" class="${c===cur?'cur':''}" style="background:${c}"></button>`;
   $('#hlpop').innerHTML=`<div class="hh"><b>형광펜</b><button data-cmd="hlsoft" data-v="0" class="${S.hlSoft?'':'on'}">진하게</button><button data-cmd="hlsoft" data-v="1" class="${S.hlSoft?'on':''}">연하게</button><button data-cmd="hloff">지우기</button></div>
+    <div class="lab">테마 추천</div><div class="hlgrid">${hlRec(S.theme).map(c=>btn(c)).join('')}</div>
     <div class="lab">기본</div><div class="hlgrid">${HL_BASE.map(x=>btn(...x)).join('')}</div>
     <div class="lab">추가 색상</div><div class="hlgrid">${HL_KP.map(x=>btn(...x)).join('')}</div><label class="custom">직접 고르기 <input type="color" id="hlCustom" value="${cur}"></label>`;
   $('#hlCustom').onchange=e=>{const v=e.target.value;S.hlLast=v;save();exec('hl',S.hlSoft?rgba(v,.45):v);hlPop();$('#hlpop').classList.remove('on')};
@@ -1676,7 +1692,8 @@ function hlPop(){const cur=S.hlLast||'#fff07a';const btn=(c,n)=>`<button data-cm
 const TC=['#d03a2f','#e8552f','#f08c00','#c9a400','#2e7d32','#00838f','#2f5fb3','#3f51b5','#7b4bb3','#c2185b','#e57399','#8d6e63','#6d4c41','#555555','#999999','#000000','#ffffff'];
 function tcPop(){const cur=S.tcLast||'#d03a2f';
   $('#tcpop').innerHTML=`<div class="hh"><b>글자색</b><button data-cmd="tcoff">기본색으로</button></div>
-    <div class="hlgrid">${TC.map(c=>`<button data-cmd="color" data-v="${c}" class="${c===cur?'cur':''}" style="background:${c}"></button>`).join('')}</div>
+    <div class="lab">테마 추천</div><div class="hlgrid">${tcRec(S.theme).map(c=>`<button data-cmd="color" data-v="${c}" class="${c===cur?'cur':''}" style="background:${c}"></button>`).join('')}</div>
+    <div class="lab">기본</div><div class="hlgrid">${TC.map(c=>`<button data-cmd="color" data-v="${c}" class="${c===cur?'cur':''}" style="background:${c}"></button>`).join('')}</div>
     <label class="custom">직접 고르기 <input type="color" id="tcCustom" value="${cur}"></label>`;
   $('#tcCustom').onchange=e=>{const v=e.target.value;S.tcLast=v;save();exec('color',v);tcPop();$('#tcpop').classList.remove('on')};
   $$('.tcA').forEach(a=>a.style.color=cur)}
