@@ -128,6 +128,11 @@ details.acc .acc-b{padding-bottom:14px}
 details.acc .acc-b>label.f:first-child{margin-top:0}
 .swatches{display:flex;gap:8px;flex-wrap:wrap}
 .sw{width:40px;height:40px;border-radius:12px;border:1px solid var(--line2);cursor:pointer;position:relative;overflow:hidden;padding:0}
+.swrap-dummy{}
+#themes.editing .sw{touch-action:none;cursor:grab;animation:swwig .5s ease-in-out infinite alternate}
+#themes.editing .sw:nth-child(2n){animation-delay:-.25s}
+#themes .sw.dragging{opacity:.45;animation:none;transform:scale(1.12)}
+@keyframes swwig{from{transform:rotate(-2deg)}to{transform:rotate(2deg)}}
 .sw.on{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--ink)}
 .sw i{position:absolute;width:18px;height:8px;border-radius:4px}
 .sub-pane{display:none}.sub-pane.on{display:block}
@@ -689,6 +694,7 @@ html.ui-dark .fabb{color:#111}
       <div class="acc-b">
         <label class="f">색 테마</label>
         <div class="line" style="margin-bottom:8px"><button class="chip" id="tCharAcc">캐릭터 말풍선을 강조색으로</button><span class="hint" style="margin:0">끄면 내 말풍선이 강조색 · 카톡·인스타·X디엠·대본·타임라인은 원래 색 유지</span></div>
+        <div class="line" style="margin:-2px 0 8px"><button class="chip" id="tThemeEdit">↕ 순서 바꾸기</button><span id="themeEditBar" style="display:none"><span class="hint" style="margin:0 6px 0 0">끌어서 옮기세요</span><button class="chip" id="themeReset">기본 순서로</button></span></div>
         <div class="seg" id="themeTab" style="margin-bottom:8px"><button data-v="light">☀ 밝은 테마</button><button data-v="dark">🌙 어두운 테마</button></div>
         <div class="swatches" id="themes"></div>
         <label class="f">배경</label>
@@ -797,16 +803,27 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const THEMES={
   pink:{bg:'#fdf4f8',ink:'#3a1626',ai:'#e8a8c0',aiInk:'#3a1626',me:'#e8317f',meInk:'#ffffff',narrInk:'#a0607a'},
   rose:{bg:'#fbf0f2',ink:'#3a2328',ai:'#ffffff',aiInk:'#3a2328',me:'#f2c9d3',meInk:'#3a2328',narrInk:'#9a7680'},
+  wine:{bg:'#fbf1f2',ink:'#3d1d24',ai:'#f1d3d8',aiInk:'#3d1d24',me:'#9e2a3c',meInk:'#ffffff',narrInk:'#9a7b80'},
   ember:{bg:'#fbf2ee',ink:'#3a1a12',ai:'#561208',aiInk:'#ffffff',me:'#e8552f',meInk:'#ffffff',narrInk:'#9a6a5c'},
+  peach:{bg:'#fff4ef',ink:'#3d2a23',ai:'#ffdccf',aiInk:'#3d2a23',me:'#f08a6c',meInk:'#ffffff',narrInk:'#9a7e73'},
+  gyul:{bg:'#fff6ec',ink:'#3b2a18',ai:'#ffe2c2',aiInk:'#3b2a18',me:'#f28c1c',meInk:'#ffffff',narrInk:'#99805f'},
   basic:{bg:'#f6f1ec',ink:'#3a2e2a',ai:'#ffffff',aiInk:'#3a2e2a',me:'#c48a7a',meInk:'#ffffff',narrInk:'#9a8a82'},
+  mocha:{bg:'#f7f2ee',ink:'#35281f',ai:'#e6d9cf',aiInk:'#35281f',me:'#7b5a46',meInk:'#ffffff',narrInk:'#8f7f73'},
   cream:{bg:'#f8f3ec',ink:'#2b2320',ai:'#ffffff',aiInk:'#2b2320',me:'#e7d6c8',meInk:'#2b2320',narrInk:'#8a7c74'},
+  lemon:{bg:'#fffbe8',ink:'#3a3320',ai:'#fff1b8',aiInk:'#3a3320',me:'#e9b80c',meInk:'#ffffff',narrInk:'#8f8466'},
+  olive:{bg:'#f7f6ea',ink:'#33321b',ai:'#e6e5c4',aiInk:'#33321b',me:'#8a8a2e',meInk:'#ffffff',narrInk:'#8e8c70'},
+  sage:{bg:'#f3f6f0',ink:'#2a3326',ai:'#dbe5d3',aiInk:'#2a3326',me:'#7f9a6f',meInk:'#ffffff',narrInk:'#848f7d'},
   green:{bg:'#f6faf1',ink:'#1f2e14',ai:'#e0ecd8',aiInk:'#1f2e14',me:'#a2d270',meInk:'#1f2e14',narrInk:'#6b7f5c'},
+  mint:{bg:'#f0fbf7',ink:'#1f3a31',ai:'#c9efe1',aiInk:'#1f3a31',me:'#2fb38a',meInk:'#ffffff',narrInk:'#6f948a'},
+  teal:{bg:'#eef8f9',ink:'#173538',ai:'#c6e8eb',aiInk:'#173538',me:'#1a8f99',meInk:'#ffffff',narrInk:'#6a8f92'},
   sky:{bg:'#eaf2fa',ink:'#1d2733',ai:'#ffffff',aiInk:'#1d2733',me:'#c9dcf2',meInk:'#1d2733',narrInk:'#5f7085'},
   blue:{bg:'#f5f8ff',ink:'#1b2540',ai:'#d8e2fb',aiInk:'#1b2540',me:'#5b8cff',meInk:'#ffffff',narrInk:'#6f7d9c'},
+  navy:{bg:'#f1f3f8',ink:'#1b2338',ai:'#d6dcea',aiInk:'#1b2338',me:'#24345e',meInk:'#ffffff',narrInk:'#7a8299'},
+  lav:{bg:'#f6f3fd',ink:'#2f2a45',ai:'#e2dbf8',aiInk:'#2f2a45',me:'#9a86e0',meInk:'#ffffff',narrInk:'#8a83a3'},
+  purple:{bg:'#f5effa',ink:'#33204a',ai:'#e3d3f3',aiInk:'#33204a',me:'#7a3fc4',meInk:'#ffffff',narrInk:'#8c7a9e'},
   mist:{bg:'#f5f6f8',ink:'#1f2430',ai:'#ffffff',aiInk:'#1f2430',me:'#dfe6f3',meInk:'#1f2430',narrInk:'#7d8494'},
   paper:{bg:'#ffffff',ink:'#1d1d1f',ai:'#f1f1f3',aiInk:'#1d1d1f',me:'#1d1d1f',meInk:'#ffffff',narrInk:'#8e8e93'},
-  mono:{bg:'#f4f4f4',ink:'#2a2a2a',ai:'#808080',aiInk:'#ffffff',me:'#333333',meInk:'#ffffff',narrInk:'#7a7a7a'},
-  night:{bg:'#1c1c22',ink:'#ececf1',ai:'#2c2c35',aiInk:'#ececf1',me:'#ececf1',meInk:'#1c1c22',narrInk:'#9a9aa6'},
+  mono:{bg:'#f4f4f4',ink:'#2a2a2a',ai:'#bdbdbd',aiInk:'#2a2a2a',me:'#6f6f6f',meInk:'#ffffff',narrInk:'#7a7a7a'},
   talk:{bg:'#b2c7d9',ink:'#191919',ai:'#ffffff',aiInk:'#191919',me:'#fee500',meInk:'#191919',narrInk:'#4f6170'},
   insta:{bg:'#ffffff',ink:'#000000',ai:'#efefef',aiInk:'#000000',me:'#3797f0',meInk:'#ffffff',narrInk:'#8e8e8e'},
   xdm:{bg:'#ffffff',ink:'#0f1419',ai:'#eff3f4',aiInk:'#0f1419',me:'#1d9bf0',meInk:'#ffffff',narrInk:'#536471'},
@@ -815,15 +832,28 @@ const THEMES={
   feed:{bg:'#f5f5f5',ink:'#222222',ai:'#f5f5f5',aiInk:'#222222',me:'#f5f5f5',meInk:'#222222',narrInk:'#9a9a9a'},
   pinkD:{bg:'#2a1820',ink:'#f6e6ec',ai:'#3a2430',aiInk:'#f6e6ec',me:'#e8317f',meInk:'#ffffff',narrInk:'#b48a9a'},
   roseD:{bg:'#2b1d21',ink:'#f3e4e8',ai:'#3b2a2f',aiInk:'#f3e4e8',me:'#c9707f',meInk:'#ffffff',narrInk:'#a88a92'},
+  wineD:{bg:'#200f13',ink:'#f2dfe2',ai:'#3f2229',aiInk:'#f2dfe2',me:'#b8394d',meInk:'#ffffff',narrInk:'#a88a8f'},
   emberD:{bg:'#1e1210',ink:'#f5e2db',ai:'#3a1d16',aiInk:'#f5e2db',me:'#e8552f',meInk:'#ffffff',narrInk:'#a77f72'},
+  peachD:{bg:'#251915',ink:'#f6e4dc',ai:'#3b2822',aiInk:'#f6e4dc',me:'#e57a5c',meInk:'#ffffff',narrInk:'#a88c80'},
+  gyulD:{bg:'#22180e',ink:'#f4e6d4',ai:'#3a2a1a',aiInk:'#f4e6d4',me:'#e8841a',meInk:'#ffffff',narrInk:'#a68e70'},
   basicD:{bg:'#26201d',ink:'#efe4dc',ai:'#362d29',aiInk:'#efe4dc',me:'#c48a7a',meInk:'#ffffff',narrInk:'#a3948b'},
+  mochaD:{bg:'#1d1612',ink:'#efe4db',ai:'#382b23',aiInk:'#efe4db',me:'#a07a62',meInk:'#ffffff',narrInk:'#a3928a'},
   creamD:{bg:'#2a2620',ink:'#f2ead9',ai:'#3a342b',aiInk:'#f2ead9',me:'#b89a74',meInk:'#ffffff',narrInk:'#a59a86'},
+  lemonD:{bg:'#211d10',ink:'#f1ead2',ai:'#3a331c',aiInk:'#f1ead2',me:'#e2b31a',meInk:'#1f1a08',narrInk:'#9c9277'},
+  oliveD:{bg:'#1c1c10',ink:'#ecebd6',ai:'#34331d',aiInk:'#ecebd6',me:'#a5a43c',meInk:'#ffffff',narrInk:'#9d9b80'},
+  sageD:{bg:'#181d16',ink:'#e4eadf',ai:'#2c3528',aiInk:'#e4eadf',me:'#87a476',meInk:'#ffffff',narrInk:'#939d8c'},
   greenD:{bg:'#18211a',ink:'#e3eedd',ai:'#26332a',aiInk:'#e3eedd',me:'#6fa34a',meInk:'#ffffff',narrInk:'#8fa588'},
+  mintD:{bg:'#122019',ink:'#dff2ea',ai:'#1f3a31',aiInk:'#dff2ea',me:'#2ea883',meInk:'#ffffff',narrInk:'#86a89c'},
+  tealD:{bg:'#0f1e20',ink:'#dceeef',ai:'#1d3a3d',aiInk:'#dceeef',me:'#22a1ab',meInk:'#ffffff',narrInk:'#7fa2a5'},
   skyD:{bg:'#16202b',ink:'#e1ebf5',ai:'#233142',aiInk:'#e1ebf5',me:'#4f86c6',meInk:'#ffffff',narrInk:'#8899ad'},
   blueD:{bg:'#131a2b',ink:'#e3e9fb',ai:'#1f2a44',aiInk:'#e3e9fb',me:'#5b8cff',meInk:'#ffffff',narrInk:'#8a97b8'},
+  navyD:{bg:'#0e1220',ink:'#e1e5f0',ai:'#222b45',aiInk:'#e1e5f0',me:'#3a5aa8',meInk:'#ffffff',narrInk:'#8a93ab'},
+  lavD:{bg:'#1c1928',ink:'#e9e5f6',ai:'#2f2a45',aiInk:'#e9e5f6',me:'#8e7ae0',meInk:'#ffffff',narrInk:'#9790b0'},
+  purpleD:{bg:'#1b1224',ink:'#ebe0f5',ai:'#33244a',aiInk:'#ebe0f5',me:'#9459dc',meInk:'#ffffff',narrInk:'#9d8cb0'},
   mistD:{bg:'#1c1f26',ink:'#e6e9ef',ai:'#2a2e38',aiInk:'#e6e9ef',me:'#5a6680',meInk:'#ffffff',narrInk:'#8d94a3'},
   paperD:{bg:'#121214',ink:'#ececf1',ai:'#26262b',aiInk:'#ececf1',me:'#ececf1',meInk:'#121214',narrInk:'#8e8e98'},
-  monoD:{bg:'#141414',ink:'#e8e8e8',ai:'#3a3a3a',aiInk:'#ffffff',me:'#e8e8e8',meInk:'#141414',narrInk:'#8a8a8a'},
+  monoD:{bg:'#141414',ink:'#e8e8e8',ai:'#b0b0b0',aiInk:'#141414',me:'#6e6e6e',meInk:'#ffffff',narrInk:'#8a8a8a'},
+  night:{bg:'#1c1c22',ink:'#ececf1',ai:'#2c2c35',aiInk:'#ececf1',me:'#ececf1',meInk:'#1c1c22',narrInk:'#9a9aa6'},
   talkD:{bg:'#212121',ink:'#eeeeee',ai:'#3a3a3a',aiInk:'#eeeeee',me:'#fee500',meInk:'#191919',narrInk:'#9a9a9a'},
   instaD:{bg:'#000000',ink:'#f5f5f5',ai:'#262626',aiInk:'#ffffff',me:'#3797f0',meInk:'#ffffff',narrInk:'#a8a8a8'},
   xdmD:{bg:'#000000',ink:'#e7e9ea',ai:'#2f3336',aiInk:'#e7e9ea',me:'#1d9bf0',meInk:'#ffffff',narrInk:'#71767b'},
@@ -1086,12 +1116,28 @@ $('#rebuildBtn').onclick=()=>{$('#banner').classList.remove('on');buildBody();ap
 
 /* ---------- 3/4. controls ---------- */
 const isDarkT=k=>/D$/.test(k)||k==='night';
+let themeEdit=false;
+function getTOrder(){try{return JSON.parse(localStorage.getItem('excerpt-themeorder')||'null')}catch(e){return null}}
+function themeKeys(){const def=Object.keys(THEMES),o=getTOrder();if(!Array.isArray(o))return def;const k=o.filter(x=>THEMES[x]);def.forEach(x=>{if(!k.includes(x))k.push(x)});return k}
+function saveTOrder(keys){try{localStorage.setItem('excerpt-themeorder',JSON.stringify(keys))}catch(e){}}
 function renderThemes(){const dk=(S.themeTab||(isDarkT(S.theme)?'dark':'light'))==='dark';$$('#themeTab button').forEach(b=>b.classList.toggle('on',(b.dataset.v==='dark')===dk));
-$('#themes').innerHTML=Object.entries(THEMES).filter(([k])=>isDarkT(k)===dk).map(([k])=>[k,thm(k)]).map(([k,t])=>`<button class="sw" data-t="${k}" style="background:${t.bg}" aria-label="${k}"><i style="left:5px;top:8px;background:${t.ai};border:1px solid rgba(0,0,0,.06)"></i><i style="right:5px;top:21px;background:${t.me}"></i></button>`).join('');
+$('#themes').classList.toggle('editing',themeEdit);$('#tThemeEdit').classList.toggle('on',themeEdit);$('#themeEditBar').style.display=themeEdit?'':'none';
+$('#themes').innerHTML=themeKeys().filter(k=>isDarkT(k)===dk).map(k=>[k,thm(k)]).map(([k,t])=>`<button class="sw" data-t="${k}" style="background:${t.bg}" aria-label="${k}"><i style="left:5px;top:8px;background:${t.ai};border:1px solid rgba(0,0,0,.06)"></i><i style="right:5px;top:21px;background:${t.me}"></i></button>`).join('');
 }
 renderThemes();
 $('#themeTab').onclick=e=>{const b=e.target.closest('[data-v]');if(!b)return;S.themeTab=b.dataset.v;save();renderThemes();$$('#themes .sw').forEach(x=>x.classList.toggle('on',x.dataset.t===S.theme))};
-$('#themes').onclick=e=>{const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;save();applyStyle()};
+$('#tThemeEdit').onclick=()=>{themeEdit=!themeEdit;renderThemes();markSw()};
+$('#themeReset').onclick=()=>{try{localStorage.removeItem('excerpt-themeorder')}catch(e){}renderThemes();markSw();toast('기본 순서로 되돌렸어요')};
+function markSw(){$$('#themes .sw').forEach(x=>x.classList.toggle('on',x.dataset.t===S.theme))}
+(()=>{const box=$('#themes');let drag=null;
+  box.addEventListener('pointerdown',e=>{if(!themeEdit)return;const b=e.target.closest('.sw');if(!b)return;e.preventDefault();drag=b;b.classList.add('dragging');box.setPointerCapture(e.pointerId)});
+  box.addEventListener('pointermove',e=>{if(!drag)return;const el=document.elementFromPoint(e.clientX,e.clientY);const t=el&&el.closest&&el.closest('#themes .sw');if(!t||t===drag)return;
+    const r=t.getBoundingClientRect();const after=e.clientX>r.left+r.width/2;box.insertBefore(drag,after?t.nextSibling:t)});
+  const end=()=>{if(!drag)return;drag.classList.remove('dragging');drag=null;
+    const vis=[...box.querySelectorAll('.sw')].map(x=>x.dataset.t);const all=themeKeys();const dk=isDarkT(vis[0]);
+    const other=all.filter(k=>isDarkT(k)!==dk);saveTOrder(dk?other.concat(vis):vis.concat(other))};
+  box.addEventListener('pointerup',end);box.addEventListener('pointercancel',end)})();
+$('#themes').onclick=e=>{if(themeEdit)return;const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;save();applyStyle()};
 function fillFonts(){const sel=$('#font');sel.innerHTML=FONTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');if(!FONTS.some(f=>f[0]===S.font))S.font='Noto Sans KR';sel.value=S.font}
 fillFonts();$('#font').onchange=()=>{S.font=$('#font').value;save();applyStyle();checkFont(S.font)};
 function checkFont(n){if(!document.fonts||!document.fonts.load)return;document.fonts.load(`16px '${n}'`,'가나다').then(l=>{if(!l.length&&!n.startsWith('MyFont'))toast('이 글꼴을 불러오지 못했어요 · GitHub 사이트에서는 보여요')}).catch(()=>{})}
