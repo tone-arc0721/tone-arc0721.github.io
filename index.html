@@ -1611,8 +1611,21 @@ $('#copyBtn').onclick=async()=>{
 let lastBlob=null;
 function expOpt(){return Object.assign({scale:2,fmt:'png',q:.92,name:'스크랩'},S.exp||{})}
 function expName(i){const d=new Date(),p=n=>String(n).padStart(2,'0');const o=expOpt();return `${(o.name||'스크랩').replace(/[\\/:*?"<>|]/g,'')}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}${i?'_'+i:''}.${o.fmt==='jpg'?'jpg':'png'}`}
+// 줄바꿈된 형광펜·검열이 이미지에서 사각형 통째로 칠해지는 문제 방지: 글자 단위로 쪼개서 칠함
+function fixInlineBg(root,win){
+  const W=win||window;const isBg=c=>c&&c!=='transparent'&&!/rgba\(\s*0,\s*0,\s*0,\s*0\s*\)/.test(c);
+  const els=[...root.querySelectorAll('.censor, span.f, span[style*="background"], .dlg')].filter(el=>isBg(W.getComputedStyle(el).backgroundColor));
+  const depth=el=>{let d=0;for(let n=el;n&&n!==root;n=n.parentNode)d++;return d};
+  els.sort((a,b)=>depth(b)-depth(a));
+  els.forEach(el=>{const cs=W.getComputedStyle(el);const bg=cs.backgroundColor;const cen=el.classList.contains('censor');const rad=cs.borderRadius;
+    const tw=el.ownerDocument.createTreeWalker(el,4);const texts=[];let t;while((t=tw.nextNode()))texts.push(t);
+    texts.forEach(tn=>{const doc=tn.ownerDocument;const frag=doc.createDocumentFragment();
+      for(const ch of Array.from(tn.data)){const sp=doc.createElement('span');sp.textContent=ch;sp.style.backgroundColor=bg;if(cen){sp.style.color=bg}frag.appendChild(sp)}
+      tn.parentNode.replaceChild(frag,tn)});
+    el.style.backgroundColor='transparent';el.style.borderRadius='0'});
+}
 async function snapCanvas(){const o=expOpt();const w=sheet.offsetWidth,h=sheet.offsetHeight;let scale=o.scale;while(w*h*scale*scale>15e6&&scale>1)scale-=.25;
-  const c=await html2canvas(sheet,{scale,backgroundColor:o.fmt==='jpg'?'#ffffff':null,logging:false,useCORS:true});
+  const c=await html2canvas(sheet,{scale,backgroundColor:o.fmt==='jpg'?'#ffffff':null,logging:false,useCORS:true,onclone:doc=>{const sh=doc.getElementById('sheet');if(sh)fixInlineBg(sh,doc.defaultView||window)}});
   return{c,url:o.fmt==='jpg'?c.toDataURL('image/jpeg',o.q):c.toDataURL('image/png'),w:c.width,h:c.height}}
 function prepCapture(){if(selStk){selStk=null;renderStickers()}getSelection().removeAllRanges();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
   sheet.classList.add('capturing');const st={t:sheet.style.transform};sheet.style.transform='none';$('#scaler').style.overflow='visible';$('#stage').style.overflow='visible';return st}
