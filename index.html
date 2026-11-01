@@ -638,6 +638,7 @@ html.ui-dark .fabb{color:#111}
     <div class="prev-h"><b>미리보기</b><span>글자를 드래그해 선택하고 도구를 누르세요 · 직접 고칠 수도 있어요</span><button class="chip" id="splitBtn" style="margin-left:auto;flex:none">📑 여러 장</button><button class="chip" id="stkAdd" style="flex:none">＋ 스티커</button></div>
     <div class="toolbar" id="toolbar">
       <button class="tb-b" data-cmd="bold" style="font-weight:800">B</button>
+      <button class="tb-b" data-cmd="italic" style="font-style:italic;font-family:Georgia,serif">I</button>
       <button class="tb-b" data-cmd="underline" style="text-decoration:underline">U</button>
       <button class="tb-b" data-cmd="strike" style="text-decoration:line-through">S</button>
       <button class="tb-b" data-cmd="size" data-v="0.85" style="font-size:11.5px">가−</button>
@@ -1655,6 +1656,7 @@ function hasDecoUp(t,kind){for(let e=t.parentElement;e&&!stopAt(e);e=e.parentEle
 function inlineFmt(cmd,v,r){
   const segs=segments(r);if(!segs.length)return null;
   if(cmd==='bold'){const allBold=segs.every(t=>+getComputedStyle(t.parentElement).fontWeight>=600);segs.forEach(t=>styleSeg(t,'fontWeight',allBold?'400':'700'))}
+  else if(cmd==='italic'){const allI=segs.every(t=>getComputedStyle(t.parentElement).fontStyle!=='normal');segs.forEach(t=>styleSeg(t,'fontStyle',allI?'normal':'italic'))}
   else if(cmd==='underline'||cmd==='strike'){const kind=cmd==='underline'?'underline':'line-through';const on=segs.every(t=>hasDecoUp(t,kind));
     segs.forEach(t=>{if(on)liftFrom(t,e=>decoOf(e).includes(kind),dropDeco(kind));else{const p=t.parentElement;const cur=p.tagName==='SPAN'&&p.classList.contains('f')&&p.childNodes.length===1?(p.style.textDecorationLine||''):'';styleSeg(t,'textDecorationLine',(cur.replace('none','')+' '+kind).trim())}})}
   else if(cmd==='size')segs.forEach(t=>styleSeg(t,'fontSize',`calc(var(--fs) * ${v})`));
@@ -1668,7 +1670,7 @@ let host0=null;
 function exec(cmd,v){
   if(!restore()){toast('먼저 미리보기에서 글자를 드래그해 선택해 주세요');return}
   const s=getSelection(),r=s.getRangeAt(0);
-  if(['bold','underline','strike','size','color','hl'].includes(cmd)){
+  if(['bold','italic','underline','strike','size','color','hl'].includes(cmd)){
     const sc=r.startContainer,so=r.startOffset;const segs=inlineFmt(cmd,v,r);
     if(segs&&segs.length){const nr=document.createRange();const a=segs[0],z=segs[segs.length-1];
       try{if(a.isConnected&&z.isConnected){nr.setStart(a,0);nr.setEnd(z,z.length);s.removeAllRanges();s.addRange(nr)}}catch(e){}}
