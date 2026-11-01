@@ -765,8 +765,8 @@ html.ui-dark .fabb{color:#111}
       <div class="acc-b">
         <div class="line"><input type="text" id="presetName" placeholder="프리셋 이름" style="flex:1;width:auto"><button class="chip on" id="presetSave">현재 스타일 저장</button></div>
         <div class="presets" id="presetList"></div>
-        <div class="line" style="margin-top:10px"><button class="chip" id="exportSet">설정 내보내기</button><button class="chip" id="importSet">설정 가져오기</button></div>
-        <p class="hint">배경·글꼴·비율·테두리·캐릭터 색 같은 꾸밈만 저장돼요(사진 제외).</p>
+        <div class="line" style="margin-top:10px"><button class="chip" id="exportSet">↗ 지금 꾸미기 공유</button><button class="chip" id="importSet">⬇ 공유받은 꾸미기 넣기</button></div>
+        <p class="hint">테마·글꼴·색·배경·테두리·비율 같은 꾸밈만 저장·공유돼요. 글 내용, 사진, 프로필 사진, 직접 올린 폰트는 빠져요. 프리셋 옆 ↗로 저장한 프리셋도 공유할 수 있어요.</p>
       </div>
     </details>
   </section>
@@ -864,7 +864,7 @@ const THEMES={
 const NOSWAP=['talk','insta','xdm','script','tl','feed'];
 
 const FONTS=[['Pretendard','프리텐다드'],['SUIT','SUIT'],['Noto Sans KR','본고딕'],['Gowun Batang','고운바탕'],['Eulyoo1945','을유1945 (명조)'],['Nanum Gothic','나눔고딕'],['IBM Plex Sans KR','IBM 플렉스 산스'],['Gothic A1','고딕 A1'],['Hahmlet','함렛 (단정한 명조)'],['Noto Serif KR','본명조'],['Nanum Myeongjo','나눔명조'],['Gowun Dodum','고운돋움'],['Nanum Pen Script','나눔손글씨 펜']];
-const STYLE_KEYS=['theme','font','fs','lh','ls','w','pad','ratio','valign','names','rule','star','keepStar','bgType','bgColor','g1','g2','gType','gAngle','pat','patColor','patSize','patA','ovColor','ovA','ink','inkColor','frame','frameColor','cornerChar','phPos','phW','phR','phRatio','phZoom','phHr','phGap','creditAlign','creditLabel','creditPos','creditSize','creditPx','panel','panelColor','panelA','dim','dimA','freeH','fitText','deco','dlg','dlgColor','dlgChar','dlgMarks','ebSize','talign','tlCard','tlNode','tlTime','tlLine','showDate','showTime','showMe','timeStep','timeFmt','unread','chatStyle','prof'];
+const STYLE_KEYS=['theme','font','fs','lh','ls','w','pad','ratio','valign','names','rule','star','keepStar','bgType','bgColor','g1','g2','gType','gAngle','pat','patColor','patSize','patA','ovColor','ovA','ink','inkColor','frame','frameColor','cornerChar','phPos','phW','phR','phRatio','phZoom','phHr','phGap','creditAlign','creditLabel','creditPos','creditSize','creditPx','panel','panelColor','panelA','dim','dimA','freeH','fitText','deco','dlg','dlgColor','dlgChar','dlgMarks','ebSize','talign','tlCard','tlNode','tlTime','tlLine','showDate','showTime','showMe','timeStep','timeFmt','unread','chatStyle','prof','charAccent','hlLast','tcLast','hlSoft'];
 const DEF={raw:'',split:'blank',me:'나',ai:'캐릭터',blocks:[],mode:'text',
   theme:'paper',font:'Noto Sans KR',fs:16,lh:1.75,ls:0,w:800,pad:48,ratio:'4/5',valign:'center',
   title:'',subtitle:'',creditL:'',creditR:'',names:true,rule:true,star:true,keepStar:false,
@@ -1894,18 +1894,45 @@ function showPages(imgs){const d=new Date(),p=n=>String(n).padStart(2,'0');const
 /* ---------- presets ---------- */
 function getPresets(){try{return JSON.parse(localStorage.getItem('excerpt-presets')||'{}')}catch(e){return{}}}
 function setPresets(p){try{localStorage.setItem('excerpt-presets',JSON.stringify(p));return true}catch(e){toast('저장 공간이 부족해요');return false}}
-function styleSnapshot(){const o={};STYLE_KEYS.forEach(k=>o[k]=JSON.parse(JSON.stringify(S[k])));o.prof=Object.fromEntries(Object.entries(S.prof).map(([k,v])=>[k,{side:v.side,bub:v.bub,ink:v.ink}]));return o}
+function styleSnapshot(){const o={};STYLE_KEYS.forEach(k=>{if(S[k]!==undefined)o[k]=JSON.parse(JSON.stringify(S[k]))});o.prof=Object.fromEntries(Object.entries(S.prof).map(([k,v])=>[k,{side:v.side,bub:v.bub,ink:v.ink}]));return o}
 function applySnapshot(o){const avs=S.prof;STYLE_KEYS.forEach(k=>{if(o[k]!==undefined)S[k]=JSON.parse(JSON.stringify(o[k]))});
   S.prof=Object.fromEntries(Object.entries(S.prof||{}).map(([k,v])=>[k,Object.assign({},v,{av:(avs[k]||{}).av||''})]));
   if(!FONTS.some(f=>f[0]===S.font))S.font='Noto Sans KR';if(!THEMES[S.theme])S.theme='paper';prevW=S.w;fillFonts();save();applyStyle()}
 function renderPresets(){const p=getPresets();const ks=Object.keys(p);
-  $('#presetList').innerHTML=ks.length?ks.map(k=>`<span class="pchip"><button data-load="${esc(k)}">${esc(k)}</button><button data-del="${esc(k)}" aria-label="삭제">✕</button></span>`).join(''):'<span class="hint" style="margin:0">저장한 프리셋이 없어요.</span>'}
+  $('#presetList').innerHTML=ks.length?ks.map(k=>`<span class="pchip"><button data-load="${esc(k)}">${esc(k)}</button><button data-share="${esc(k)}" aria-label="공유">↗</button><button data-del="${esc(k)}" aria-label="삭제">✕</button></span>`).join(''):'<span class="hint" style="margin:0">저장한 프리셋이 없어요.</span>'}
 $('#presetSave').onclick=()=>{const n=$('#presetName').value.trim()||('프리셋 '+(Object.keys(getPresets()).length+1));const p=getPresets();p[n]=styleSnapshot();if(setPresets(p)){$('#presetName').value='';renderPresets();toast('‘'+n+'’ 저장했어요')}};
-$('#presetList').onclick=e=>{const l=e.target.closest('[data-load]'),d=e.target.closest('[data-del]');const p=getPresets();
+$('#presetList').onclick=e=>{const l=e.target.closest('[data-load]'),d=e.target.closest('[data-del]'),sh=e.target.closest('[data-share]');const p=getPresets();
+  if(sh){shareModal(sh.dataset.share,p[sh.dataset.share]);return}
   if(l){applySnapshot(p[l.dataset.load]);toast('불러왔어요')}
   if(d){delete p[d.dataset.del];setPresets(p);renderPresets()}};
-$('#exportSet').onclick=()=>modal(`<b>설정 코드</b><p class="hint" style="margin:4px 0 8px">전체를 복사해 두었다가 ‘설정 가져오기’에 붙여넣으면 같은 스타일이 돼요.</p><textarea readonly id="expTxt">${esc(JSON.stringify(styleSnapshot()))}</textarea><div class="btns" style="margin-top:10px"><button class="btn ghost" id="expCopy">복사</button><button class="btn" data-close>닫기</button></div>`,()=>{$('#expCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('#expTxt').value);toast('복사했어요')}catch(e){$('#expTxt').select();toast('길게 눌러 복사해 주세요')}}});
-$('#importSet').onclick=()=>modal(`<b>설정 코드 붙여넣기</b><textarea id="impTxt" style="margin-top:10px" placeholder="{...}"></textarea><div class="btns" style="margin-top:10px"><button class="btn ghost" data-close>취소</button><button class="btn" id="impDo">적용</button></div>`,()=>{$('#impDo').onclick=()=>{try{applySnapshot(JSON.parse($('#impTxt').value));closeModal();toast('설정을 적용했어요')}catch(e){toast('코드 형식이 맞지 않아요')}}});
+const SHARE_BASE=/github\.io$/.test(location.hostname)?location.origin+location.pathname:'https://tone-arc0721.github.io/';
+const b64u=u8=>{let s='';u8.forEach(c=>s+=String.fromCharCode(c));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')};
+const unb64u=t=>{t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';return Uint8Array.from(atob(t),c=>c.charCodeAt(0))};
+async function encShare(name,st){const json=JSON.stringify({v:1,n:name,s:st});const raw=new TextEncoder().encode(json);
+  if(window.CompressionStream){try{const z=new Uint8Array(await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('deflate-raw'))).arrayBuffer());return'Z'+b64u(z)}catch(e){}}
+  return'J'+b64u(raw)}
+async function decShare(txt){txt=(txt||'').trim();if(!txt)throw 0;
+  if(txt[0]==='{'){const o=JSON.parse(txt);return o.s?o:{n:'',s:o}}
+  const m=txt.match(/[#&?]s=([A-Za-z0-9_-]+)/);let c=m?m[1]:txt.replace(/\s/g,'');
+  let u8=unb64u(c.slice(1));if(c[0]==='Z')u8=new Uint8Array(await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer());else if(c[0]!=='J')throw 0;
+  const o=JSON.parse(new TextDecoder().decode(u8));if(!o.s)throw 0;return o}
+async function shareModal(name,st){const code=await encShare(name,st),link=SHARE_BASE+'#s='+code;
+  modal(`<b>꾸미기 공유</b><p class="hint" style="margin:4px 0 8px">‘${esc(name)}’ · 글 내용과 사진은 들어가지 않아요. 링크를 열거나 코드를 ‘공유받은 꾸미기 넣기’에 붙여넣으면 같은 꾸미기가 돼요.</p>
+    <label class="f">링크</label><textarea readonly id="shLink" style="height:64px">${esc(link)}</textarea>
+    <label class="f" style="margin-top:8px">코드</label><textarea readonly id="shCode" style="height:64px">${esc(code)}</textarea>
+    <div class="btns" style="margin-top:10px;flex-wrap:wrap">${navigator.share?'<button class="btn ghost" id="shSys">공유하기</button>':''}<button class="btn ghost" id="shCopyL">링크 복사</button><button class="btn ghost" id="shCopyC">코드 복사</button><button class="btn" data-close>닫기</button></div>`,()=>{
+    const cp=async id=>{try{await navigator.clipboard.writeText($(id).value);toast('복사했어요')}catch(e){$(id).select();toast('길게 눌러 복사해 주세요')}};
+    $('#shCopyL').onclick=()=>cp('#shLink');$('#shCopyC').onclick=()=>cp('#shCode');
+    if($('#shSys'))$('#shSys').onclick=()=>navigator.share({title:'스크랩 꾸미기 · '+name,text:'스크랩 꾸미기 ‘'+name+'’',url:link}).catch(()=>{})})}
+function receiveModal(o){const name=o.n||'공유받은 꾸미기';
+  modal(`<b>‘${esc(name)}’ 꾸미기를 받았어요</b><p class="hint" style="margin:4px 0 8px">지금 작업의 글과 사진은 그대로 두고 꾸밈만 바뀌어요. 프리셋으로 저장해 두면 나중에도 쓸 수 있어요.</p>
+    <div class="btns" style="margin-top:10px;flex-wrap:wrap"><button class="btn ghost" data-close>취소</button><button class="btn ghost" id="rcSave">프리셋으로만 저장</button><button class="btn" id="rcApply">적용 + 저장</button></div>`,()=>{
+    const keep=()=>{const p=getPresets();let n=name,i=2;while(p[n])n=name+' '+(i++);p[n]=o.s;if(setPresets(p))renderPresets();return n};
+    $('#rcSave').onclick=()=>{const n=keep();closeModal();toast('‘'+n+'’ 프리셋으로 저장했어요')};
+    $('#rcApply').onclick=()=>{logState&&logState();applySnapshot(o.s);keep();setters.forEach(f=>typeof f==='function'&&f());renderThemes();closeModal();toast('꾸미기를 적용했어요')}})}
+$('#exportSet').onclick=()=>shareModal($('#presetName').value.trim()||'내 꾸미기',styleSnapshot());
+$('#importSet').onclick=()=>modal(`<b>공유받은 꾸미기 넣기</b><p class="hint" style="margin:4px 0 8px">받은 링크나 코드를 붙여넣으세요.</p><textarea id="impTxt" placeholder="https://… 또는 Z…"></textarea><div class="btns" style="margin-top:10px"><button class="btn ghost" data-close>취소</button><button class="btn" id="impDo">다음</button></div>`,()=>{$('#impDo').onclick=async()=>{try{const o=await decShare($('#impTxt').value);closeModal();setTimeout(()=>receiveModal(o),60)}catch(e){toast('링크나 코드 형식이 맞지 않아요')}}});
+(async()=>{const m=location.hash.match(/[#&]s=([A-Za-z0-9_-]+)/);if(!m)return;try{const o=await decShare('#s='+m[1]);history.replaceState(null,'',location.pathname+location.search);setTimeout(()=>receiveModal(o),400)}catch(e){toast('공유 링크를 읽지 못했어요')}})();
 
 /* ---------- modal ---------- */
 function modal(h,after){$('#mbox').innerHTML=h;$('#modal').classList.add('on');after&&after()}
