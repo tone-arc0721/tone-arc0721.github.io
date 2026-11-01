@@ -1167,7 +1167,7 @@ function themeBg(k){const t=THEMES[k]||THEMES.paper,bg=t.bg;
   let acc=themeAcc(k);
   const dark=hx(bg).reduce((a,v)=>a+v,0)/765<.45;
   if(/^(talk|insta|xdm)D?$/.test(k))acc=dark?'#ffffff':(k==='talk'?'#5b7a96':'#8e8e93');
-  return{bgColor:bg,g2:dark?mixC(bg,acc,.28):mixC(bg,'#ffffff',.6),g1:dark?mixC(bg,'#000000',.35):mixC(bg,acc,.22),patColor:mixC(bg,acc,.6),ovColor:bg,frameColor:mixC(bg,acc,.35)}}
+  return{bgColor:bg,g2:dark?mixC(bg,acc,.28):mixC(bg,'#ffffff',.6),g1:dark?mixC(bg,'#000000',.35):mixC(bg,acc,.22),patColor:mixC(bg,acc,.6),ovColor:bg,frameColor:mixC(bg,acc,.35),dlgColor:tcRec(k)[0]}}
 $('#themes').onclick=e=>{if(themeEdit)return;const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;Object.assign(S,themeBg(S.theme));S.hlLast=hlRec(S.theme)[0];S.tcLast=tcRec(S.theme)[0];typeof hlPop==='function'&&hlPop();typeof tcPop==='function'&&tcPop();setters.forEach(f=>typeof f==='function'&&f());save();applyStyle()};
 function fillFonts(){const sel=$('#font');sel.innerHTML=FONTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');if(!FONTS.some(f=>f[0]===S.font))S.font='Noto Sans KR';sel.value=S.font}
 fillFonts();$('#font').onchange=()=>{S.font=$('#font').value;save();applyStyle();checkFont(S.font)};
