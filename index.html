@@ -207,7 +207,7 @@ details.acc .acc-b>label.f:first-child{margin-top:0}
 #sheet.capturing .xguide{display:none!important}
 #sheet .dimlayer{position:absolute;inset:0;z-index:0;pointer-events:none;display:none}
 #sheet .frame{position:absolute;inset:12px;pointer-events:none;z-index:1;border-radius:6px}
-#sheet .eb{position:absolute;z-index:3;pointer-events:none;overflow:hidden;line-height:1;display:none;text-align:center;white-space:nowrap}
+#sheet .eb{color:var(--frc,inherit);position:absolute;z-index:3;pointer-events:none;overflow:hidden;line-height:1;display:none;text-align:center;white-space:nowrap}
 #sheet .eb-t{left:0;right:0;top:6px}#sheet .eb-b{left:0;right:0;bottom:6px}
 #sheet .eb-l{top:0;bottom:0;left:6px;white-space:normal}#sheet .eb-r{top:0;bottom:0;right:6px;white-space:normal}
 #sheet .eb-l span,#sheet .eb-r span{display:block}
@@ -1166,7 +1166,7 @@ function themeBg(k){const t=THEMES[k]||THEMES.paper,bg=t.bg;
   let acc=themeAcc(k);
   const dark=hx(bg).reduce((a,v)=>a+v,0)/765<.45;
   if(/^(talk|insta|xdm)D?$/.test(k))acc=dark?'#ffffff':(k==='talk'?'#5b7a96':'#8e8e93');
-  return{bgColor:bg,g2:dark?mixC(bg,acc,.28):mixC(bg,'#ffffff',.6),g1:dark?mixC(bg,'#000000',.35):mixC(bg,acc,.22),patColor:mixC(bg,acc,.6),ovColor:bg}}
+  return{bgColor:bg,g2:dark?mixC(bg,acc,.28):mixC(bg,'#ffffff',.6),g1:dark?mixC(bg,'#000000',.35):mixC(bg,acc,.22),patColor:mixC(bg,acc,.6),ovColor:bg,frameColor:mixC(bg,acc,.35)}}
 $('#themes').onclick=e=>{if(themeEdit)return;const b=e.target.closest('.sw');if(!b)return;S.theme=b.dataset.t;Object.assign(S,themeBg(S.theme));S.hlLast=hlRec(S.theme)[0];S.tcLast=tcRec(S.theme)[0];typeof hlPop==='function'&&hlPop();typeof tcPop==='function'&&tcPop();setters.forEach(f=>typeof f==='function'&&f());save();applyStyle()};
 function fillFonts(){const sel=$('#font');sel.innerHTML=FONTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');if(!FONTS.some(f=>f[0]===S.font))S.font='Noto Sans KR';sel.value=S.font}
 fillFonts();$('#font').onchange=()=>{S.font=$('#font').value;save();applyStyle();checkFont(S.font)};
@@ -1523,6 +1523,7 @@ function applyStyle(skipProfiles){
   const vars={bg:t.bg,ai:t.ai,aiInk:t.aiInk,me:t.me,meInk:t.meInk,ink,narrInk:S.ink==='theme'?t.narrInk:rgba(ink,.6),rule:rgba(ink,.18),tint:rgba(ink,.07),
     fs:S.fs+'px',lh:S.lh,ls:S.ls+'em',font:`'${S.font}'`,pad:S.pad+'px',crs:crsVal(),valign:S.valign||'center',dlgw:(S.dlg==='bold'||S.dlg==='both')?'700':'inherit',dlgc:(S.dlg==='color'||S.dlg==='both')?S.dlgColor:'inherit',talign:S.talign||'left',phgap:Math.round(S.fs*S.phGap)+'px',phw:(isSide(S.phPos)?Math.min(S.phW,70):S.phW)+'%',phr:S.phR+'px'};
   {const dk=hx(t.bg).reduce((a,v)=>a+v,0)/765<.45;vars.cen=mixC(t.bg,themeAcc(S.theme),dk?.25:.28)}
+  vars.frc=S.frameColor;
   for(const k in vars)sheet.style.setProperty('--'+k,vars[k]);
   sheet.style.background=bgCSS();{const dl=sheet.querySelector('.dimlayer');dl.style.display=S.dim?'block':'none';dl.style.background=`rgba(0,0,0,${S.dimA/100})`}
   sheet.classList.toggle('cen-blur',S.cenStyle==='blur');
