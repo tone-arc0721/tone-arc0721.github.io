@@ -544,7 +544,7 @@ html.studio.L-mo #secPrev .prev-h{min-height:0;margin-bottom:0}
 #bigPv{display:none;white-space:nowrap;flex:none}html.studio.L-mo #bigPv{display:inline-flex}
 html.studio.L-mo .split{left:0;right:0;top:calc(var(--abh,57px) + var(--pvh,52vh));height:22px;background:var(--bg,#f7f7f8)}
 html.studio.L-mo .split i{width:44px;height:5px}
-html.studio.L-mo .wrap{position:fixed;left:0;right:0;top:calc(var(--abh,57px) + var(--pvh,52vh) + 22px);bottom:calc(62px + env(safe-area-inset-bottom));overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:4px 12px 24px;display:block;max-width:none;margin:0}
+html.studio.L-mo .wrap{position:fixed;left:0;right:0;top:calc(var(--abh,57px) + var(--pvh,52vh) + 22px);bottom:calc(62px + env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;padding:4px 12px 24px;display:block;max-width:none;margin:0}
 html.studio.L-mo body{overflow:hidden}
 html.studio.L-mo .wrap>.sec{margin-bottom:12px}
 html.studio.L-mo .stkbar,html.studio.L-mo .hlpop{bottom:calc(70px + env(safe-area-inset-bottom))}
@@ -968,6 +968,7 @@ html.ui-dark .fabb{color:#111}
   </div>
   <p style="margin:22px 0 8px">작업 화면 색</p>
   <div class="seg" id="uiSeg" style="max-width:360px;margin:0 auto"><button data-ui="system">시스템 설정 따라가기</button><button data-ui="light">라이트</button><button data-ui="dark">다크</button></div>
+  <p class="hint" id="verTag" style="text-align:center;margin-top:10px">V.1.0</p>
   <button class="btn ghost" id="chClose" style="margin-top:16px;max-width:360px">닫기</button>
 </div></div>
 <div class="split" id="splitH" aria-label="크기 조절"><i></i></div>
@@ -2632,11 +2633,12 @@ document.documentElement.classList.toggle('studio',STUDIO);
     else{root.style.setProperty('--pvh',bigPrev.h+'px');S.zoomMode=bigPrev.z||'all';bigPrev=null;$('#bigPv').textContent='⛶ 크게'}fitSoon()};
   $('#bigPv').onclick=toggleBig;let lastTap=0;$('#stage').addEventListener('touchend',e=>{if(e.touches.length)return;const now=Date.now();if(now-lastTap<300&&!window.getSelection().toString()){e.preventDefault();toggleBig();lastTap=0}else lastTap=now},{passive:false});
   $('#stage').addEventListener('dblclick',e=>{if(root.classList.contains('L-mo')&&!window.getSelection().toString())toggleBig()});
+  const pvHome=$('#secPrev').nextElementSibling;window.placePrev=()=>{const pv=$('#secPrev');if(STUDIO&&root.classList.contains('L-mo')){if(pv.parentElement!==document.body)document.body.insertBefore(pv,$('#splitH'))}else if(pv.parentElement===document.body){$('.wrap').insertBefore(pv,pvHome&&pvHome.parentElement?pvHome:null)}};placePrev();
   if(STUDIO){if(!S.zoomMode)S.zoomMode='all';setTab(cur);setTimeout(()=>{$('#toolbar').scrollLeft=0},300)}})();
 function setLayout(m,remember){const h=document.documentElement;h.classList.remove('L-pc','L-mo');h.classList.add('L-'+m);
   $('#vp').setAttribute('content',m==='pc'&&screen.width<1000?'width=1200':'width=device-width, initial-scale=1');
   if(remember){try{localStorage.setItem('excerpt-layout',m)}catch(e){}}
-  $('#chooser').classList.remove('on');setTimeout(fitSoon,60)}
+  $('#chooser').classList.remove('on');if(window.placePrev)placePrev();setTimeout(fitSoon,60)}
 $$('.ch-opt').forEach(b=>{if(b.dataset.lay===window.__layoutAuto){b.classList.add('rec');b.insertAdjacentHTML('beforeend','<span class="tag">지금 기기에 추천</span>')}b.onclick=()=>setLayout(b.dataset.lay,true)});
 $('#layoutBtn').onclick=()=>$('#chooser').classList.add('on');
 $('#chClose').onclick=()=>{if(!window.__layoutPref){setLayout(window.__layoutAuto,true);window.__layoutPref=window.__layoutAuto}else $('#chooser').classList.remove('on')};
