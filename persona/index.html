@@ -429,6 +429,24 @@ html.L-mo .pick{flex:none}
 html.L-mo .mixbar .code{-webkit-line-clamp:1;padding:7px 10px;font-size:12.5px}
 html.L-mo .nwrap{padding-bottom:190px}
 [hidden]{display:none !important}
+/* kinds */
+.kline{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12px;color:var(--muted)}
+.kline .pf{font-weight:700;color:var(--ink);background:var(--soft);border-radius:6px;padding:0 6px}
+.kline .who{color:#db2777;font-weight:500}
+html.ui-dark .kline .who{color:#f472b6}
+.kline .kst{font-weight:700;color:var(--c);border:1px solid currentColor;border-radius:999px;padding:0 7px;font-size:11px}
+.kline.big{font-size:13.5px}
+.kbox{border:1px solid var(--rule);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px;background:var(--paper)}
+.kbox-t{font-size:13px;font-weight:700}
+.visrows{display:flex;flex-direction:column;gap:8px}
+.visrow{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--dash);border-radius:12px;padding:8px 8px 8px 12px;background:var(--surface)}
+.visrow span{font-size:14px;font-weight:500}
+.visrow .seg{height:auto}
+.visrow .seg button{padding:6px 12px}
+.closed{max-width:560px;margin:60px auto;text-align:center;color:var(--muted);display:flex;flex-direction:column;gap:6px;align-items:center;padding:0 16px}
+.closed svg{color:var(--muted)}
+.closed b{color:var(--ink);font-size:18px}
+.is-closed .stats{display:none}
 </style>
 </head>
 <body>
@@ -444,10 +462,8 @@ html.L-mo .nwrap{padding-bottom:190px}
     </div></div>
 </div></div>
 <header id="banner"></header>
-<div class="pages-wrap" id="pageTabs" hidden><div class="pages" role="tablist" aria-label="페이지">
-  <button type="button" role="tab" id="tab-chars" aria-selected="true">캐릭터 <span class="pg-pub">공개</span></button>
-  <button type="button" role="tab" id="tab-notes" aria-selected="false">프롬 노트 <span class="n" id="noteCount"></span> <span class="pg-lock"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>나만 보기</span></button>
-</div></div>
+<div class="pages-wrap" id="pageTabs" hidden><div class="pages" id="pageTabsIn" role="tablist" aria-label="페이지"></div></div>
+<div class="closed" id="closedView" hidden><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><b>비공개 서랍이에요</b><span>지금은 공개된 내용이 없어요.</span></div>
 <div class="wrap" id="charsView">
   <div class="bar">
     <label class="search" for="q">
@@ -519,7 +535,7 @@ let openId = null, draft = null, editingSettings = false;
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const newId = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-const src = ref => !ref ? "" : ref.startsWith("fs:") ? fsSrc(ref.slice(3),"images") : ref.startsWith("np:") ? fsSrc(ref.slice(3),"noteImages") : (/^(data:|https?:|\/|\.|images\/)/.test(ref) || /\.(png|jpe?g|gif|webp|avif)$/i.test(ref) ? ref : "/_blob/"+ref);
+const src = ref => !ref ? "" : IMG_PREFIX[ref.slice(0,3)] ? fsSrc(ref.slice(3), IMG_PREFIX[ref.slice(0,3)]) : (/^(data:|https?:|\/|\.|images\/)/.test(ref) || /\.(png|jpe?g|gif|webp|avif)$/i.test(ref) ? ref : "/_blob/"+ref);
 let standalone = false, standaloneEdit = false;
 const splitTags = s => String(s||"").split(/[,，\n]/).map(x=>x.trim()).filter(Boolean);
 
@@ -555,14 +571,14 @@ const EXAMPLES = [
 ];
 
 /* ---------- storage ---------- */
-function cache(){ const ok = lsSet(LS_KEY, {chars, settings, savedAt:Date.now()}); if(!ok && standaloneEdit) toast("브라우저 저장 공간이 가득 찼어요. 지금 내보내기로 data.json을 받아 두세요."); }
+function cache(){ const ok = lsSet(LS_KEY, {chars: kind==="mine" ? chars : (store.mine||[]), settings, savedAt:Date.now()}); if(!ok && standaloneEdit) toast("브라우저 저장 공간이 가득 찼어요. 지금 내보내기로 data.json을 받아 두세요."); }
 async function saveChar(c){
   if(mode==="firebase"){
     if(!fb || !canEdit){ toast("편집하려면 로그인해 주세요."); return false; }
     const before = chars.find(x=>x.id===c.id);
     try{
       c = await fsNormalizeChar(c);
-      await fb.fs.setDoc(fb.fs.doc(fb.db,"chars",c.id), c);
+      await fb.fs.setDoc(fb.fs.doc(fb.db,KINDS[kind].coll,c.id), c);
       const j = chars.findIndex(x=>x.id===c.id); if(j>=0) chars[j]=c; else chars.push(c);
       render();
       if(before) await fsDeleteUnused(charRefs(before).filter(r=>!charRefs(c).includes(r)), null);
@@ -581,7 +597,7 @@ async function deleteChar(id){
   if(mode==="firebase"){
     if(!fb || !canEdit) return;
     const old = chars.find(x=>x.id===id);
-    try{ await fb.fs.deleteDoc(fb.fs.doc(fb.db,"chars",id)); chars = chars.filter(x=>x.id!==id); render(); if(old) await fsDeleteUnused(charRefs(old), id); return true; }
+    try{ await fb.fs.deleteDoc(fb.fs.doc(fb.db,KINDS[kind].coll,id)); chars = chars.filter(x=>x.id!==id); store[kind] = chars; render(); if(old) await fsDeleteUnused(charRefs(old), id); return true; }
     catch(e){ fbFailed(e); return false; }
   }
   chars = chars.filter(x=>x.id!==id); cache(); render();
@@ -592,7 +608,7 @@ async function saveSettings(s){
     if(!fb || !canEdit){ toast("편집하려면 로그인해 주세요."); return false; }
     try{
       s = JSON.parse(JSON.stringify(s));
-      s.banner = await fsNormalizeRef(s.banner); s.avatar = await fsNormalizeRef(s.avatar);
+      s.banner = await fsNormalizeRef(s.banner,"siteImages","si:"); s.avatar = await fsNormalizeRef(s.avatar,"siteImages","si:");
       Object.keys(s).forEach(k=>{ if(s[k]===undefined||s[k]===null) delete s[k]; });
       await fb.fs.setDoc(fb.fs.doc(fb.db,"site","settings"), s);
       settings = s; renderBanner(); render();
@@ -623,8 +639,8 @@ async function prepImage(file){
     return await new Promise(r=>cv.toBlob(b=>r(b||file),"image/jpeg",assets?0.9:0.8));
   }catch(e){ return file; }
 }
-async function storeImage(file){
-  if(mode==="firebase"){ if(!fb || !canEdit){ toast("편집하려면 로그인해 주세요."); return null; } return await fsImageFromBlob(file); }
+async function storeImage(file, target){
+  if(mode==="firebase"){ if(!fb || !canEdit){ toast("편집하려면 로그인해 주세요."); return null; } const t = target==="site" ? {coll:"siteImages",prefix:"si:"} : imgTarget(); return await fsImageFromBlob(file, t.coll, t.prefix); }
   const blob = await prepImage(file);
   if(assets){
     try{ const r = await assets.upload(blob, blob.type?undefined:{type:"image/jpeg"}); return r.id; }
@@ -695,7 +711,7 @@ async function saveTags(){
   const keep = new Set(live.filter(t=>t.orig).map(t=>t.orig));
   const removed = allTags().filter(t=>!keep.has(t));
   const s = JSON.parse(JSON.stringify(settings));
-  s.tagOrder = names; s.tagColors = {}; live.forEach(t=>{ s.tagColors[t.name]=t.color; });
+  s[tagOrderKey()] = names; s.tagColors = Object.assign({}, s.tagColors||{}); removed.forEach(t=>{ delete s.tagColors[t]; }); Object.keys(rename).forEach(t=>{ delete s.tagColors[t]; }); live.forEach(t=>{ s.tagColors[t.name]=t.color; });
   for(const c of chars.slice()){
     if(!(c.tags||[]).some(t=>rename[t] || removed.includes(t))) continue;
     const nc = JSON.parse(JSON.stringify(c));
@@ -756,13 +772,185 @@ function pairEditorHtml(d, b){
   </div>`;
 }
 
+/* ================= 탭(종류)별 캐릭터 + 탭별 공개 설정 ================= */
+const KINDS = {
+  mine:  {label:"내 페르소나", coll:"chars",       img:"images",       prefix:"fs:", defVis:"public"},
+  ai:    {label:"AI 캐릭터",   coll:"aiChars",     img:"aiImages",     prefix:"ai:", defVis:"public"},
+  friend:{label:"친구 캐릭터", coll:"friendChars", img:"friendImages", prefix:"fr:", defVis:"private"}
+};
+const PAGE_ORDER = ["mine","ai","friend","notes"];
+const IMG_PREFIX = {"fs:":"images","ai:":"aiImages","fr:":"friendImages","np:":"noteImages","si:":"siteImages"};
+const LOCK_SVG = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`;
+const AI_STATUS = [["on","진행 중","#16a34a"],["done","완결","#71717a"],["keep","보관","#ca8a04"]];
+let kind = "mine", store = {mine:null, ai:null, friend:null}, vis = {}, visLoaded = false, kindSubs = {}, visDraft = null, migratedSite = false;
+function visOf(k){ const d = k==="notes" ? "private" : KINDS[k].defVis; return (vis && (vis[k]==="public"||vis[k]==="private")) ? vis[k] : d; }
+function multiKind(){ return mode==="firebase" && !!fb; }
+function canSee(k){ return canEdit ? true : visOf(k)==="public"; }
+function notesVisible(){ return multiKind() && canSee("notes"); }
+function tagOrderKey(){ return kind==="mine" ? "tagOrder" : "tagOrder_"+kind; }
+function visiblePages(){
+  if(!multiKind()) return ["mine"];
+  return PAGE_ORDER.filter(k=> k==="notes" ? notesVisible() : canSee(k));
+}
+function imgTarget(){ const k = KINDS[kind] || KINDS.mine; return {coll:k.img, prefix:k.prefix}; }
+
+/* subscriptions */
+function subKind(k){
+  if(kindSubs[k] || !fb) return;
+  kindSubs[k] = fb.fs.onSnapshot(fb.fs.collection(fb.db, KINDS[k].coll), snap=>{
+    store[k] = snap.docs.map(d=>Object.assign({}, d.data(), {id:d.id}));
+    if(k==="mine" && localReason) localReason = "";
+    if(k===kind && page!=="notes"){ chars = store[k]; cache(); render(); refreshOpenChar(); }
+    renderTabs();
+  }, err=>{
+    kindSubs[k] = null; store[k] = [];
+    if(err && err.code==="permission-denied" && visLoaded && canSee(k)){
+      localReason = canEdit ? "Firestore 규칙이 예전 버전이에요. 안내받은 새 규칙을 붙여넣고 게시해 주세요." : "";
+    }
+    if(k===kind && page!=="notes"){ chars = []; render(); }
+    renderTabs();
+  });
+}
+function unsubKind(k){ if(kindSubs[k]){ try{ kindSubs[k](); }catch(e){} kindSubs[k] = null; } }
+function syncSubs(){
+  if(!fb || !visLoaded) return;
+  for(const k in KINDS){ if(canSee(k)) subKind(k); else { unsubKind(k); store[k] = null; } }
+  if(notesVisible()) startNotes(); else stopNotes();
+}
+function refreshOpenChar(){ if(openId && !draft && !editingSettings && $("ov").classList.contains("open")) viewChar(openId); }
+function subVis(){
+  fb.fs.onSnapshot(fb.fs.doc(fb.db,"site","visibility"), snap=>{
+    vis = snap.exists() ? Object.assign({}, snap.data()) : {};
+    visLoaded = true;
+    syncSubs(); setPage(page, true);
+  }, ()=>{ visLoaded = true; syncSubs(); setPage(page, true); });
+}
+
+/* pages */
+function initialPage(){
+  const h = location.hash.replace("#","");
+  if(PAGE_ORDER.includes(h)) return h;
+  try{ const p = localStorage.getItem("persona-page"); return p==="chars" ? "mine" : (p||"mine"); }catch(e){ return "mine"; }
+}
+function renderTabs(){
+  const vp = visiblePages();
+  const show = multiKind() && (canEdit || vp.length > 1);
+  $("pageTabs").hidden = !show;
+  if(!show) return;
+  $("pageTabsIn").innerHTML = vp.map(k=>{
+    const n = k==="notes" ? notes.length : (store[k] ? store[k].length : (k==="mine" ? chars.length : 0));
+    const label = k==="notes" ? "프롬 노트" : KINDS[k].label;
+    const badge = !canEdit ? "" : visOf(k)==="public" ? `<span class="pg-pub">공개</span>` : `<span class="pg-lock">${LOCK_SVG}나만</span>`;
+    return `<button type="button" role="tab" data-page="${k}" aria-selected="${page===k}">${label} <span class="n">${String(n).padStart(2,"0")}</span>${badge}</button>`;
+  }).join("");
+}
+function setPage(p, fromHash){
+  if(p==="chars") p = "mine";
+  const vp = visiblePages();
+  const closed = multiKind() && visLoaded && !vp.length;
+  if(!vp.includes(p)) p = vp[0] || "mine";
+  page = p;
+  if(p!=="notes"){
+    if(kind!==p) { kind = p; filt.tag = null; }
+    if(store[p]) chars = store[p]; else if(p!=="mine") chars = [];
+  }
+  if(canEdit){ try{ localStorage.setItem("persona-page", page); }catch(e){} }
+  if(!fromHash){ try{ history.replaceState(null, "", page==="mine" ? location.pathname+location.search : "#"+page); }catch(e){} }
+  $("closedView").hidden = !closed; document.body.classList.toggle("is-closed", closed);
+  $("charsView").hidden = closed || page==="notes";
+  $("notesView").hidden = closed || page!=="notes";
+  $("mixBar").hidden = closed || page!=="notes";
+  document.body.classList.toggle("on-notes", page==="notes");
+  renderTabs(); renderBanner();
+  if(page==="notes") renderNotes(); else render();
+}
+window.addEventListener("hashchange", ()=>{ const h=location.hash.replace("#",""); if(PAGE_ORDER.includes(h)) setPage(h, true); });
+
+/* banner/profile images live in a public collection so they show even when 내 페르소나 is 나만 보기 */
+async function migrateSiteImages(){
+  if(!canEdit || !fb || migratedSite) return;
+  migratedSite = true;
+  const s = JSON.parse(JSON.stringify(settings)); let changed = false;
+  for(const k of ["banner","avatar"]){
+    if(s[k] && s[k].startsWith("fs:")){
+      const d = await loadFsImg(s[k].slice(3), "images");
+      if(d){ const id = newId(); try{ await fb.fs.setDoc(fb.fs.doc(fb.db,"siteImages",id), {data:d, createdAt:Date.now()}); fsImg[id]=d; s[k]="si:"+id; changed=true; }catch(e){} }
+    }
+  }
+  if(changed) await saveSettings(s);
+}
+
+/* kind-specific bits for cards, detail and editor */
+function kindLine(c){
+  if(kind==="ai"){
+    const st = AI_STATUS.find(x=>x[0]===c.status);
+    return `<div class="kline">${c.platform?`<span class="pf">${esc(c.platform)}</span>`:""}${c.maker?`<span>${esc(c.maker)}</span>`:""}${c.chats?`<span>대화 ${esc(c.chats)}번</span>`:""}${st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""}</div>`;
+  }
+  if(kind==="friend") return c.owner ? `<div class="kline"><span class="who">${esc(c.owner)}의 캐릭터</span></div>` : "";
+  return "";
+}
+function withNames(c){ return (c.with||[]).map(id=>(store.mine||[]).find(x=>x.id===id)).filter(Boolean); }
+function kindRows(c){
+  const out = [];
+  if(kind==="ai"){
+    const st = AI_STATUS.find(x=>x[0]===c.status);
+    const bits = [c.platform?`<span class="pf">${esc(c.platform)}</span>`:"", c.maker?esc(c.maker):"", c.chats?`대화 ${esc(c.chats)}번`:"", st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""].filter(Boolean);
+    if(bits.length) out.push(row("정보", `<div class="kline big">${bits.map(b=>`<span>${b}</span>`).join("")}</div>`));
+    if(c.link) out.push(row("봇 링크", `<div class="txt">${linkify(esc(c.link))}</div>`));
+  }
+  if(kind==="friend" && c.owner) out.push(row("주인", `<div class="txt">${linkify(esc(c.owner))}</div>`));
+  if(kind!=="mine"){
+    const w = withNames(c);
+    if(w.length) out.push(row("함께하는 내 페르소나", `<div class="tagpick">${w.map(m=>`<button type="button" class="tagopt" data-gochar="${esc(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name)}</button>`).join("")}</div>`));
+  }
+  return out;
+}
+function kindEditorHtml(d){
+  if(kind==="mine") return "";
+  const mine = (store.mine||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
+  const withPick = `<div class="f"><span class="lab">함께하는 내 페르소나 <span class="hint">· 눌러서 고르기</span></span><div class="tagpick">${mine.length ? mine.map(m=>`<button type="button" class="tagopt" data-kwith="${esc(m.id)}" aria-pressed="${(d.with||[]).includes(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name||"이름 없음")}</button>`).join("") : `<span class="busy">내 페르소나가 아직 없어요</span>`}</div></div>`;
+  if(kind==="friend") return `<div class="kbox"><div class="kbox-t">친구 캐릭터 정보</div>
+    <div class="f"><label for="k-owner">주인 <span class="hint">· 친구 닉네임이나 SNS 주소</span></label><input type="text" id="k-owner" data-f="owner" value="${esc(d.owner||"")}" placeholder="@친구닉네임"></div>${withPick}</div>`;
+  const plats = Array.from(new Set((store.ai||[]).map(c=>c.platform).filter(Boolean).concat(["CRACK","ZETA","CAVEDUCK"])));
+  return `<div class="kbox"><div class="kbox-t">AI 캐릭터 정보</div>
+    <div class="two"><div class="f"><label for="k-platform">플랫폼</label><input type="text" id="k-platform" data-f="platform" list="k-plats" value="${esc(d.platform||"")}" placeholder="CRACK, ZETA …"><datalist id="k-plats">${plats.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist></div>
+      <div class="f"><label for="k-maker">제작자</label><input type="text" id="k-maker" data-f="maker" value="${esc(d.maker||"")}" placeholder="@제작자"></div></div>
+    <div class="f"><label for="k-link">봇 링크</label><input type="text" id="k-link" data-f="link" value="${esc(d.link||"")}" placeholder="https://"></div>
+    <div class="two"><div class="f"><span class="lab">진행 상태</span><div class="seg" role="group" aria-label="진행 상태">${AI_STATUS.map(([v,n])=>`<button type="button" data-kstatus="${v}" aria-pressed="${d.status===v}">${n}</button>`).join("")}</div></div>
+      <div class="f"><label for="k-chats">대화 수</label><input type="number" id="k-chats" min="0" value="${esc(d.chats||0)}" style="max-width:140px"></div></div>
+    ${withPick}</div>`;
+}
+function visSettingsHtml(){
+  if(!multiKind() || !canEdit) return "";
+  visDraft = {mine:visOf("mine"), ai:visOf("ai"), friend:visOf("friend"), notes:visOf("notes")};
+  return `<div class="f"><span class="lab">탭별 공개 범위 <span class="hint">· 나만 보기 탭은 방문자에게 탭도 내용도 보이지 않아요</span></span>
+    <div class="visrows">${[["mine","내 페르소나"],["ai","AI 캐릭터"],["friend","친구 캐릭터"],["notes","프롬 노트"]].map(([k,n])=>`<div class="visrow"><span>${n}</span>
+      <div class="seg" role="group" aria-label="${n} 공개 범위"><button type="button" data-vis="${k}|public" aria-pressed="${visDraft[k]==="public"}">공개</button><button type="button" data-vis="${k}|private" aria-pressed="${visDraft[k]==="private"}">나만 보기</button></div></div>`).join("")}</div></div>`;
+}
+async function saveVis(){
+  if(!visDraft || !multiKind() || !canEdit) return true;
+  const same = Object.keys(visDraft).every(k=>visDraft[k]===visOf(k));
+  if(same) return true;
+  try{ await fb.fs.setDoc(fb.fs.doc(fb.db,"site","visibility"), visDraft); vis = Object.assign({}, visDraft); return true; }
+  catch(e){ fbFailed(e); return false; }
+}
+
+document.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return; const d = b.dataset;
+  if(d.page){ setPage(d.page); return; }
+  if(d.vis){ const [k,v]=d.vis.split("|"); visDraft[k]=v; b.parentElement.querySelectorAll("[data-vis]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.vis===d.vis)); return; }
+  if(d.kstatus && draft){ draft.status = draft.status===d.kstatus ? "" : d.kstatus; b.parentElement.querySelectorAll("[data-kstatus]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.kstatus===draft.status)); return; }
+  if(d.kwith && draft){ const w = draft.with = draft.with||[]; const on = !w.includes(d.kwith); draft.with = on ? [...w, d.kwith] : w.filter(x=>x!==d.kwith); b.setAttribute("aria-pressed", on); return; }
+  if(d.gochar){ const id = d.gochar; closeModal(); setPage("mine"); setTimeout(()=>viewChar(id), 30); return; }
+});
+
 /* ================= 프롬 노트 (나만 보기) ================= */
 const DEFAULT_CATS = [
   {id:"artist",name:"작가 태그",color:"#7c3aed"},{id:"style",name:"화풍·질감",color:"#db2777"},
   {id:"pose",name:"구도·포즈",color:"#2563eb"},{id:"bg",name:"배경·조명",color:"#0d9488"},
   {id:"outfit",name:"의상",color:"#ea580c"},{id:"neg",name:"네거티브",color:"#dc2626"},{id:"memo",name:"메모",color:"#71717a"}
 ];
-let page = "chars", notes = [], noteCfg = null, notesSubs = [], nFilt = {cat:"all", q:"", sort:"recent"};
+let page = "mine", notes = [], noteCfg = null, notesSubs = [], nFilt = {cat:"all", q:"", sort:"recent"};
 let noteDraft = null, catDraft = null, mixList = [];
 try{ mixList = JSON.parse(localStorage.getItem("persona-mix")||"[]")||[]; }catch(e){ mixList=[]; }
 function saveMix(){ try{ localStorage.setItem("persona-mix", JSON.stringify(mixList)); }catch(e){} }
@@ -788,27 +976,6 @@ function startNotes(){
 let notesDenied = false;
 function stopNotes(){ notesSubs.forEach(u=>{ try{ u(); }catch(e){} }); notesSubs = []; notes = []; noteCfg = null; notesDenied = false; }
 
-function setPage(p, fromHash){
-  const next = (p==="notes" && notesEnabled()) ? "notes" : "chars";
-  page = next;
-  if(notesEnabled()){ try{ localStorage.setItem("persona-page", page); }catch(e){} }
-  if(!fromHash){ try{ history.replaceState(null, "", page==="notes" ? "#notes" : location.pathname+location.search); }catch(e){} }
-  $("pageTabs").hidden = !notesEnabled();
-  $("tab-chars").setAttribute("aria-selected", page==="chars");
-  $("tab-notes").setAttribute("aria-selected", page==="notes");
-  $("charsView").hidden = page!=="chars";
-  $("notesView").hidden = page!=="notes";
-  $("mixBar").hidden = page!=="notes";
-  document.body.classList.toggle("on-notes", page==="notes");
-  renderBanner();
-  if(page==="notes") renderNotes(); else render();
-}
-function initialPage(){
-  if(location.hash==="#notes") return "notes";
-  try{ return localStorage.getItem("persona-page")||"chars"; }catch(e){ return "chars"; }
-}
-window.addEventListener("hashchange", ()=>{ if(location.hash==="#notes") setPage("notes", true); });
-
 /* ---------- render ---------- */
 function noteCats(){
   const cs = cats().slice();
@@ -816,7 +983,7 @@ function noteCats(){
   return cs;
 }
 function renderNotes(){
-  $("noteCount").textContent = String(notes.length).padStart(2,"0");
+  renderTabs(); $("nAddBtn").hidden = !canEdit;
   if(notesDenied){
     $("nGrid").innerHTML = `<div class="empty">프롬 노트를 읽을 권한이 없어요. Firebase 규칙에 프롬 노트 부분을 추가하고 게시해 주세요.</div>`;
     $("nRail").innerHTML = ""; renderMix(); return;
@@ -825,7 +992,7 @@ function renderNotes(){
   const cnt = id => id==="all" ? notes.length : id==="__none" ? notes.filter(n=>!catById(n.cat)).length : notes.filter(n=>n.cat===id).length;
   $("nRail").innerHTML = `<div class="t">카테고리</div>` +
     [{id:"all",name:"전체",color:"#71717a"}, ...cs].map(c=>`<button class="ncat" type="button" data-ncat="${esc(c.id)}" aria-pressed="${nFilt.cat===c.id}" style="--c:${esc(c.color)}"><i></i>${esc(c.name)}<span class="n">${cnt(c.id)}</span></button>`).join("") +
-    `<button class="ncat manage" type="button" data-nact="cats">카테고리 관리</button>`;
+    (canEdit ? `<button class="ncat manage" type="button" data-nact="cats">카테고리 관리</button>` : "");
   document.querySelectorAll("#nSortSeg [data-nsort]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.nsort===nFilt.sort));
   const q = nFilt.q.toLowerCase();
   let l = notes.filter(n=>{
@@ -837,7 +1004,7 @@ function renderNotes(){
   if(nFilt.sort==="fav") l = l.filter(n=>n.fav);
   l.sort(nFilt.sort==="used" ? (a,b)=>(b.uses||0)-(a.uses||0) : (a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
   $("nGrid").innerHTML = l.length ? l.map(noteCard).join("") :
-    `<div class="empty">${notes.length ? "조건에 맞는 프롬이 없어요." : `아직 프롬이 없어요. <button class="add-btn" type="button" data-nact="new" style="height:34px;margin-left:8px">+ 새 프롬</button>`}</div>`;
+    `<div class="empty">${notes.length ? "조건에 맞는 프롬이 없어요." : `아직 프롬이 없어요.${canEdit?` <button class="add-btn" type="button" data-nact="new" style="height:34px;margin-left:8px">+ 새 프롬</button>`:""}`}</div>`;
   renderMix();
 }
 function noteCard(n){
@@ -846,7 +1013,7 @@ function noteCard(n){
   const used = (n.used||[]).map(id=>chars.find(x=>x.id===id)).filter(Boolean);
   return `<article class="pnote${inMix?" in":""}">
     <div class="n-top"><span class="cchip" style="--c:${esc(c.color)}">${esc(c.name)}</span>${n.uses?`<span class="used">${n.uses}번 씀</span>`:""}
-      <button class="star" type="button" data-nfav="${esc(n.id)}" aria-pressed="${!!n.fav}" aria-label="즐겨찾기">★</button></div>
+      ${canEdit ? `<button class="star" type="button" data-nfav="${esc(n.id)}" aria-pressed="${!!n.fav}" aria-label="즐겨찾기">★</button>` : (n.fav ? `<span class="star" aria-label="즐겨찾기" aria-pressed="true">★</span>` : "")}</div>
     <div class="n-body">${(n.thumbs||[]).length?`<div class="nthumbs">${n.thumbs.slice(0,3).map(r=>`<img src="${esc(src(r))}" alt="" data-zoom="${esc(r)}">`).join("")}</div>`:""}
       <div class="n-text"><h3>${esc(n.title||"제목 없음")}</h3>${n.memo?`<div class="memo">${richText(n.memo)}</div>`:""}</div></div>
     ${n.text?`<div class="code nclamp">${esc(n.text)}</div>`:""}
@@ -854,7 +1021,7 @@ function noteCard(n){
     ${(n.tags||[]).length?`<div class="n-tags">${n.tags.map(t=>`<span>#${esc(t)}</span>`).join("")}</div>`:""}
     <div class="n-acts"><button class="copy" type="button" data-ncopy="${esc(n.id)}">COPY</button>
       <button class="copy${inMix?" strong":""}" type="button" data-nmix="${esc(n.id)}">${inMix?"바구니에서 빼기":"+ 바구니"}</button>
-      <button class="copy" type="button" data-nedit="${esc(n.id)}" style="margin-left:auto">수정</button></div>
+      ${canEdit ? `<button class="copy" type="button" data-nedit="${esc(n.id)}" style="margin-left:auto">수정</button>` : ""}</div>
   </article>`;
 }
 function renderMix(){
@@ -968,7 +1135,7 @@ async function saveCats(){
 
 /* ---------- character detail: linked notes (owner only) ---------- */
 function charNotesHtml(c){
-  if(!notesEnabled()) return "";
+  if(!notesVisible()) return "";
   const l = notes.filter(n=>(n.used||[]).includes(c.id));
   if(!l.length) return "";
   return `<div class="cnotes">${l.map(n=>{ const ct=catById(n.cat)||{name:"미분류",color:"#a1a1aa"};
@@ -979,12 +1146,10 @@ function charNotesHtml(c){
 document.addEventListener("click", async e=>{
   const b = e.target.closest("button"); if(!b) return;
   const d = b.dataset;
-  if(b.id==="tab-chars"){ setPage("chars"); return; }
-  if(b.id==="tab-notes"){ setPage("notes"); return; }
   if(d.ncat!==undefined){ nFilt.cat=d.ncat; renderNotes(); return; }
   if(d.nsort){ nFilt.sort=d.nsort; renderNotes(); return; }
-  if(d.nfav){ const n=notes.find(x=>x.id===d.nfav); if(!n) return; const c=Object.assign({},n,{fav:!n.fav}); if(await saveNote(c)) renderNotes(); return; }
-  if(d.ncopy){ const n=notes.find(x=>x.id===d.ncopy); if(!n) return; copy(n.text||""); const c=Object.assign({},n,{uses:(n.uses||0)+1}); await saveNote(c); if(page==="notes") renderNotes(); return; }
+  if(d.nfav){ if(!canEdit) return; const n=notes.find(x=>x.id===d.nfav); if(!n) return; const c=Object.assign({},n,{fav:!n.fav}); if(await saveNote(c)) renderNotes(); return; }
+  if(d.ncopy){ const n=notes.find(x=>x.id===d.ncopy); if(!n) return; copy(n.text||""); if(notesEnabled()){ const c=Object.assign({},n,{uses:(n.uses||0)+1}); await saveNote(c); if(page==="notes") renderNotes(); } return; }
   if(d.nmix){ const id=d.nmix; mixList = mixList.some(m=>m.id===id) ? mixList.filter(m=>m.id!==id) : [...mixList,{id,w:1}]; saveMix(); renderNotes(); return; }
   if(d.mixw){ const [id,s]=d.mixw.split("|"); const m=mixList.find(x=>x.id===id); if(m){ m.w=Math.max(.5,Math.min(2,Math.round((m.w+(+s)*.1)*10)/10)); saveMix(); renderMix(); } return; }
   if(d.mixmove){ const [i,s]=d.mixmove.split("|").map(Number); const j=i+s; if(j>=0&&j<mixList.length){ [mixList[i],mixList[j]]=[mixList[j],mixList[i]]; saveMix(); renderMix(); } return; }
@@ -1042,11 +1207,11 @@ document.addEventListener("input", e=>{
 document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="c-new"){ e.preventDefault(); const x=document.querySelector('[data-nact="cAdd"]'); if(x) x.click(); } });
 
 /* ---------- derived ---------- */
-function list(){ if(chars.length) return chars; const hid = settings.hiddenExamples||[]; return EXAMPLES.filter(e=>!hid.includes(e.id)); }
+function list(){ if(chars.length || kind!=="mine") return chars; const hid = settings.hiddenExamples||[]; return EXAMPLES.filter(e=>!hid.includes(e.id)); }
 function allTags(){
-  const order = (settings.tagOrder||[]).slice();
+  const order = (settings[tagOrderKey()]||[]).slice();
   // 예시 카드의 태그는, 아직 캐릭터도 태그 설정도 없을 때만 보여줘요 (지운 태그가 예시에서 되살아나지 않게)
-  const src = chars.length || Array.isArray(settings.tagOrder) ? chars : EXAMPLES;
+  const src = chars.length || kind!=="mine" || Array.isArray(settings[tagOrderKey()]) ? chars : EXAMPLES;
   const used=[]; src.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(c=>(c.tags||[]).forEach(t=>{ if(!used.includes(t)) used.push(t); }));
   return order.concat(used.filter(t=>!order.includes(t)));
 }
@@ -1054,7 +1219,7 @@ function filtered(){
   const q = filt.q.trim().toLowerCase();
   let l = list().filter(c=>{
     if(filt.tag && !(c.tags||[]).includes(filt.tag)) return false;
-    if(q && !(`${c.name} ${c.sub||""} ${c.hashtags||""} ${(c.tags||[]).join(" ")} ${pairNames(c).join(" ")}`.toLowerCase().includes(q))) return false;
+    if(q && !(`${c.name} ${c.sub||""} ${c.hashtags||""} ${(c.tags||[]).join(" ")} ${pairNames(c).join(" ")} ${c.platform||""} ${c.maker||""} ${c.owner||""}}`.toLowerCase().includes(q))) return false;
     return true;
   });
   const by = {
@@ -1136,7 +1301,7 @@ function card(c){
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
     <div class="info">
       <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
-      ${c.hashtags||pairNames(c).length?`<div class="hash">${pairNames(c).length?`<span class="pairmark">× ${esc(pairNames(c).join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}
+      ${kindLine(c)}${c.hashtags||pairNames(c).length?`<div class="hash">${pairNames(c).length?`<span class="pairmark">× ${esc(pairNames(c).join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}
       ${(c.tags||[]).length?`<div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>`:""}
     </div></article>`;
 }
@@ -1146,7 +1311,7 @@ function listRow(c){
   return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
     <span class="l-no">No.${numberOf(c.id)}</span>
     <div class="l-th">${img}</div>
-    <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>
+    <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>${kindLine(c)}
       ${c.hashtags||pn.length?`<div class="hash">${pn.length?`<span class="pairmark">× ${esc(pn.join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}</div>
     <div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>
     <span class="dday"><span class="hdot" style="background:${esc(hc)}"></span>${d?`D+${d}`:""}</span>
@@ -1165,6 +1330,7 @@ function viewChar(id){
   const cover = c.cover ? `<div class="cover"><img src="${esc(src(c.cover))}" alt="${esc(c.name)}" data-zoom="${esc(c.cover)}"></div>`
     : `<div class="cover">${phHtml(c,true)}</div>`;
   const rows = [];
+  rows.push(...kindRows(c));
   if((c.tags||[]).length) rows.push(row("분류", `<div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>`));
   let lastTagRow = -1; const tagBlocks = [];
   (c.blocks||[]).forEach(b=>{
@@ -1248,6 +1414,7 @@ function renderEditor(keep){
       <div class="f"><label for="e-name">이름</label><input type="text" id="e-name" data-f="name" value="${esc(d.name)}" placeholder="포포"></div>
       <div class="f"><label for="e-sub">부제 <span class="hint">· 짝, 별칭 등</span></label><input type="text" id="e-sub" data-f="sub" value="${esc(d.sub||"")}" placeholder="제노"></div>
     </div>
+    ${kindEditorHtml(d)}
     <div class="f"><label for="e-hash">해시태그 <span class="hint">· 카드에 작게 보여요</span></label><input type="text" id="e-hash" data-f="hashtags" value="${esc(d.hashtags||"")}" placeholder="#Heliotrope #CherryPie"></div>
     <div class="f"><span class="lab">분류 태그 <span class="hint">· 눌러서 고르기, 색과 순서는 ‘태그 관리’에서</span></span>
       <div class="tagpick" role="group" aria-label="분류 태그">${allTags().concat((d.tags||[]).filter(t=>!allTags().includes(t))).map(t=>`<button type="button" class="tagopt" data-tagpick="${esc(t)}" aria-pressed="${(d.tags||[]).includes(t)}" style="--tc:${tagColor(t)}">${esc(t)}</button>`).join("") || `<span class="busy">아직 태그가 없어요</span>`}</div>
@@ -1270,6 +1437,7 @@ function readEditor(){
   if(!draft) return;
   document.querySelectorAll("[data-f]").forEach(el=>draft[el.dataset.f]=el.value.trim());
   const o=$("e-order"); if(o) draft.order = Number(o.value)||0;
+  const kc=$("k-chats"); if(kc) draft.chats = Number(kc.value)||0;
   const cb=$("e-comb"); if(cb) draft.combined = cb.checked;
   document.querySelectorAll("[data-blabel]").forEach(el=>{ const b=draft.blocks.find(x=>x.id===el.dataset.blabel); if(b) b.label=el.value; });
   document.querySelectorAll("[data-btext]").forEach(el=>{ const b=draft.blocks.find(x=>x.id===el.dataset.btext); if(b) b.text=el.value; });
@@ -1305,6 +1473,7 @@ function openSettings(){
         <div style="display:flex;flex-direction:column;gap:4px"><button class="btn" type="button" data-act="pickAvatar">고르기</button>${s.avatar?`<button class="btn" type="button" data-act="rmAvatar">빼기</button>`:""}</div></div></div>
     </div>
     <span class="busy" id="busy-set"></span>
+    ${visSettingsHtml()}
     <div class="f"><span class="lab">태그</span><div class="addrow"><button class="btn" type="button" data-act="tags">태그 관리 (추가·이름·순서·색)</button></div></div>
     <div class="f"><span class="lab">백업</span><div class="addrow"><button class="btn" type="button" data-act="export">내보내기 (JSON)</button><button class="btn" type="button" data-act="import">가져오기</button></div>
       <span class="busy">글과 설정이 백업돼요. 이미지는 이 사이트 안에 저장된 것을 가리키는 주소로만 들어가요.</span></div>
@@ -1315,7 +1484,7 @@ function readSettings(){ const s=Object.assign({},settings); s.title=$("s-title"
 
 /* ---------- backup ---------- */
 function exportJson(){
-  const data = JSON.stringify({app:"persona-gallery",version:2,exportedAt:new Date().toISOString(),settings,chars},null,2);
+  const data = JSON.stringify({app:"persona-gallery",version:3,exportedAt:new Date().toISOString(),settings,chars: kind==="mine"?chars:(store.mine||chars), aiChars: store.ai||[], friendChars: store.friend||[], visibility: vis},null,2);
   openModal(`<div class="mtop"><span></span><button class="mbtn x" type="button" data-act="settings" aria-label="뒤로">×</button></div><div class="mbody"><div class="form">
     <h3>백업 내보내기</h3>
     <div class="f"><span class="lab">내 주소(깃허브 페이지 등)에 올릴 때</span>
@@ -1490,10 +1659,10 @@ document.addEventListener("click", async e=>{
       draft.tags=draft.tags||[]; if(!draft.tags.includes(v)) draft.tags.push(v);
       renderEditor(true); break;
     }
-    case "saveSettings": await saveSettings(readSettings()); closeModal(); toast("설정을 저장했어요"); break;
+    case "saveSettings": { t.disabled=true; const okV = await saveVis(); const okS = await saveSettings(readSettings()); if(okV && okS!==false){ closeModal(); toast("설정을 저장했어요"); setPage(page, true); } else t.disabled=false; break; }
     case "pickBanner": case "pickAvatar": {
       const s=readSettings(); settings=s; const [f]=await pickFiles(false); if(!f) return;
-      $("busy-set").textContent="올리는 중…"; const r=await storeImage(f);
+      $("busy-set").textContent="올리는 중…"; const r=await storeImage(f,"site");
       if(r){ if(ds.act==="pickBanner") s.banner=r; else s.avatar=r; settings=s; }
       openSettings(); break;
     }
@@ -1590,9 +1759,10 @@ async function fsImageFromBlob(blob, coll, prefix){
   try{ await fb.fs.setDoc(fb.fs.doc(fb.db,coll||"images",id), {data:d, createdAt:Date.now()}); fsImg[id]=d; return (prefix||"fs:")+id; }
   catch(e){ fbFailed(e); return null; }
 }
-async function fsNormalizeRef(ref){
+async function fsNormalizeRef(ref, coll, prefix){
   if(!ref || !ref.startsWith("data:")) return ref;
-  try{ const b = await (await fetch(ref)).blob(); return (await fsImageFromBlob(b)) || ref; }catch(e){ return ref; }
+  const t = coll ? {coll, prefix} : imgTarget();
+  try{ const b = await (await fetch(ref)).blob(); return (await fsImageFromBlob(b, t.coll, t.prefix)) || ref; }catch(e){ return ref; }
 }
 async function fsNormalizeChar(c){
   c = JSON.parse(JSON.stringify(c));
@@ -1602,9 +1772,10 @@ async function fsNormalizeChar(c){
 }
 function charRefs(c){ const r=[]; if(c.cover) r.push(c.cover); (c.blocks||[]).forEach(b=>{ (b.images||[]).forEach(x=>r.push(x)); if(b.image) r.push(b.image); }); return r; }
 async function fsDeleteUnused(refs, ignoreId){
-  const inUse = new Set(); chars.filter(c=>c.id!==ignoreId).forEach(c=>charRefs(c).forEach(r=>inUse.add(r)));
+  const all = [].concat(...Object.keys(KINDS).map(k=> k===kind ? chars : (store[k]||[])));
+  const inUse = new Set(); all.filter(c=>c.id!==ignoreId).forEach(c=>charRefs(c).forEach(r=>inUse.add(r)));
   if(settings.banner) inUse.add(settings.banner); if(settings.avatar) inUse.add(settings.avatar);
-  for(const r of refs){ if(r && r.startsWith("fs:") && !inUse.has(r)){ try{ await fb.fs.deleteDoc(fb.fs.doc(fb.db,"images",r.slice(3))); }catch(e){} } }
+  for(const r of refs){ const coll = r && IMG_PREFIX[r.slice(0,3)]; if(coll && !["noteImages","siteImages"].includes(coll) && !inUse.has(r)){ try{ await fb.fs.deleteDoc(fb.fs.doc(fb.db,coll,r.slice(3))); }catch(e){} } }
 }
 function fbFailed(e){
   const code = (e && e.code) || "";
@@ -1653,21 +1824,11 @@ async function runFirebase(){
     fbUser = u;
     canEdit = !!(u && u.email && u.email.toLowerCase()===OWNER_EMAIL);
     if(u && !canEdit && !warnedNotOwner){ warnedNotOwner = true; toast("이 계정은 편집 권한이 없어요. "+OWNER_EMAIL+"로 로그인해 주세요."); }
-    if(canEdit) startNotes(); else stopNotes();
-    renderAuth(); setPage(canEdit ? initialPage() : "chars", true); refreshOpen();
+    syncSubs(); renderAuth(); setPage(initialPage(), true); refreshOpen();
+    if(canEdit) migrateSiteImages();
   });
   fb.au.getRedirectResult(fb.auth).catch(()=>{});
-  let first = true;
-  const timer = setTimeout(()=>{ if(first){ localReason="저장소 응답을 기다리는 중이에요. 보이는 내용이 최신이 아닐 수 있어요."; render(); } }, 10000);
-  fb.fs.onSnapshot(fb.fs.collection(fb.db,"chars"), snap=>{
-    if(first){ first=false; clearTimeout(timer); localReason=""; }
-    chars = snap.docs.map(d=>Object.assign({}, d.data(), {id:d.id}));
-    cache(); render(); refreshOpen();
-  }, err=>{
-    clearTimeout(timer);
-    localReason = err && err.code==="permission-denied" ? "Firestore 규칙이 아직 게시되지 않아 내용을 읽을 수 없어요. 안내받은 규칙을 붙여넣고 게시해 주세요." : "저장소를 읽지 못했어요. 새로고침해 주세요.";
-    render();
-  });
+  subVis();
   fb.fs.onSnapshot(fb.fs.doc(fb.db,"site","settings"), snap=>{
     if(editingSettings) return;
     settings = snap.exists() ? Object.assign({}, snap.data()) : {};
