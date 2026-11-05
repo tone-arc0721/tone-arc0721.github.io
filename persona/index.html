@@ -351,6 +351,84 @@ html.L-mo .lrow .dday{grid-area:dd;align-self:start}
 .hdot,.cdot{box-shadow:inset 0 0 0 1px rgba(0,0,0,.10)}
 .cdot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
 .block textarea{border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:9px 11px;width:100%;resize:vertical;font:inherit;line-height:1.6}
+/* ---- page tabs (캐릭터 / 프롬 노트) ---- */
+.pages-wrap{max-width:1360px;margin:0 auto;padding:0 40px}
+.pages{display:flex;gap:18px;border-bottom:1px solid var(--dash)}
+.pages button{border:0;background:none;padding:12px 2px;font-size:15px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:7px}
+.pages button[aria-selected="true"]{color:var(--ink);font-weight:700;border-bottom-color:var(--ink)}
+.pages .n{font-size:12px;font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.pg-lock{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;color:#7c3aed;background:color-mix(in srgb,#7c3aed 12%,transparent);border-radius:999px;padding:1px 8px}
+html.ui-dark .pg-lock{color:#c4b5fd}
+.pg-pub{font-size:11.5px;font-weight:700;color:var(--muted);background:var(--soft);border-radius:999px;padding:1px 8px}
+html.L-mo .pages-wrap{padding:0 16px;max-width:560px}
+
+/* ---- notes view ---- */
+.nwrap{max-width:1360px;margin:0 auto;padding:20px 40px 220px;display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start}
+.nrail{flex:0 0 210px;display:flex;flex-direction:column;gap:2px;position:sticky;top:76px}
+.nrail .t{font-size:12px;font-weight:500;color:var(--muted);padding:0 10px 6px}
+.ncat{display:flex;align-items:center;gap:9px;border:0;background:none;border-radius:10px;padding:8px 10px;text-align:left;color:var(--ink);font-size:14px}
+.ncat:hover{background:var(--soft)}
+.ncat[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.08);font-weight:700}
+html.ui-dark .ncat[aria-pressed="true"]{background:#2d2e34;box-shadow:none}
+.ncat i{width:8px;height:8px;border-radius:50%;flex:none;background:var(--c)}
+.ncat .n{margin-left:auto;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ncat.manage{color:var(--muted);font-size:13px;border:1px dashed var(--rule);margin-top:8px;justify-content:center}
+.nmain{flex:999 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.ngrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.pnote{background:var(--surface);border:1px solid var(--dash);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.pnote.in{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.n-top{display:flex;align-items:center;gap:8px}
+.cchip{font-size:11.5px;font-weight:500;border:1px solid currentColor;border-radius:999px;padding:0 8px;color:var(--c);white-space:nowrap}
+html.ui-dark .cchip{color:color-mix(in srgb,var(--c) 55%,#fff)}
+.star{margin-left:auto;border:0;background:none;font-size:17px;color:var(--rule);padding:2px 4px;line-height:1}
+.star[aria-pressed="true"]{color:#eab308}
+.n-body{display:flex;gap:12px;align-items:flex-start}
+.nthumbs{display:flex;gap:4px;flex:none}
+.nthumbs img{width:46px;height:60px;border-radius:8px;object-fit:cover;cursor:zoom-in;background:var(--soft)}
+.n-text{min-width:0;flex:1}
+.n-text h3{margin:0 0 4px;font-size:16px;letter-spacing:-.2px;overflow-wrap:anywhere}
+.memo{font-size:12.5px;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere}
+.nclamp{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;width:100%}
+.n-tags{display:flex;gap:5px;flex-wrap:wrap}
+.n-tags span{font-size:11.5px;color:var(--muted);background:var(--soft);border-radius:999px;padding:1px 8px}
+.used{font-size:12px;color:var(--muted)}
+.ulink{border:0;background:none;padding:0;color:var(--ink);font-weight:500;font-size:12px;text-decoration:underline;text-underline-offset:2px}
+.n-acts{display:flex;gap:6px;flex-wrap:wrap}
+
+/* mix basket */
+.mixbar{position:fixed;left:0;right:0;bottom:0;z-index:15;background:var(--surface);border-top:1px solid var(--rule);box-shadow:0 -8px 30px rgba(0,0,0,.08)}
+.mix-in{max-width:1360px;margin:0 auto;padding:12px 40px 14px;display:flex;flex-direction:column;gap:10px}
+.mix-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.mix-h b{font-size:14px}
+.mix-h .busy{flex:1}
+.mix-h .sp{display:flex;gap:6px}
+.picks{display:flex;gap:6px;flex-wrap:wrap;max-height:92px;overflow:auto}
+.pick{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--rule);border-radius:999px;padding:3px 4px 3px 4px;font-size:13px;background:var(--paper)}
+.pick button{border:0;background:var(--soft);border-radius:999px;min-width:24px;height:24px;line-height:1;font-size:13px;padding:0 4px}
+.pick button:disabled{opacity:.35}
+.pick .w{font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;min-width:28px;text-align:center}
+.mixbar .code{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.mixbar.empty-mix .code{display:none}
+
+/* character detail: linked notes */
+.cnotes{display:flex;flex-direction:column;gap:8px;width:100%}
+.cnote{border:1px solid var(--dash);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--paper)}
+.cnote-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+
+html.L-mo .nwrap{padding:16px 16px 230px;max-width:560px;gap:14px}
+html.L-mo .nrail{position:static;flex:1 1 100%;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:2px}
+html.L-mo .nrail .t{display:none}
+html.L-mo .ncat{flex:none;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;font-size:13px}
+html.L-mo .ncat.manage{margin-top:0}
+html.L-mo .ngrid{grid-template-columns:1fr}
+html.L-mo .mix-in{padding:8px 16px 10px;max-width:560px;gap:6px}
+html.L-mo .mix-h .busy{display:none}
+html.L-mo .mix-h b{margin-right:auto}
+html.L-mo .picks{flex-wrap:nowrap;overflow-x:auto;max-height:none;padding-bottom:2px}
+html.L-mo .pick{flex:none}
+html.L-mo .mixbar .code{-webkit-line-clamp:1;padding:7px 10px;font-size:12.5px}
+html.L-mo .nwrap{padding-bottom:190px}
+[hidden]{display:none !important}
 </style>
 </head>
 <body>
@@ -366,7 +444,11 @@ html.L-mo .lrow .dday{grid-area:dd;align-self:start}
     </div></div>
 </div></div>
 <header id="banner"></header>
-<div class="wrap">
+<div class="pages-wrap" id="pageTabs" hidden><div class="pages" role="tablist" aria-label="페이지">
+  <button type="button" role="tab" id="tab-chars" aria-selected="true">캐릭터 <span class="pg-pub">공개</span></button>
+  <button type="button" role="tab" id="tab-notes" aria-selected="false">프롬 노트 <span class="n" id="noteCount"></span> <span class="pg-lock"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>나만 보기</span></button>
+</div></div>
+<div class="wrap" id="charsView">
   <div class="bar">
     <label class="search" for="q">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -388,6 +470,23 @@ html.L-mo .lrow .dday{grid-area:dd;align-self:start}
   <div id="notes"></div>
   <div class="grid" id="grid"></div>
 </div>
+<div class="nwrap" id="notesView" hidden>
+  <aside class="nrail" id="nRail" aria-label="카테고리"></aside>
+  <div class="nmain">
+    <div class="bar">
+      <label class="search" for="nq"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="nq" type="search" placeholder="제목, 프롬, 메모로 찾기"></label>
+      <div class="seg" id="nSortSeg" role="group" aria-label="정렬"><button type="button" data-nsort="recent" aria-pressed="true">최근</button><button type="button" data-nsort="fav" aria-pressed="false">즐겨찾기</button><button type="button" data-nsort="used" aria-pressed="false">많이 씀</button></div>
+      <button class="add-btn" id="nAddBtn" type="button">+ 새 프롬</button>
+    </div>
+    <div class="ngrid" id="nGrid"></div>
+  </div>
+</div>
+<div class="mixbar" id="mixBar" hidden><div class="mix-in">
+  <div class="mix-h"><b>조합 바구니</b><span class="busy">담은 순서대로 합쳐요 · 숫자는 강도 (1.0은 그대로)</span>
+    <div class="sp"><button class="copy" type="button" id="mixClear">비우기</button><button class="copy strong" type="button" id="mixCopy">COPY ALL</button></div></div>
+  <div class="picks" id="mixPicks"></div>
+  <div class="code" id="mixOut"></div>
+</div></div>
 
 <div class="overlay" id="ov"><div class="modal" id="modal" role="dialog" aria-modal="true" aria-label="캐릭터"></div></div>
 <div class="lb" id="lb"><img id="lbImg" alt=""></div>
@@ -420,7 +519,7 @@ let openId = null, draft = null, editingSettings = false;
 const $ = id => document.getElementById(id);
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const newId = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
-const src = ref => !ref ? "" : ref.startsWith("fs:") ? fsSrc(ref.slice(3)) : (/^(data:|https?:|\/|\.|images\/)/.test(ref) || /\.(png|jpe?g|gif|webp|avif)$/i.test(ref) ? ref : "/_blob/"+ref);
+const src = ref => !ref ? "" : ref.startsWith("fs:") ? fsSrc(ref.slice(3),"images") : ref.startsWith("np:") ? fsSrc(ref.slice(3),"noteImages") : (/^(data:|https?:|\/|\.|images\/)/.test(ref) || /\.(png|jpe?g|gif|webp|avif)$/i.test(ref) ? ref : "/_blob/"+ref);
 let standalone = false, standaloneEdit = false;
 const splitTags = s => String(s||"").split(/[,，\n]/).map(x=>x.trim()).filter(Boolean);
 
@@ -657,6 +756,291 @@ function pairEditorHtml(d, b){
   </div>`;
 }
 
+/* ================= 프롬 노트 (나만 보기) ================= */
+const DEFAULT_CATS = [
+  {id:"artist",name:"작가 태그",color:"#7c3aed"},{id:"style",name:"화풍·질감",color:"#db2777"},
+  {id:"pose",name:"구도·포즈",color:"#2563eb"},{id:"bg",name:"배경·조명",color:"#0d9488"},
+  {id:"outfit",name:"의상",color:"#ea580c"},{id:"neg",name:"네거티브",color:"#dc2626"},{id:"memo",name:"메모",color:"#71717a"}
+];
+let page = "chars", notes = [], noteCfg = null, notesSubs = [], nFilt = {cat:"all", q:"", sort:"recent"};
+let noteDraft = null, catDraft = null, mixList = [];
+try{ mixList = JSON.parse(localStorage.getItem("persona-mix")||"[]")||[]; }catch(e){ mixList=[]; }
+function saveMix(){ try{ localStorage.setItem("persona-mix", JSON.stringify(mixList)); }catch(e){} }
+function notesEnabled(){ return mode==="firebase" && canEdit && !!fb; }
+function cats(){ return (noteCfg && Array.isArray(noteCfg.cats)) ? noteCfg.cats : DEFAULT_CATS; }
+function catById(id){ return cats().find(c=>c.id===id) || null; }
+function weighted(text, w){ const r=Math.round(w*10)/10; return r===1 ? text : `${r}::${text} ::`; }
+
+function startNotes(){
+  if(notesSubs.length || !fb) return;
+  notesSubs.push(fb.fs.onSnapshot(fb.fs.collection(fb.db,"notes"), snap=>{
+    notes = snap.docs.map(d=>Object.assign({}, d.data(), {id:d.id}));
+    mixList = mixList.filter(m=>notes.some(n=>n.id===m.id));
+    if(page==="notes"){ renderBanner(); renderNotes(); }
+    if(openId && !draft && !editingSettings && $("ov").classList.contains("open")) viewChar(openId);
+  }, err=>{ if(err && err.code==="permission-denied"){ notesDenied = true; if(page==="notes") renderNotes(); } }));
+  notesSubs.push(fb.fs.onSnapshot(fb.fs.doc(fb.db,"private","notes"), snap=>{
+    if(catDraft) return;
+    noteCfg = snap.exists() ? Object.assign({}, snap.data()) : null;
+    if(page==="notes"){ renderBanner(); renderNotes(); }
+  }, ()=>{}));
+}
+let notesDenied = false;
+function stopNotes(){ notesSubs.forEach(u=>{ try{ u(); }catch(e){} }); notesSubs = []; notes = []; noteCfg = null; notesDenied = false; }
+
+function setPage(p, fromHash){
+  const next = (p==="notes" && notesEnabled()) ? "notes" : "chars";
+  page = next;
+  if(notesEnabled()){ try{ localStorage.setItem("persona-page", page); }catch(e){} }
+  if(!fromHash){ try{ history.replaceState(null, "", page==="notes" ? "#notes" : location.pathname+location.search); }catch(e){} }
+  $("pageTabs").hidden = !notesEnabled();
+  $("tab-chars").setAttribute("aria-selected", page==="chars");
+  $("tab-notes").setAttribute("aria-selected", page==="notes");
+  $("charsView").hidden = page!=="chars";
+  $("notesView").hidden = page!=="notes";
+  $("mixBar").hidden = page!=="notes";
+  document.body.classList.toggle("on-notes", page==="notes");
+  renderBanner();
+  if(page==="notes") renderNotes(); else render();
+}
+function initialPage(){
+  if(location.hash==="#notes") return "notes";
+  try{ return localStorage.getItem("persona-page")||"chars"; }catch(e){ return "chars"; }
+}
+window.addEventListener("hashchange", ()=>{ if(location.hash==="#notes") setPage("notes", true); });
+
+/* ---------- render ---------- */
+function noteCats(){
+  const cs = cats().slice();
+  if(notes.some(n=>!catById(n.cat))) cs.push({id:"__none",name:"미분류",color:"#a1a1aa"});
+  return cs;
+}
+function renderNotes(){
+  $("noteCount").textContent = String(notes.length).padStart(2,"0");
+  if(notesDenied){
+    $("nGrid").innerHTML = `<div class="empty">프롬 노트를 읽을 권한이 없어요. Firebase 규칙에 프롬 노트 부분을 추가하고 게시해 주세요.</div>`;
+    $("nRail").innerHTML = ""; renderMix(); return;
+  }
+  const cs = noteCats();
+  const cnt = id => id==="all" ? notes.length : id==="__none" ? notes.filter(n=>!catById(n.cat)).length : notes.filter(n=>n.cat===id).length;
+  $("nRail").innerHTML = `<div class="t">카테고리</div>` +
+    [{id:"all",name:"전체",color:"#71717a"}, ...cs].map(c=>`<button class="ncat" type="button" data-ncat="${esc(c.id)}" aria-pressed="${nFilt.cat===c.id}" style="--c:${esc(c.color)}"><i></i>${esc(c.name)}<span class="n">${cnt(c.id)}</span></button>`).join("") +
+    `<button class="ncat manage" type="button" data-nact="cats">카테고리 관리</button>`;
+  document.querySelectorAll("#nSortSeg [data-nsort]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.nsort===nFilt.sort));
+  const q = nFilt.q.toLowerCase();
+  let l = notes.filter(n=>{
+    if(nFilt.cat==="__none"){ if(catById(n.cat)) return false; }
+    else if(nFilt.cat!=="all" && n.cat!==nFilt.cat) return false;
+    if(q && !(`${n.title||""} ${n.text||""} ${n.memo||""} ${(n.tags||[]).join(" ")}`.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  if(nFilt.sort==="fav") l = l.filter(n=>n.fav);
+  l.sort(nFilt.sort==="used" ? (a,b)=>(b.uses||0)-(a.uses||0) : (a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+  $("nGrid").innerHTML = l.length ? l.map(noteCard).join("") :
+    `<div class="empty">${notes.length ? "조건에 맞는 프롬이 없어요." : `아직 프롬이 없어요. <button class="add-btn" type="button" data-nact="new" style="height:34px;margin-left:8px">+ 새 프롬</button>`}</div>`;
+  renderMix();
+}
+function noteCard(n){
+  const c = catById(n.cat) || {name:"미분류",color:"#a1a1aa"};
+  const inMix = mixList.some(m=>m.id===n.id);
+  const used = (n.used||[]).map(id=>chars.find(x=>x.id===id)).filter(Boolean);
+  return `<article class="pnote${inMix?" in":""}">
+    <div class="n-top"><span class="cchip" style="--c:${esc(c.color)}">${esc(c.name)}</span>${n.uses?`<span class="used">${n.uses}번 씀</span>`:""}
+      <button class="star" type="button" data-nfav="${esc(n.id)}" aria-pressed="${!!n.fav}" aria-label="즐겨찾기">★</button></div>
+    <div class="n-body">${(n.thumbs||[]).length?`<div class="nthumbs">${n.thumbs.slice(0,3).map(r=>`<img src="${esc(src(r))}" alt="" data-zoom="${esc(r)}">`).join("")}</div>`:""}
+      <div class="n-text"><h3>${esc(n.title||"제목 없음")}</h3>${n.memo?`<div class="memo">${richText(n.memo)}</div>`:""}</div></div>
+    ${n.text?`<div class="code nclamp">${esc(n.text)}</div>`:""}
+    ${used.length?`<div class="used">쓰는 캐릭터 · ${used.map(u=>`<button type="button" class="ulink" data-open="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>`:""}
+    ${(n.tags||[]).length?`<div class="n-tags">${n.tags.map(t=>`<span>#${esc(t)}</span>`).join("")}</div>`:""}
+    <div class="n-acts"><button class="copy" type="button" data-ncopy="${esc(n.id)}">COPY</button>
+      <button class="copy${inMix?" strong":""}" type="button" data-nmix="${esc(n.id)}">${inMix?"바구니에서 빼기":"+ 바구니"}</button>
+      <button class="copy" type="button" data-nedit="${esc(n.id)}" style="margin-left:auto">수정</button></div>
+  </article>`;
+}
+function renderMix(){
+  const items = mixList.map(m=>({m, n:notes.find(x=>x.id===m.id)})).filter(x=>x.n);
+  $("mixPicks").innerHTML = items.length ? items.map(({m,n},i)=>`<span class="pick">
+      <button type="button" data-mixmove="${i}|-1" aria-label="앞으로" ${i===0?"disabled":""}>‹</button>${esc(n.title||"제목 없음")}<button type="button" data-mixmove="${i}|1" aria-label="뒤로" ${i===items.length-1?"disabled":""}>›</button>
+      <button type="button" data-mixw="${esc(n.id)}|-1" aria-label="약하게">−</button><span class="w">${m.w.toFixed(1)}</span><button type="button" data-mixw="${esc(n.id)}|1" aria-label="강하게">+</button>
+      <button type="button" data-mixout="${esc(n.id)}" aria-label="빼기">×</button></span>`).join("")
+    : `<span class="busy">카드의 ‘+ 바구니’를 눌러 담으면 순서대로 합쳐져요.</span>`;
+  $("mixOut").textContent = items.length ? items.map(({m,n})=>weighted(n.text||"", m.w)).join(", ") : "—";
+  $("mixBar").classList.toggle("empty-mix", !items.length);
+}
+
+/* ---------- save ---------- */
+async function saveNote(n){
+  if(!notesEnabled()){ toast("편집하려면 로그인해 주세요."); return false; }
+  try{
+    n = JSON.parse(JSON.stringify(n));
+    Object.keys(n).forEach(k=>{ if(n[k]===undefined) delete n[k]; });
+    await fb.fs.setDoc(fb.fs.doc(fb.db,"notes",n.id), n);
+    const i = notes.findIndex(x=>x.id===n.id); if(i>=0) notes[i]=n; else notes.push(n);
+    return true;
+  }catch(e){ fbFailed(e); return false; }
+}
+async function deleteNote(id){
+  const old = notes.find(x=>x.id===id);
+  try{
+    await fb.fs.deleteDoc(fb.fs.doc(fb.db,"notes",id));
+    notes = notes.filter(x=>x.id!==id); mixList = mixList.filter(m=>m.id!==id); saveMix();
+    if(old) for(const r of (old.thumbs||[])) if(r.startsWith("np:")) { try{ await fb.fs.deleteDoc(fb.fs.doc(fb.db,"noteImages",r.slice(3))); }catch(e){} }
+    return true;
+  }catch(e){ fbFailed(e); return false; }
+}
+async function saveNoteCfg(cfg){
+  try{ await fb.fs.setDoc(fb.fs.doc(fb.db,"private","notes"), JSON.parse(JSON.stringify(cfg))); noteCfg = cfg; return true; }
+  catch(e){ fbFailed(e); return false; }
+}
+
+/* ---------- note editor ---------- */
+function openNoteEditor(id){
+  editingSettings = true;
+  const base = id ? notes.find(x=>x.id===id) : null;
+  noteDraft = base ? JSON.parse(JSON.stringify(base)) : {id:newId(), cat:(nFilt.cat!=="all"&&nFilt.cat!=="__none")?nFilt.cat:(cats()[0]||{}).id||"", title:"", text:"", memo:"", tags:[], used:[], thumbs:[], fav:false, uses:0, _new:true};
+  renderNoteEditor(false);
+}
+function readNoteEditor(){
+  if(!noteDraft) return;
+  const g = id => $(id) ? $(id).value : "";
+  noteDraft.title = g("ne-title").trim(); noteDraft.text = g("ne-text").trim(); noteDraft.memo = g("ne-memo").trim();
+  noteDraft.tags = splitTags(g("ne-tags")).map(t=>t.replace(/^#/,"")).filter((v,i,a)=>a.indexOf(v)===i);
+}
+function renderNoteEditor(keep){
+  const m=$("modal"), y=m.scrollTop, d=noteDraft;
+  const catBtns = cats().map(c=>`<button type="button" class="tagopt" data-necat="${esc(c.id)}" aria-pressed="${d.cat===c.id}" style="--tc:${esc(c.color)}">${esc(c.name)}</button>`).join("");
+  const charBtns = chars.length ? chars.slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(c=>`<button type="button" class="tagopt" data-neuse="${esc(c.id)}" aria-pressed="${(d.used||[]).includes(c.id)}" style="--tc:${esc(heartOf(c))}">${esc(c.name||"이름 없음")}</button>`).join("") : `<span class="busy">서랍에 캐릭터가 없어요</span>`;
+  openModal(`<div class="mtop"><span>프롬 노트</span><div class="acts"><button class="mbtn x" type="button" data-nact="closeEd" aria-label="닫기">✕</button></div></div>
+  <div class="form">
+    <h3>${d._new?"새 프롬":"프롬 수정"}</h3>
+    <div class="f"><label for="ne-title">제목</label><input type="text" id="ne-title" value="${esc(d.title||"")}" placeholder="수채 + 얇은 선 조합"></div>
+    <div class="f"><span class="lab">카테고리 <span class="hint">· 이름과 색은 ‘카테고리 관리’에서</span></span><div class="tagpick">${catBtns}</div></div>
+    <div class="f"><label for="ne-text">프롬</label><textarea id="ne-text" rows="5" placeholder="artist:…, watercolor (medium), thin lineart">${esc(d.text||"")}</textarea></div>
+    <div class="f"><label for="ne-memo">메모 <span class="hint">· 강도, 버전, 잘 맞는 상황 등</span></label><textarea id="ne-memo" rows="3">${esc(d.memo||"")}</textarea></div>
+    <div class="f"><label for="ne-tags">해시태그 <span class="hint">· 쉼표로 구분</span></label><input type="text" id="ne-tags" value="${esc((d.tags||[]).join(", "))}" placeholder="수채, 부드러움"></div>
+    <div class="f"><span class="lab">쓰는 캐릭터 <span class="hint">· 고르면 그 캐릭터 상세에도 이 프롬이 보여요 (나만)</span></span><div class="tagpick">${charBtns}</div></div>
+    <div class="f"><span class="lab">예시 이미지</span>
+      <div class="thumbs">${(d.thumbs||[]).map((r,j)=>`<div class="t"><img src="${esc(src(r))}" alt=""><button type="button" data-nethrm="${j}" aria-label="이미지 빼기">×</button></div>`).join("")}</div>
+      <div><button class="btn" type="button" data-nact="neAddImg">이미지 추가</button> <span class="busy" id="busy-ne"></span></div></div>
+    <label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="ne-fav" ${d.fav?"checked":""}> 즐겨찾기</label>
+    <div class="foot">${d._new?"":`<button class="btn danger left" type="button" data-nact="neDelAsk">삭제</button>`}
+      <button class="btn" type="button" data-nact="closeEd">취소</button><button class="btn dark" type="button" data-nact="neSave">저장</button></div>
+  </div>`);
+  if(keep) m.scrollTop = y;
+}
+
+/* ---------- category manager ---------- */
+function openCatManager(){
+  editingSettings = true;
+  catDraft = cats().map(c=>({orig:c.id, id:c.id, name:c.name, color:c.color, count:notes.filter(n=>n.cat===c.id).length, confirm:false}));
+  renderCatManager(false);
+}
+function readCatNames(){ document.querySelectorAll("[data-cname]").forEach(el=>{ const c=catDraft[+el.dataset.cname]; if(c) c.name=el.value; }); }
+function renderCatManager(keep){
+  const m=$("modal"), y=m.scrollTop;
+  const rows = catDraft.map((c,i)=>`<div class="tm-row">
+      <div class="tm-top">
+        <button class="icon-btn" type="button" data-cmove="${i}|-1" aria-label="위로" ${i===0?"disabled":""}>↑</button>
+        <button class="icon-btn" type="button" data-cmove="${i}|1" aria-label="아래로" ${i===catDraft.length-1?"disabled":""}>↓</button>
+        <span class="tm-dot" style="background:${esc(c.color)}"></span>
+        <input type="text" data-cname="${i}" value="${esc(c.name)}" aria-label="카테고리 이름">
+        <span class="busy tm-count">${c.count}개</span>
+        ${c.confirm?`<button class="btn danger" type="button" data-cdel="${i}">${c.count?`${c.count}개는 미분류로, 삭제`:"삭제"}</button>`:`<button class="icon-btn" type="button" data-cdelask="${i}" aria-label="카테고리 삭제">✕</button>`}
+      </div>
+      <div class="colors">${TAG_PALETTE.map(([nm,h])=>`<button type="button" class="cdot" style="background:${h}" data-ccolor="${i}|${h}" aria-pressed="${c.color.toLowerCase()===h}" aria-label="${nm}" title="${nm}"></button>`).join("")}<input type="color" data-ccustom="${i}" value="${esc(c.color)}" aria-label="직접 고르기"></div>
+    </div>`).join("");
+  openModal(`<div class="mtop"><span>카테고리 관리</span><div class="acts"><button class="mbtn x" type="button" data-nact="closeCat" aria-label="닫기">✕</button></div></div>
+    <div class="form">
+      <p class="busy" style="margin:0">위에서부터 순서대로 보여요. 지운 카테고리의 프롬은 ‘미분류’로 옮겨져요.</p>
+      ${rows || `<div class="busy">카테고리가 없어요. 아래에서 만들어 보세요.</div>`}
+      <div class="addrow"><input type="text" id="c-new" placeholder="새 카테고리 이름" style="flex:1;min-width:140px;border:1px solid var(--rule);border-radius:10px;padding:8px 11px;background:var(--surface)"><button class="btn" type="button" data-nact="cAdd">+ 추가</button></div>
+      <div class="foot"><button class="btn" type="button" data-nact="closeCat">취소</button><button class="btn dark" type="button" data-nact="cSave">저장</button></div>
+    </div>`);
+  if(keep) m.scrollTop = y;
+}
+async function saveCats(){
+  readCatNames();
+  const live = catDraft.map(c=>({...c, name:c.name.trim()})).filter(c=>c.name);
+  if(new Set(live.map(c=>c.name)).size !== live.length){ toast("같은 이름의 카테고리가 있어요."); return false; }
+  const cfg = Object.assign({}, noteCfg||{}, {cats: live.map(c=>({id:c.id, name:c.name, color:c.color}))});
+  return await saveNoteCfg(cfg);
+}
+
+/* ---------- character detail: linked notes (owner only) ---------- */
+function charNotesHtml(c){
+  if(!notesEnabled()) return "";
+  const l = notes.filter(n=>(n.used||[]).includes(c.id));
+  if(!l.length) return "";
+  return `<div class="cnotes">${l.map(n=>{ const ct=catById(n.cat)||{name:"미분류",color:"#a1a1aa"};
+    return `<div class="cnote"><div class="cnote-h"><span class="cchip" style="--c:${esc(ct.color)}">${esc(ct.name)}</span><b>${esc(n.title||"제목 없음")}</b><button class="copy" type="button" data-ncopy="${esc(n.id)}" style="margin-left:auto">COPY</button></div><div class="code nclamp">${esc(n.text||"")}</div></div>`; }).join("")}</div>`;
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const d = b.dataset;
+  if(b.id==="tab-chars"){ setPage("chars"); return; }
+  if(b.id==="tab-notes"){ setPage("notes"); return; }
+  if(d.ncat!==undefined){ nFilt.cat=d.ncat; renderNotes(); return; }
+  if(d.nsort){ nFilt.sort=d.nsort; renderNotes(); return; }
+  if(d.nfav){ const n=notes.find(x=>x.id===d.nfav); if(!n) return; const c=Object.assign({},n,{fav:!n.fav}); if(await saveNote(c)) renderNotes(); return; }
+  if(d.ncopy){ const n=notes.find(x=>x.id===d.ncopy); if(!n) return; copy(n.text||""); const c=Object.assign({},n,{uses:(n.uses||0)+1}); await saveNote(c); if(page==="notes") renderNotes(); return; }
+  if(d.nmix){ const id=d.nmix; mixList = mixList.some(m=>m.id===id) ? mixList.filter(m=>m.id!==id) : [...mixList,{id,w:1}]; saveMix(); renderNotes(); return; }
+  if(d.mixw){ const [id,s]=d.mixw.split("|"); const m=mixList.find(x=>x.id===id); if(m){ m.w=Math.max(.5,Math.min(2,Math.round((m.w+(+s)*.1)*10)/10)); saveMix(); renderMix(); } return; }
+  if(d.mixmove){ const [i,s]=d.mixmove.split("|").map(Number); const j=i+s; if(j>=0&&j<mixList.length){ [mixList[i],mixList[j]]=[mixList[j],mixList[i]]; saveMix(); renderMix(); } return; }
+  if(d.mixout){ mixList=mixList.filter(m=>m.id!==d.mixout); saveMix(); renderNotes(); return; }
+  if(d.nedit){ openNoteEditor(d.nedit); return; }
+  if(d.necat){ readNoteEditor(); noteDraft.cat=d.necat; document.querySelectorAll("[data-necat]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.necat===d.necat)); return; }
+  if(d.neuse){ const u=noteDraft.used=noteDraft.used||[]; const on=!u.includes(d.neuse); noteDraft.used = on ? [...u,d.neuse] : u.filter(x=>x!==d.neuse); b.setAttribute("aria-pressed",on); return; }
+  if(d.nethrm!==undefined){ readNoteEditor(); noteDraft.thumbs.splice(+d.nethrm,1); renderNoteEditor(true); return; }
+  if(d.cmove){ readCatNames(); const [i,s]=d.cmove.split("|").map(Number); const j=i+s; if(j>=0&&j<catDraft.length){ [catDraft[i],catDraft[j]]=[catDraft[j],catDraft[i]]; } renderCatManager(true); return; }
+  if(d.ccolor){ readCatNames(); const [i,h]=d.ccolor.split("|"); catDraft[+i].color=h; renderCatManager(true); return; }
+  if(d.cdelask!==undefined){ readCatNames(); catDraft.forEach(x=>x.confirm=false); catDraft[+d.cdelask].confirm=true; renderCatManager(true); return; }
+  if(d.cdel!==undefined){ readCatNames(); catDraft.splice(+d.cdel,1); renderCatManager(true); return; }
+  switch(d.nact){
+    case "new": openNoteEditor(null); break;
+    case "cats": openCatManager(); break;
+    case "closeEd": noteDraft=null; closeModal(); break;
+    case "closeCat": catDraft=null; closeModal(); break;
+    case "neAddImg": {
+      readNoteEditor(); const files = await pickFiles(true); if(!files.length) return;
+      let k=0; for(const f of files){ const sp=$("busy-ne"); if(sp) sp.textContent=`올리는 중… ${++k}/${files.length}`; const r=await fsImageFromBlob(f,"noteImages","np:"); if(r) noteDraft.thumbs.push(r); }
+      renderNoteEditor(true); break;
+    }
+    case "neDelAsk": {
+      b.parentElement.innerHTML = `<span class="busy" style="margin-right:auto">“${esc(noteDraft.title||"제목 없음")}” 삭제할까요?</span><button class="btn" type="button" data-nact="neDelNo">취소</button><button class="btn dark" type="button" data-nact="neDelOk" style="background:var(--danger);border-color:var(--danger)">삭제</button>`;
+      break;
+    }
+    case "neDelNo": readNoteEditor(); renderNoteEditor(true); break;
+    case "neDelOk": { const id=noteDraft.id; noteDraft=null; closeModal(); if(await deleteNote(id)){ toast("삭제했어요"); renderNotes(); } break; }
+    case "neSave": {
+      readNoteEditor(); const fv=$("ne-fav"); if(fv) noteDraft.fav=fv.checked;
+      const n = Object.assign({}, noteDraft); delete n._new;
+      if(!n.title) n.title = (n.text||"").split(",")[0].slice(0,30) || "제목 없음";
+      n.createdAt = n.createdAt || Date.now(); n.updatedAt = Date.now();
+      b.disabled = true;
+      if(await saveNote(n)){ noteDraft=null; closeModal(); renderBanner(); renderNotes(); toast("저장했어요"); } else b.disabled=false;
+      break;
+    }
+    case "cAdd": {
+      readCatNames(); const v=($("c-new").value||"").trim(); if(!v) return;
+      if(catDraft.some(c=>c.name.trim()===v)){ toast("이미 있는 카테고리예요."); return; }
+      const used=catDraft.map(c=>c.color); const pick=(TAG_PALETTE.find(([n,h])=>!used.includes(h))||TAG_PALETTE[0])[1];
+      catDraft.push({orig:null,id:"c"+newId(),name:v,color:pick,count:0,confirm:false}); renderCatManager(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const ni=$("c-new"); if(ni) ni.focus();
+      break;
+    }
+    case "cSave": { b.disabled=true; if(await saveCats()){ catDraft=null; closeModal(); if(!catById(nFilt.cat) && nFilt.cat!=="all") nFilt.cat="all"; renderBanner(); renderNotes(); toast("카테고리를 저장했어요"); } else b.disabled=false; break; }
+  }
+  if(b.id==="mixClear"){ mixList=[]; saveMix(); renderNotes(); }
+  if(b.id==="mixCopy"){ const t=$("mixOut").textContent; if(t && t!=="—") copy(t); }
+  if(b.id==="nAddBtn"){ openNoteEditor(null); }
+});
+document.addEventListener("input", e=>{
+  if(e.target.id==="nq"){ nFilt.q=e.target.value.trim(); renderNotes(); }
+  if(e.target.dataset && e.target.dataset.ccustom!==undefined && catDraft){ const i=+e.target.dataset.ccustom; catDraft[i].color=e.target.value; const row=e.target.closest(".tm-row"); if(row){ row.querySelector(".tm-dot").style.background=e.target.value; row.querySelectorAll(".cdot").forEach(x=>x.setAttribute("aria-pressed","false")); } }
+});
+document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="c-new"){ e.preventDefault(); const x=document.querySelector('[data-nact="cAdd"]'); if(x) x.click(); } });
+
 /* ---------- derived ---------- */
 function list(){ if(chars.length) return chars; const hid = settings.hiddenExamples||[]; return EXAMPLES.filter(e=>!hid.includes(e.id)); }
 function allTags(){
@@ -697,10 +1081,13 @@ function renderBanner(){
     <div class="head"><div class="head-in">
       <div class="who">${av?`<div class="av">${av}</div>`:""}
         <div style="min-width:0"><div class="eyebrow">PERSONA INDEX</div><h1>${esc(title)}</h1><div class="desc">${linkify(esc(subtitle))}</div></div></div>
-      <div class="stats">
+      <div class="stats">${page==="notes" ? `
+        <div class="stat"><span>PROMPTS</span><b>${String(notes.length).padStart(3,"0")}</b></div>
+        <div class="stat"><span>CATEGORIES</span><b>${String(cats().length).padStart(3,"0")}</b></div>
+        <div class="stat"><span>UPDATED</span><b>${(()=>{ const t=notes.reduce((m,n)=>Math.max(m,n.updatedAt||0),0); if(!t) return "—"; const d=new Date(t); return String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0"); })()}</b></div>` : `
         <div class="stat"><span>ENTRIES</span><b>${String(l.length).padStart(3,"0")}</b></div>
         <div class="stat"><span>TAGS</span><b>${String(allTags().length).padStart(3,"0")}</b></div>
-        <div class="stat"><span>UPDATED</span><b>${upd}</b></div>
+        <div class="stat"><span>UPDATED</span><b>${upd}</b></div>`}
       </div>${gear}
     </div></div>`;
   document.title = title;
@@ -769,7 +1156,7 @@ function listRow(c){
 /* ---------- modal: view ---------- */
 function findChar(id){ return chars.find(x=>x.id===id) || EXAMPLES.find(x=>x.id===id); }
 function openModal(html, wide){ const m=$("modal"); m.className="modal"+(wide?"":" narrow"); m.innerHTML=html; $("ov").classList.add("open"); m.scrollTop=0; }
-function closeModal(){ $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; }
+function closeModal(){ $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; if(typeof noteDraft!=="undefined"){ noteDraft=null; catDraft=null; } }
 function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}</div><div class="val">${inner}</div></div>`; }
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
@@ -799,6 +1186,7 @@ function viewChar(id){
       rows.push(row(label||"이미지", `<div class="gal ${cls}">${imgs.map(r=>`<img src="${esc(src(r))}" alt="" loading="lazy" data-zoom="${esc(r)}">`).join("")}</div>`));
     }
   });
+  { const cn = charNotesHtml(c); if(cn) rows.push(row(`프롬 노트 <span class="pg-lock" style="margin-top:4px">나만</span>`, cn)); }
   if(tagBlocks.length>=2 && c.combined!==false){
     rows.splice(lastTagRow, 0, row("종합 태그", `<div class="code">${esc(tagBlocks.flat().join(", "))}</div><button class="copy strong" type="button" data-act="copyAllTags">COPY ALL</button>`));
   }
@@ -1140,7 +1528,7 @@ $("lb").addEventListener("click", ()=>$("lb").classList.remove("open"));
 document.addEventListener("keydown", e=>{
   if(e.key==="Enter" && e.target.id==="t-new"){ e.preventDefault(); const b=document.querySelector('[data-act="tAdd"]'); if(b) b.click(); return; }
   if(e.key==="Enter" && e.target.id==="e-newtag"){ e.preventDefault(); const b=document.querySelector('[data-act="addTagInEditor"]'); if(b) b.click(); return; }
-  if(e.key==="Escape"){ if($("lb").classList.contains("open")) $("lb").classList.remove("open"); else if($("ov").classList.contains("open") && !draft) closeModal(); }
+  if(e.key==="Escape"){ if($("lb").classList.contains("open")) $("lb").classList.remove("open"); else if($("ov").classList.contains("open") && !draft && !noteDraft && !catDraft && !tagDraft) closeModal(); }
   if((e.key==="Enter"||e.key===" ") && e.target.dataset && e.target.dataset.open){ e.preventDefault(); viewChar(e.target.dataset.open); }
 });
 $("q").addEventListener("input", e=>{ filt.q=e.target.value; render(); });
@@ -1162,14 +1550,14 @@ const FB_BASE = "https://www.gstatic.com/firebasejs/10.12.2/";
 let fb = null, fbUser = null, warnedNotOwner = false;
 const fsImg = {}, fsLoading = {};
 const BLANK = "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-function fsSrc(id){ if(fsImg[id]) return fsImg[id]; loadFsImg(id); return BLANK+"#fs="+id; }
-function loadFsImg(id){
+function fsSrc(id, coll){ if(fsImg[id]) return fsImg[id]; loadFsImg(id, coll); return BLANK+"#fs="+id; }
+function loadFsImg(id, coll){
   if(fsImg[id]) return Promise.resolve(fsImg[id]);
   if(fsLoading[id]) return fsLoading[id];
   if(!fb) return Promise.resolve(null);
   fsLoading[id] = (async()=>{
     try{
-      const s = await fb.fs.getDoc(fb.fs.doc(fb.db,"images",id));
+      const s = await fb.fs.getDoc(fb.fs.doc(fb.db,coll||"images",id));
       const d = s.exists() ? s.data().data : null;
       if(d){
         fsImg[id] = d;
@@ -1195,11 +1583,11 @@ async function encodeForFs(blob){
   }
   return null;
 }
-async function fsImageFromBlob(blob){
+async function fsImageFromBlob(blob, coll, prefix){
   const d = await encodeForFs(blob);
   if(!d){ toast("이미지를 읽지 못했어요. JPG나 PNG로 다시 시도해 주세요."); return null; }
   const id = newId();
-  try{ await fb.fs.setDoc(fb.fs.doc(fb.db,"images",id), {data:d, createdAt:Date.now()}); fsImg[id]=d; return "fs:"+id; }
+  try{ await fb.fs.setDoc(fb.fs.doc(fb.db,coll||"images",id), {data:d, createdAt:Date.now()}); fsImg[id]=d; return (prefix||"fs:")+id; }
   catch(e){ fbFailed(e); return null; }
 }
 async function fsNormalizeRef(ref){
@@ -1265,7 +1653,8 @@ async function runFirebase(){
     fbUser = u;
     canEdit = !!(u && u.email && u.email.toLowerCase()===OWNER_EMAIL);
     if(u && !canEdit && !warnedNotOwner){ warnedNotOwner = true; toast("이 계정은 편집 권한이 없어요. "+OWNER_EMAIL+"로 로그인해 주세요."); }
-    renderAuth(); renderBanner(); render(); refreshOpen();
+    if(canEdit) startNotes(); else stopNotes();
+    renderAuth(); setPage(canEdit ? initialPage() : "chars", true); refreshOpen();
   });
   fb.au.getRedirectResult(fb.auth).catch(()=>{});
   let first = true;
@@ -1287,6 +1676,7 @@ async function runFirebase(){
 }
 
 $("authBtn").addEventListener("click", authClick);
+
 
 /* ---------- shared screen mode (same key as 발췌) ---------- */
 function uiPref(){ try{ return localStorage.getItem("excerpt-ui")||"system"; }catch(e){ return "system"; } }
