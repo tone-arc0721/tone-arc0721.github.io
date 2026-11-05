@@ -293,7 +293,7 @@ html.L-mo .modal,html.L-mo .modal.narrow{max-width:560px}
 html.L-mo .overlay{justify-content:center}
 /* list view */
 .grid.list{display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--dash);border-radius:16px;overflow:hidden}
-.lrow{display:grid;grid-template-columns:64px 44px minmax(0,1.3fr) minmax(0,1fr) 120px;gap:14px;align-items:center;padding:10px 16px;border-top:1px solid var(--dash);cursor:pointer}
+.lrow{display:grid;grid-template-columns:44px minmax(0,1.3fr) minmax(0,1fr) 120px;gap:14px;align-items:center;padding:10px 16px;border-top:1px solid var(--dash);cursor:pointer}
 .lrow:first-child{border-top:0}
 .lrow:hover{background:var(--soft)}
 .l-no{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
@@ -312,7 +312,7 @@ html.L-mo .lrow .l-th{grid-area:th}
 html.L-mo .lrow .l-main{grid-area:main}
 html.L-mo .lrow .chips{grid-area:chips;padding-top:0}
 html.L-mo .lrow .dday{grid-area:dd;align-self:start}
-@media (max-width:1080px){ .lrow{grid-template-columns:56px 44px minmax(0,1.3fr) minmax(0,1fr) 100px} }
+@media (max-width:1080px){ .lrow{grid-template-columns:44px minmax(0,1.3fr) minmax(0,1fr) 100px} }
 
 /* pair section */
 .pair{border:1px solid var(--dash);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px;width:100%;background:var(--paper)}
@@ -486,6 +486,8 @@ html.ui-dark .g-m{color:#93b4ff} html.ui-dark .g-f{color:#f9a8d4}
 .fp-line{display:flex;align-items:center;gap:2px}
 .fp-line .gbadge{vertical-align:0}
 .pair-in{border-style:dashed;background:var(--surface)}
+.card-top{justify-content:flex-end}
+.card>.thumb:first-child{margin-top:12px}
 </style>
 </head>
 <body>
@@ -1526,7 +1528,7 @@ function card(c){
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
   const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,false);
   return `<article class="card" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
-    <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday">${heartSvg(hc,12)}D+${d}</span>`:kind==="friend"?"":heartSvg(hc,12)}</div>
+    ${kind==="friend" ? "" : `<div class="card-top">${d?`<span class="dday">${heartSvg(hc,12)}D+${d}</span>`:heartSvg(hc,12)}</div>`}
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
     <div class="info">
       <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${genderBadge(c.gender)}${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
@@ -1539,7 +1541,6 @@ function listRow(c){
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
   const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,true);
   return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
-    <span class="l-no">No.${numberOf(c.id)}</span>
     <div class="l-th">${img}</div>
     <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${genderBadge(c.gender)}${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>${kindLine(c)}
       ${c.hashtags||pn.length?`<div class="hash">${pn.length?`<span class="pairmark">× ${esc(pn.join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}</div>
@@ -1593,7 +1594,7 @@ function viewChar(id){
     rows.splice(lastTagRow, 0, row("종합 태그", `<div class="code">${esc(tagBlocks.flat().join(", "))}</div><button class="copy strong" type="button" data-act="copyAllTags">COPY ALL</button>`));
   }
   const since = c.start ? " · since "+c.start.replace(/-/g,".") : "";
-  openModal(`<div class="mtop"><span>PERSONA INDEX / No.${numberOf(c.id)}</span>
+  openModal(`<div class="mtop"><span>${esc((KINDS[kind]||KINDS.mine).label)}</span>
       <div class="acts" id="viewActs">${canEdit?`<button class="mbtn" type="button" data-act="delView">삭제</button><button class="mbtn" type="button" data-act="edit">수정</button>`:""}
       <button class="mbtn x" type="button" data-act="close" aria-label="닫기">✕</button></div></div>
     <div class="sheet">
