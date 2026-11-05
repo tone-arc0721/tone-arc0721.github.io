@@ -454,6 +454,15 @@ html.ui-dark .kline .who{color:#f472b6}
 .hbtn[aria-pressed="true"]{background:var(--soft);box-shadow:0 0 0 2px var(--ink)}
 .vis-name{display:flex;align-items:center;gap:2px}
 .vis-name span{margin-left:6px}
+.ppl{font-size:11px;font-weight:700;color:#2563eb;background:color-mix(in srgb,#2563eb 12%,transparent);border-radius:999px;padding:0 7px}
+html.ui-dark .ppl{color:#93b4ff}
+.pmulti{display:flex;flex-direction:column;gap:8px;width:100%}
+.pm-row{display:flex;flex-direction:column;gap:4px}
+.pm-l{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--muted)}
+.pm-l .copy.sm{margin-left:auto;min-height:24px;padding:1px 8px;font-size:11.5px}
+.pm-badge{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;background:#2563eb;color:#fff;font-size:11px;font-weight:700}
+.code.light{background:var(--soft);color:var(--ink)}
+.pg select{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:6px 8px;font-size:13px;width:100%}
 </style>
 </head>
 <body>
@@ -1013,7 +1022,7 @@ function renderNotes(){
   let l = notes.filter(n=>{
     if(nFilt.cat==="__none"){ if(catById(n.cat)) return false; }
     else if(nFilt.cat!=="all" && n.cat!==nFilt.cat) return false;
-    if(q && !(`${n.title||""} ${n.text||""} ${n.memo||""} ${(n.tags||[]).join(" ")}`.toLowerCase().includes(q))) return false;
+    if(q && !(`${n.title||""} ${n.text||""} ${(n.chars||[]).map(x=>(x.name||"")+" "+(x.text||"")).join(" ")} ${n.memo||""} ${(n.tags||[]).join(" ")}`.toLowerCase().includes(q))) return false;
     return true;
   });
   if(nFilt.sort==="fav") l = l.filter(n=>n.fav);
@@ -1025,16 +1034,16 @@ function renderNotes(){
 function noteCard(n){
   const c = catById(n.cat) || {name:"미분류",color:"#a1a1aa"};
   const inMix = mixList.some(m=>m.id===n.id);
-  const used = (n.used||[]).map(id=>chars.find(x=>x.id===id)).filter(Boolean);
+  const used = (n.used||[]).map(id=>(store.mine||chars).find(x=>x.id===id)).filter(Boolean);
   return `<article class="pnote${inMix?" in":""}">
-    <div class="n-top"><span class="cchip" style="--c:${esc(c.color)}">${esc(c.name)}</span>${n.uses?`<span class="used">${n.uses}번 씀</span>`:""}
+    <div class="n-top"><span class="cchip" style="--c:${esc(c.color)}">${esc(c.name)}</span>${(n.chars||[]).length?`<span class="ppl">${n.chars.length}인</span>`:""}${n.uses?`<span class="used">${n.uses}번 씀</span>`:""}
       ${canEdit ? `<button class="star" type="button" data-nfav="${esc(n.id)}" aria-pressed="${!!n.fav}" aria-label="즐겨찾기">★</button>` : (n.fav ? `<span class="star" aria-label="즐겨찾기" aria-pressed="true">★</span>` : "")}</div>
     <div class="n-body">${(n.thumbs||[]).length?`<div class="nthumbs">${n.thumbs.slice(0,3).map(r=>`<img src="${esc(src(r))}" alt="" data-zoom="${esc(r)}">`).join("")}</div>`:""}
       <div class="n-text"><h3>${esc(n.title||"제목 없음")}</h3>${n.memo?`<div class="memo">${richText(n.memo)}</div>`:""}</div></div>
-    ${n.text?`<div class="code nclamp">${esc(n.text)}</div>`:""}
+    ${noteBodyHtml(n)}
     ${used.length?`<div class="used">쓰는 캐릭터 · ${used.map(u=>`<button type="button" class="ulink" data-open="${esc(u.id)}">${esc(u.name)}</button>`).join(", ")}</div>`:""}
     ${(n.tags||[]).length?`<div class="n-tags">${n.tags.map(t=>`<span>#${esc(t)}</span>`).join("")}</div>`:""}
-    <div class="n-acts"><button class="copy" type="button" data-ncopy="${esc(n.id)}">COPY</button>
+    <div class="n-acts"><button class="copy" type="button" data-ncopy="${esc(n.id)}">${(n.chars||[]).length?"기본 COPY":"COPY"}</button>${(n.chars||[]).length?`<button class="copy" type="button" data-ncopyall="${esc(n.id)}">전체 COPY</button>`:""}
       <button class="copy${inMix?" strong":""}" type="button" data-nmix="${esc(n.id)}">${inMix?"바구니에서 빼기":"+ 바구니"}</button>
       ${canEdit ? `<button class="copy" type="button" data-nedit="${esc(n.id)}" style="margin-left:auto">수정</button>` : ""}</div>
   </article>`;
@@ -1087,17 +1096,46 @@ function readNoteEditor(){
   const g = id => $(id) ? $(id).value : "";
   noteDraft.title = g("ne-title").trim(); noteDraft.text = g("ne-text").trim(); noteDraft.memo = g("ne-memo").trim();
   noteDraft.tags = splitTags(g("ne-tags")).map(t=>t.replace(/^#/,"")).filter((v,i,a)=>a.indexOf(v)===i);
+  document.querySelectorAll("[data-nech]").forEach(el=>{ const [i,f]=el.dataset.nech.split("|"); if(noteDraft.chars && noteDraft.chars[+i]) noteDraft.chars[+i][f]=el.value.trim(); });
+  const fv=$("ne-fav"); if(fv) noteDraft.fav=fv.checked;
+}
+function drawerCharOptions(){
+  const groups = [["mine","내 페르소나"],["ai","AI 캐릭터"],["friend","친구 캐릭터"]].map(([k,l])=>{
+    const arr = (store[k] || (k==="mine" ? chars : [])).filter(c=>(c.blocks||[]).some(b=>b.type==="tags" && (b.text||"").trim()));
+    return arr.length ? `<optgroup label="${l}">${arr.map(c=>`<option value="${k}|${esc(c.id)}">${esc(c.name||"이름 없음")}</option>`).join("")}</optgroup>` : "";
+  }).join("");
+  return groups || `<option value="" disabled>태그가 있는 캐릭터가 없어요</option>`;
+}
+function noteFullText(n){
+  const L="ABCDEF"; const parts=[];
+  if(n.text) parts.push(`[기본]\n${n.text}`);
+  (n.chars||[]).forEach((ch,i)=>{ if(ch.text) parts.push(`[${L[i]}${ch.name?` · ${ch.name}`:""}]\n${ch.text}`); });
+  return parts.join("\n\n");
+}
+function noteBodyHtml(n){
+  const L="ABCDEF";
+  if(!(n.chars||[]).length) return n.text ? `<div class="code nclamp">${esc(n.text)}</div>` : "";
+  return `<div class="pmulti">${n.text?`<div class="pm-row"><div class="pm-l">기본</div><div class="code nclamp">${esc(n.text)}</div></div>`:""}
+    ${n.chars.map((ch,i)=>`<div class="pm-row"><div class="pm-l"><span class="pm-badge">${L[i]}</span>${esc(ch.name||"")}<button class="copy sm" type="button" data-ncopych="${esc(n.id)}|${i}">COPY</button></div><div class="code nclamp light">${esc(ch.text||"")}</div></div>`).join("")}</div>`;
 }
 function renderNoteEditor(keep){
   const m=$("modal"), y=m.scrollTop, d=noteDraft;
   const catBtns = cats().map(c=>`<button type="button" class="tagopt" data-necat="${esc(c.id)}" aria-pressed="${d.cat===c.id}" style="--tc:${esc(c.color)}">${esc(c.name)}</button>`).join("");
-  const charBtns = chars.length ? chars.slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(c=>`<button type="button" class="tagopt" data-neuse="${esc(c.id)}" aria-pressed="${(d.used||[]).includes(c.id)}" style="--tc:${esc(heartOf(c))}">${esc(c.name||"이름 없음")}</button>`).join("") : `<span class="busy">서랍에 캐릭터가 없어요</span>`;
+  const _mine = store.mine||chars; const charBtns = _mine.length ? _mine.slice().sort((a,b)=>(a.order||0)-(b.order||0)).map(c=>`<button type="button" class="tagopt" data-neuse="${esc(c.id)}" aria-pressed="${(d.used||[]).includes(c.id)}" style="--tc:${esc(heartOf(c))}">${esc(c.name||"이름 없음")}</button>`).join("") : `<span class="busy">서랍에 캐릭터가 없어요</span>`;
   openModal(`<div class="mtop"><span>프롬 노트</span><div class="acts"><button class="mbtn x" type="button" data-nact="closeEd" aria-label="닫기">✕</button></div></div>
   <div class="form">
     <h3>${d._new?"새 프롬":"프롬 수정"}</h3>
     <div class="f"><label for="ne-title">제목</label><input type="text" id="ne-title" value="${esc(d.title||"")}" placeholder="수채 + 얇은 선 조합"></div>
     <div class="f"><span class="lab">카테고리 <span class="hint">· 이름과 색은 ‘카테고리 관리’에서</span></span><div class="tagpick">${catBtns}</div></div>
-    <div class="f"><label for="ne-text">프롬</label><textarea id="ne-text" rows="5" placeholder="artist:…, watercolor (medium), thin lineart">${esc(d.text||"")}</textarea></div>
+    <div class="f"><span class="lab">인원</span><div class="seg" role="group" aria-label="인원"><button type="button" data-nemode="single" aria-pressed="${!(d.chars||[]).length}">1인</button><button type="button" data-nemode="multi" aria-pressed="${!!(d.chars||[]).length}">2인 이상</button></div></div>
+    <div class="f"><label for="ne-text">${(d.chars||[]).length?`기본 프롬 <span class="hint">· 화풍, 배경, 구도처럼 모두에게 공통인 부분</span>`:"프롬"}</label><textarea id="ne-text" rows="5" placeholder="${(d.chars||[]).length?"2boys, masterpiece, night, city …":"artist:…, watercolor (medium), thin lineart"}">${esc(d.text||"")}</textarea></div>
+    ${(d.chars||[]).length?`<div class="f"><span class="lab">캐릭터 프롬 <span class="hint">· 캐릭터마다 따로 넣는 프롬</span></span>
+      ${d.chars.map((ch,i)=>`<div class="pg">
+        <div class="bhead"><span class="kind" style="color:#2563eb">캐릭터 ${"ABCDEF"[i]}</span><input type="text" data-nech="${i}|name" value="${esc(ch.name||"")}" placeholder="이름 (선택)" aria-label="캐릭터 ${"ABCDEF"[i]} 이름">${d.chars.length>2?`<button class="icon-btn" type="button" data-nechdel="${i}" aria-label="캐릭터 ${"ABCDEF"[i]} 빼기">✕</button>`:""}</div>
+        <textarea rows="3" data-nech="${i}|text" placeholder="1boy, black hair, sharp eyes …" aria-label="캐릭터 ${"ABCDEF"[i]} 프롬">${esc(ch.text||"")}</textarea>
+        <select data-nechpull="${i}" aria-label="서랍 캐릭터 태그 불러오기"><option value="">서랍 캐릭터의 태그 불러오기…</option>${drawerCharOptions()}</select>
+      </div>`).join("")}
+      ${d.chars.length<6?`<div><button class="btn" type="button" data-nact="neAddCh">+ 캐릭터 추가</button></div>`:""}</div>`:""}
     <div class="f"><label for="ne-memo">메모 <span class="hint">· 강도, 버전, 잘 맞는 상황 등</span></label><textarea id="ne-memo" rows="3">${esc(d.memo||"")}</textarea></div>
     <div class="f"><label for="ne-tags">해시태그 <span class="hint">· 쉼표로 구분</span></label><input type="text" id="ne-tags" value="${esc((d.tags||[]).join(", "))}" placeholder="수채, 부드러움"></div>
     <div class="f"><span class="lab">쓰는 캐릭터 <span class="hint">· 고르면 그 캐릭터 상세에도 이 프롬이 보여요 (나만)</span></span><div class="tagpick">${charBtns}</div></div>
@@ -1170,6 +1208,10 @@ document.addEventListener("click", async e=>{
   if(d.mixmove){ const [i,s]=d.mixmove.split("|").map(Number); const j=i+s; if(j>=0&&j<mixList.length){ [mixList[i],mixList[j]]=[mixList[j],mixList[i]]; saveMix(); renderMix(); } return; }
   if(d.mixout){ mixList=mixList.filter(m=>m.id!==d.mixout); saveMix(); renderNotes(); return; }
   if(d.nedit){ openNoteEditor(d.nedit); return; }
+  if(d.nemode && noteDraft){ readNoteEditor(); if(d.nemode==="multi"){ if(!(noteDraft.chars||[]).length) noteDraft.chars=[{name:"",text:""},{name:"",text:""}]; } else { const has=(noteDraft.chars||[]).some(x=>x.text); if(has && !b.dataset.sure){ b.dataset.sure="1"; toast("캐릭터 프롬이 지워져요. 한 번 더 누르면 1인으로 바꿔요."); return; } noteDraft.chars=[]; } renderNoteEditor(true); return; }
+  if(d.nechdel!==undefined && noteDraft){ readNoteEditor(); noteDraft.chars.splice(+d.nechdel,1); renderNoteEditor(true); return; }
+  if(d.ncopych){ const [id,i]=d.ncopych.split("|"); const n=notes.find(x=>x.id===id); const ch=n&&(n.chars||[])[+i]; if(ch) copy(ch.text||""); return; }
+  if(d.ncopyall){ const n=notes.find(x=>x.id===d.ncopyall); if(n){ copy(noteFullText(n)); if(notesEnabled()){ await saveNote(Object.assign({},n,{uses:(n.uses||0)+1})); if(page==="notes") renderNotes(); } } return; }
   if(d.necat){ readNoteEditor(); noteDraft.cat=d.necat; document.querySelectorAll("[data-necat]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.necat===d.necat)); return; }
   if(d.neuse){ const u=noteDraft.used=noteDraft.used||[]; const on=!u.includes(d.neuse); noteDraft.used = on ? [...u,d.neuse] : u.filter(x=>x!==d.neuse); b.setAttribute("aria-pressed",on); return; }
   if(d.nethrm!==undefined){ readNoteEditor(); noteDraft.thumbs.splice(+d.nethrm,1); renderNoteEditor(true); return; }
@@ -1182,6 +1224,7 @@ document.addEventListener("click", async e=>{
     case "cats": openCatManager(); break;
     case "closeEd": noteDraft=null; closeModal(); break;
     case "closeCat": catDraft=null; closeModal(); break;
+    case "neAddCh": readNoteEditor(); if((noteDraft.chars||[]).length<6){ noteDraft.chars.push({name:"",text:""}); } renderNoteEditor(true); break;
     case "neAddImg": {
       readNoteEditor(); const files = await pickFiles(true); if(!files.length) return;
       let k=0; for(const f of files){ const sp=$("busy-ne"); if(sp) sp.textContent=`올리는 중… ${++k}/${files.length}`; const r=await fsImageFromBlob(f,"noteImages","np:"); if(r) noteDraft.thumbs.push(r); }
@@ -1196,6 +1239,7 @@ document.addEventListener("click", async e=>{
     case "neSave": {
       readNoteEditor(); const fv=$("ne-fav"); if(fv) noteDraft.fav=fv.checked;
       const n = Object.assign({}, noteDraft); delete n._new;
+      n.chars = (n.chars||[]).filter(x=>(x.text||"").trim() || (x.name||"").trim());
       if(!n.title) n.title = (n.text||"").split(",")[0].slice(0,30) || "제목 없음";
       n.createdAt = n.createdAt || Date.now(); n.updatedAt = Date.now();
       b.disabled = true;
@@ -1218,6 +1262,16 @@ document.addEventListener("click", async e=>{
 document.addEventListener("input", e=>{
   if(e.target.id==="nq"){ nFilt.q=e.target.value.trim(); renderNotes(); }
   if(e.target.dataset && e.target.dataset.ccustom!==undefined && catDraft){ const i=+e.target.dataset.ccustom; catDraft[i].color=e.target.value; const row=e.target.closest(".tm-row"); if(row){ row.querySelector(".tm-dot").style.background=e.target.value; row.querySelectorAll(".cdot").forEach(x=>x.setAttribute("aria-pressed","false")); } }
+});
+document.addEventListener("change", e=>{
+  const el = e.target; if(!el.dataset || el.dataset.nechpull===undefined || !noteDraft) return;
+  const v = el.value; if(!v) return; const [k,id] = v.split("|");
+  const c = (store[k] || (k==="mine" ? chars : [])).find(x=>x.id===id); if(!c) return;
+  readNoteEditor();
+  const i = +el.dataset.nechpull; const ch = noteDraft.chars[i];
+  ch.text = (c.blocks||[]).filter(b=>b.type==="tags").flatMap(b=>splitTags(b.text)).join(", ");
+  if(!ch.name) ch.name = c.name || "";
+  renderNoteEditor(true); toast(`${c.name}의 태그를 불러왔어요`);
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="c-new"){ e.preventDefault(); const x=document.querySelector('[data-nact="cAdd"]'); if(x) x.click(); } });
 
