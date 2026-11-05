@@ -526,6 +526,29 @@ html.L-mo .m-th .ph-name b{font-size:calc(var(--fs) * .34)}
 html.L-mo .pages{gap:14px}
 html.L-mo .pages button{font-size:14px;gap:5px}
 .kline .who{flex:none;display:inline;gap:0;align-items:initial;min-width:0}
+.pf i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.platbar{margin-bottom:-6px}
+/* 모바일: 모든 탭 같은 크기, 카드 더 작게 (기본 3열 · 작게 4열 · 목록 2열) */
+html.L-mo .grid:not(.list):not(.compact){grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html.L-mo .grid.compact{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+html.L-mo .card{border-radius:12px}
+html.L-mo .card-top{padding:4px 7px;font-size:10.5px}
+html.L-mo .thumb{margin:6px;border-radius:8px}
+html.L-mo .info{padding:0 7px 8px;gap:2px}
+html.L-mo .nm h2{font-size:13px}
+html.L-mo .nm span,html.L-mo .info .hash{font-size:10.5px}
+html.L-mo .info .kline{font-size:10.5px;gap:2px 5px}
+html.L-mo .info .kline .kst{font-size:10px;padding:0 5px}
+html.L-mo .info .chips{display:none}
+html.L-mo .gbadge{min-width:16px;height:16px;font-size:10px;padding:0 4px}
+html.L-mo .ph b{font-size:26px}
+html.L-mo .grid.compact .thumb{margin:4px}
+html.L-mo .grid.compact .info{padding:0 5px 6px}
+html.L-mo .grid.compact .nm h2{font-size:11.5px}
+html.L-mo .grid.compact .card-top,html.L-mo .grid.compact .kline{display:none}
+html.L-mo .grid.compact .ph b{font-size:18px}
+html.L-mo .ph-name b{font-size:calc(var(--fs) * .6)}
+html.L-mo .grid.compact .ph-name b{font-size:calc(var(--fs) * .42)}
 </style>
 </head>
 <body>
@@ -561,6 +584,7 @@ html.L-mo .pages button{font-size:14px;gap:5px}
     </div>
     <button class="add-btn" id="addBtn" type="button" hidden>+ 새 항목</button>
   </div>
+  <div class="tagbar platbar" id="platrow" role="group" aria-label="플랫폼으로 보기" hidden></div>
   <div class="tagbar" id="tagrow" role="group" aria-label="태그로 보기"></div>
   <div id="notes"></div>
   <div class="grid" id="grid"></div>
@@ -607,7 +631,7 @@ const OLD_KEY = "persona-drawer:v1";
 /* ---------- state ---------- */
 let chars = [], settings = {}, mode = "local", canEdit = true;
 let db = null, assets = null, uid = null, downloadsNs = null;
-let filt = {q:"", tag:null, sort:"order", rev:false, view:"card"};
+let filt = {q:"", tag:null, platform:null, sort:"order", rev:false, view:"card"};
 try{ const v=localStorage.getItem("persona-view"); if(v==="card"||v==="compact"||v==="list") filt.view=v; }catch(e){}
 let openId = null, draft = null, editingSettings = false;
 
@@ -979,6 +1003,107 @@ document.addEventListener("click", e=>{
   const gs = fpItems(b); copy((k==="all" ? gs.flatMap(g=>g.items) : (gs[+k]||{items:[]}).items).join(", "));
 });
 
+/* ================= AI 캐릭터: 플랫폼 칩 + 플랫폼 관리 ================= */
+let platDraft = null;
+function allPlatforms(){
+  const list = (settings.platforms||[]).map(p=>p.name).filter(Boolean);
+  const used = []; (store.ai || (kind==="ai" ? chars : [])).forEach(c=>{ if(c.platform && !used.includes(c.platform)) used.push(c.platform); });
+  return list.concat(used.filter(p=>!list.includes(p)));
+}
+function platColor(name){
+  const p = (settings.platforms||[]).find(x=>x.name===name);
+  if(p && /^#[0-9a-f]{6}$/i.test(p.color||"")) return p.color;
+  const auto = [2,7,9,5,4,8,6,1]; return TAG_PALETTE[auto[hash(name)%auto.length]][1];
+}
+function pfChip(name){ return `<span class="pf"><i style="background:${esc(platColor(name))}"></i>${esc(name)}</span>`; }
+function renderPlatRow(){
+  const el = $("platrow"); if(!el) return;
+  if(kind!=="ai"){ el.hidden = true; filt.platform = null; return; }
+  const all = list();
+  const ps = allPlatforms();
+  const none = all.filter(c=>!c.platform).length;
+  el.hidden = !(ps.length || canEdit);
+  el.innerHTML = `<button class="tagbtn" type="button" data-plat="" aria-pressed="${!filt.platform}">전체 플랫폼<span class="n">${String(all.length).padStart(2,"0")}</span></button>` +
+    ps.map(p=>`<button class="tagbtn" type="button" data-plat="${esc(p)}" aria-pressed="${filt.platform===p}" style="--tc:${esc(platColor(p))}">${esc(p)}<span class="n">${String(all.filter(c=>c.platform===p).length).padStart(2,"0")}</span></button>`).join("") +
+    (none && ps.length ? `<button class="tagbtn" type="button" data-plat="__none" aria-pressed="${filt.platform==="__none"}">플랫폼 없음<span class="n">${String(none).padStart(2,"0")}</span></button>` : "") +
+    (canEdit ? `<button class="tagbtn manage" type="button" data-act="plats">플랫폼 관리</button>` : "");
+}
+function platPickerHtml(d){
+  const ps = allPlatforms(); if(d.platform && !ps.includes(d.platform)) ps.push(d.platform);
+  return `<div class="f"><span class="lab">플랫폼 <span class="hint">· 눌러서 고르기, 이름·색·순서는 ‘플랫폼 관리’에서</span></span>
+    <div class="tagpick" role="group" aria-label="플랫폼">${ps.map(p=>`<button type="button" class="tagopt" data-kplat="${esc(p)}" aria-pressed="${d.platform===p}" style="--tc:${esc(platColor(p))}">${esc(p)}</button>`).join("") || `<span class="busy">아직 플랫폼이 없어요</span>`}</div>
+    <div class="addrow"><input type="text" id="k-newplat" placeholder="새 플랫폼 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addPlat">+ 플랫폼 만들기</button></div></div>`;
+}
+function openPlatManager(){
+  editingSettings = true;
+  const all = store.ai || chars;
+  platDraft = allPlatforms().map(p=>({orig:p, name:p, color:platColor(p), count:all.filter(c=>c.platform===p).length, confirm:false}));
+  renderPlatManager(false);
+}
+function readPlatNames(){ document.querySelectorAll("[data-plname]").forEach(el=>{ const t=platDraft[+el.dataset.plname]; if(t) t.name=el.value; }); }
+function renderPlatManager(keep){
+  const m=$("modal"), y=m.scrollTop;
+  const rows = platDraft.map((t,i)=>`<div class="tm-row">
+      <div class="tm-top">
+        <button class="icon-btn" type="button" data-plmove="${i}|-1" aria-label="위로" ${i===0?"disabled":""}>↑</button>
+        <button class="icon-btn" type="button" data-plmove="${i}|1" aria-label="아래로" ${i===platDraft.length-1?"disabled":""}>↓</button>
+        <span class="tm-dot" style="background:${esc(t.color)}"></span>
+        <input type="text" data-plname="${i}" value="${esc(t.name)}" aria-label="플랫폼 이름">
+        <span class="busy tm-count">${t.count}명</span>
+        ${t.confirm?`<button class="btn danger" type="button" data-pldel="${i}">${t.count?`${t.count}명은 플랫폼 없음으로, 삭제`:"삭제"}</button>`:`<button class="icon-btn" type="button" data-pldelask="${i}" aria-label="플랫폼 삭제">✕</button>`}
+      </div>
+      <div class="colors">${TAG_PALETTE.map(([n,h])=>`<button type="button" class="cdot" style="background:${h}" data-plcolor="${i}|${h}" aria-pressed="${t.color.toLowerCase()===h}" aria-label="${n}" title="${n}"></button>`).join("")}<input type="color" data-plcustom="${i}" value="${esc(t.color)}" aria-label="직접 고르기"></div>
+    </div>`).join("");
+  openModal(`<div class="mtop"><span>플랫폼 관리</span><div class="acts"><button class="mbtn x" type="button" data-act="close" aria-label="닫기">✕</button></div></div>
+    <div class="form">
+      <p class="busy" style="margin:0">위에서부터 순서대로 플랫폼 줄에 보여요. 이름을 바꾸거나 지우면 AI 캐릭터 전체에 같이 적용돼요.</p>
+      ${rows || `<div class="busy">아직 플랫폼이 없어요. 아래에서 만들어 보세요.</div>`}
+      <div class="addrow"><input type="text" id="pl-new" placeholder="새 플랫폼 이름" style="flex:1;min-width:140px;border:1px solid var(--rule);border-radius:10px;padding:8px 11px;background:var(--surface)"><button class="btn" type="button" data-act="plAdd">+ 추가</button></div>
+      <div class="foot"><button class="btn" type="button" data-act="close">취소</button><button class="btn dark" type="button" data-act="plSave">저장</button></div>
+    </div>`);
+  if(keep) m.scrollTop = y;
+}
+async function savePlats(btn){
+  readPlatNames();
+  const live = platDraft.map(t=>({...t, name:t.name.trim()})).filter(t=>t.name);
+  if(new Set(live.map(t=>t.name)).size !== live.length){ toast("같은 이름의 플랫폼이 있어요."); return; }
+  const rename = {}; live.forEach(t=>{ if(t.orig && t.orig!==t.name) rename[t.orig]=t.name; });
+  const keep = new Set(live.filter(t=>t.orig).map(t=>t.orig));
+  const removed = allPlatforms().filter(p=>!keep.has(p));
+  if(btn) btn.disabled = true;
+  for(const c of (store.ai || chars).slice()){
+    if(!c.platform || !(rename[c.platform] || removed.includes(c.platform))) continue;
+    const nc = JSON.parse(JSON.stringify(c)); nc.platform = rename[c.platform] || ""; nc.updatedAt = Date.now();
+    if((await saveChar(nc))===false){ if(btn) btn.disabled=false; return; }
+  }
+  const s = JSON.parse(JSON.stringify(settings)); s.platforms = live.map(t=>({name:t.name, color:t.color}));
+  if(!(await saveSettings(s))){ if(btn) btn.disabled=false; return; }
+  if(filt.platform && (removed.includes(filt.platform) || rename[filt.platform])) filt.platform = rename[filt.platform] || null;
+  closeModal(); render(); toast("플랫폼을 저장했어요");
+}
+document.addEventListener("click", async e=>{
+  const b = e.target.closest("button"); if(!b) return; const d = b.dataset;
+  if(d.plat!==undefined){ filt.platform = (d.plat==="" || filt.platform===d.plat) ? null : d.plat; render(); return; }
+  if(d.kplat!==undefined && draft){ draft.platform = draft.platform===d.kplat ? "" : d.kplat; b.parentElement.querySelectorAll("[data-kplat]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.kplat===draft.platform)); return; }
+  if(d.plmove){ readPlatNames(); const [i,s2]=d.plmove.split("|").map(Number); const j=i+s2; if(j>=0&&j<platDraft.length){ [platDraft[i],platDraft[j]]=[platDraft[j],platDraft[i]]; } renderPlatManager(true); return; }
+  if(d.plcolor){ readPlatNames(); const [i,h]=d.plcolor.split("|"); platDraft[+i].color=h; renderPlatManager(true); return; }
+  if(d.pldelask!==undefined){ readPlatNames(); platDraft.forEach(x=>x.confirm=false); platDraft[+d.pldelask].confirm=true; renderPlatManager(true); return; }
+  if(d.pldel!==undefined){ readPlatNames(); platDraft.splice(+d.pldel,1); renderPlatManager(true); return; }
+  switch(d.act){
+    case "plats": openPlatManager(); break;
+    case "plAdd": { readPlatNames(); const v=($("pl-new").value||"").trim(); if(!v) return; if(platDraft.some(x=>x.name.trim()===v)){ toast("이미 있는 플랫폼이에요."); return; }
+      const used=platDraft.map(x=>x.color); const pick=(TAG_PALETTE.find(([n,h])=>!used.includes(h))||TAG_PALETTE[0])[1];
+      platDraft.push({orig:null,name:v,color:pick,count:0,confirm:false}); renderPlatManager(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const ni=$("pl-new"); if(ni) ni.focus(); break; }
+    case "plSave": await savePlats(b); break;
+    case "addPlat": { if(!draft) return; readEditor(); const v=($("k-newplat").value||"").trim(); if(!v) return; draft.platform = v; renderEditor(true); break; }
+  }
+});
+document.addEventListener("input", e=>{ if(e.target.dataset && e.target.dataset.plcustom!==undefined && platDraft){ const i=+e.target.dataset.plcustom; platDraft[i].color=e.target.value; const row=e.target.closest(".tm-row"); if(row){ row.querySelector(".tm-dot").style.background=e.target.value; row.querySelectorAll(".cdot").forEach(x=>x.setAttribute("aria-pressed","false")); } } });
+document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && e.target.id==="pl-new"){ e.preventDefault(); const x=document.querySelector('[data-act="plAdd"]'); if(x) x.click(); }
+  if(e.key==="Enter" && e.target.id==="k-newplat"){ e.preventDefault(); const x=document.querySelector('[data-act="addPlat"]'); if(x) x.click(); }
+});
+
 /* ================= 탭(종류)별 캐릭터 + 탭별 공개 설정 ================= */
 const KINDS = {
   mine:  {label:"내 페르소나", coll:"chars",       img:"images",       prefix:"fs:", defVis:"public"},
@@ -1063,7 +1188,7 @@ function setPage(p, fromHash){
   if(!vp.includes(p)) p = vp[0] || "mine";
   page = p;
   if(p!=="notes"){
-    if(kind!==p) { kind = p; filt.tag = null; }
+    if(kind!==p) { kind = p; filt.tag = null; filt.platform = null; }
     if(store[p]) chars = store[p]; else if(p!=="mine") chars = [];
   }
   if(canEdit){ try{ localStorage.setItem("persona-page", page); }catch(e){} }
@@ -1096,7 +1221,7 @@ async function migrateSiteImages(){
 function kindLine(c){
   if(kind==="ai"){
     const st = AI_STATUS.find(x=>x[0]===c.status);
-    return `<div class="kline">${c.platform?`<span class="pf">${esc(c.platform)}</span>`:""}${c.maker?`<span>${esc(c.maker)}</span>`:""}${st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""}</div>`;
+    return `<div class="kline">${c.platform?pfChip(c.platform):""}${c.maker?`<span>${esc(c.maker)}</span>`:""}${st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""}</div>`;
   }
   if(kind==="friend"){ const nm = fpNames(c); return `<div class="kline">${c.owner?`<span class="who">${esc(c.owner)}</span>`:""}${nm.length?`<span>페르소나 ${nm.length} · ${esc(nm.join(", "))}</span>`:""}</div>`; }
   return "";
@@ -1106,7 +1231,7 @@ function kindRows(c){
   const out = [];
   if(kind==="ai"){
     const st = AI_STATUS.find(x=>x[0]===c.status);
-    const bits = [c.platform?`<span class="pf">${esc(c.platform)}</span>`:"", c.maker?esc(c.maker):"", st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""].filter(Boolean);
+    const bits = [c.platform?pfChip(c.platform):"", c.maker?esc(c.maker):"", st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""].filter(Boolean);
     if(bits.length) out.push(row("정보", `<div class="kline big">${bits.map(b=>`<span>${b}</span>`).join("")}</div>`));
     if(c.link) out.push(row("봇 링크", `<div class="txt">${linkify(esc(c.link))}</div>`));
   }
@@ -1125,9 +1250,9 @@ function kindEditorHtml(d){
     <div class="f"><label for="k-owner">주인 <span class="hint">· 친구 닉네임이나 SNS 주소</span></label><input type="text" id="k-owner" data-f="owner" value="${esc(d.owner||"")}" placeholder="@친구닉네임"></div></div>`;
   const plats = Array.from(new Set((store.ai||[]).map(c=>c.platform).filter(Boolean).concat(["CRACK","ZETA","CAVEDUCK"])));
   return `<div class="kbox"><div class="kbox-t">AI 캐릭터 정보</div>
-    <div class="two"><div class="f"><label for="k-platform">플랫폼</label><input type="text" id="k-platform" data-f="platform" list="k-plats" value="${esc(d.platform||"")}" placeholder="CRACK, ZETA …"><datalist id="k-plats">${plats.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist></div>
-      <div class="f"><label for="k-maker">제작자</label><input type="text" id="k-maker" data-f="maker" value="${esc(d.maker||"")}" placeholder="@제작자"></div></div>
-    <div class="f"><label for="k-link">봇 링크</label><input type="text" id="k-link" data-f="link" value="${esc(d.link||"")}" placeholder="https://"></div>
+    ${platPickerHtml(d)}
+    <div class="two"><div class="f"><label for="k-maker">제작자</label><input type="text" id="k-maker" data-f="maker" value="${esc(d.maker||"")}" placeholder="@제작자"></div>
+      <div class="f"><label for="k-link">봇 링크</label><input type="text" id="k-link" data-f="link" value="${esc(d.link||"")}" placeholder="https://"></div></div>
     <div class="f"><span class="lab">진행 상태</span><div class="seg" role="group" aria-label="진행 상태" style="width:fit-content">${AI_STATUS.map(([v,n])=>`<button type="button" data-kstatus="${v}" aria-pressed="${d.status===v}">${n}</button>`).join("")}</div></div>
     ${withPick}</div>`;
 }
@@ -1485,6 +1610,7 @@ function filtered(){
   const q = filt.q.trim().toLowerCase();
   let l = list().filter(c=>{
     if(filt.tag && !(c.tags||[]).includes(filt.tag)) return false;
+    if(kind==="ai" && filt.platform && (filt.platform==="__none" ? !!c.platform : c.platform!==filt.platform)) return false;
     if(q && !(`${c.name} ${c.sub||""} ${c.hashtags||""} ${(c.tags||[]).join(" ")} ${pairNames(c).join(" ")} ${c.platform||""} ${c.maker||""} ${c.owner||""} ${fpBlocks(c).map(b=>(b.name||"")+" "+(b.groups||[]).map(g=>g.text||"").join(" ")).join(" ")}}`.toLowerCase().includes(q))) return false;
     return true;
   });
@@ -1545,6 +1671,7 @@ function render(){
   renderBanner();
   const l0 = list();
   const tags = allTags();
+  renderPlatRow();
   $("tagrow").innerHTML = `<button class="tagbtn" type="button" data-tag="" aria-pressed="${!filt.tag}">ALL<span class="n">${String(l0.length).padStart(2,"0")}</span></button>` +
     tags.map(t=>`<button class="tagbtn" type="button" data-tag="${esc(t)}" aria-pressed="${filt.tag===t}" style="--tc:${tagColor(t)}">${esc(t)}<span class="n">${String(l0.filter(c=>(c.tags||[]).includes(t)).length).padStart(2,"0")}</span></button>`).join("") +
     (canEdit ? `<button class="tagbtn manage" type="button" data-act="tags">태그 관리</button>` : "");
@@ -1595,7 +1722,7 @@ function listRow(c){
 /* ---------- modal: view ---------- */
 function findChar(id){ return chars.find(x=>x.id===id) || EXAMPLES.find(x=>x.id===id); }
 function openModal(html, wide){ const m=$("modal"); m.className="modal"+(wide?"":" narrow"); m.innerHTML=html; $("ov").classList.add("open"); m.scrollTop=0; }
-function closeModal(){ visDraft = null; $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; if(typeof noteDraft!=="undefined"){ noteDraft=null; catDraft=null; } }
+function closeModal(){ visDraft = null; platDraft = null; $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; if(typeof noteDraft!=="undefined"){ noteDraft=null; catDraft=null; } }
 function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}</div><div class="val">${inner}</div></div>`; }
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
@@ -1985,7 +2112,7 @@ $("lb").addEventListener("click", ()=>$("lb").classList.remove("open"));
 document.addEventListener("keydown", e=>{
   if(e.key==="Enter" && e.target.id==="t-new"){ e.preventDefault(); const b=document.querySelector('[data-act="tAdd"]'); if(b) b.click(); return; }
   if(e.key==="Enter" && e.target.id==="e-newtag"){ e.preventDefault(); const b=document.querySelector('[data-act="addTagInEditor"]'); if(b) b.click(); return; }
-  if(e.key==="Escape"){ if($("lb").classList.contains("open")) $("lb").classList.remove("open"); else if($("ov").classList.contains("open") && !draft && !noteDraft && !catDraft && !tagDraft) closeModal(); }
+  if(e.key==="Escape"){ if($("lb").classList.contains("open")) $("lb").classList.remove("open"); else if($("ov").classList.contains("open") && !draft && !noteDraft && !catDraft && !tagDraft && !platDraft) closeModal(); }
   if((e.key==="Enter"||e.key===" ") && e.target.dataset && e.target.dataset.open){ e.preventDefault(); viewChar(e.target.dataset.open); }
 });
 $("q").addEventListener("input", e=>{ filt.q=e.target.value; render(); });
