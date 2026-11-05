@@ -6,7 +6,7 @@
 <title>페르소나 서랍</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="../icon.svg">
 <meta name="theme-color" content="#ffffff">
 <script>(function(){var d=document.documentElement;function ap(){var u="system";try{u=localStorage.getItem("excerpt-ui")||"system"}catch(e){}var dt=d.getAttribute("data-theme");var dk=u==="dark"||(u==="system"&&(dt?dt==="dark":!!(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)));d.classList.toggle("ui-dark",dk)}window.__applyUI=ap;ap();function lay(){var p=null;try{p=localStorage.getItem("excerpt-layout")}catch(e){}var m=p==="pc"||p==="mo"?p:((window.innerWidth||screen.width)<960?"mo":"pc");d.classList.toggle("L-mo",m==="mo");d.classList.toggle("L-pc",m==="pc");var v=document.querySelector("meta[name=viewport]");if(v)v.setAttribute("content",m==="pc"&&screen.width<1000?"width=1200":"width=device-width, initial-scale=1");window.__layout=m}window.__applyLayout=lay;lay();try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",ap)}catch(e){}try{new MutationObserver(ap).observe(d,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}})();</script>
@@ -18,7 +18,7 @@
   --chip-bg:#f4f4f5; --chip-fg:#3f3f46; --code-bg:#18181b; --code-fg:#f4f4f5;
   --danger:#dc2626; --scrim:rgba(0,0,0,.45); --ph-l:72%; --ph-d:52%;
   --f-body:"Noto Sans KR","Pretendard",system-ui,sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --f-mono:"Noto Sans KR","Pretendard",system-ui,sans-serif; /* 글씨체는 하나로: 굵기·크기로만 구분 */
   color-scheme:light;
 }
 html.ui-dark{
@@ -329,6 +329,28 @@ html.L-mo .lrow .dday{grid-area:dd;align-self:start}
 .pg{border:1px dashed var(--rule);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px}
 .pg .bhead input{border-radius:8px;padding:5px 8px;font-weight:600}
 .lab-s{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+/* 통일된 글씨: 한 글꼴, 굵기·크기만 다르게 */
+.eyebrow{letter-spacing:.06em;font-weight:500;font-size:11.5px}
+.stat span{font-weight:500;letter-spacing:.02em}
+.stat b{font-weight:700;letter-spacing:-.02em}
+.stat b,.card-top,.l-no,.tagbtn .n,.dday,.code{font-variant-numeric:tabular-nums}
+.f label,.f .lab,.lab-s{font-size:12.5px;font-weight:500;letter-spacing:0}
+.chip{font-weight:500;font-size:11.5px}
+.ptag{font-size:13px}
+.copy,.mbtn,.mtop{font-weight:500;letter-spacing:.01em}
+.code{font-size:13.5px;line-height:1.75}
+.card-top{font-size:12px;font-weight:500}
+.tagbtn .n{font-size:11.5px;font-weight:500;margin-left:5px}
+.pg-l,.rowx>.lbl{font-size:12.5px;font-weight:500}
+/* 눌린 태그는 그 태그 색으로 (ALL은 검정 그대로) */
+.tagbtn[style*="--tc"]::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tc);margin-right:6px;vertical-align:1px}
+.tagbtn[aria-pressed="true"][style*="--tc"]{background:var(--tc);border-color:var(--tc) !important;color:#fff;font-weight:700}
+.tagbtn[aria-pressed="true"][style*="--tc"]::before{background:#fff}
+.tagbtn[aria-pressed="true"][style*="--tc"] .n{color:#fff;opacity:.85}
+/* 파스텔 하트 점이 흰 바탕에서도 보이게 */
+.hdot,.cdot{box-shadow:inset 0 0 0 1px rgba(0,0,0,.10)}
+.cdot[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink)}
+.block textarea{border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:9px 11px;width:100%;resize:vertical;font:inherit;line-height:1.6}
 </style>
 </head>
 <body>
@@ -381,7 +403,9 @@ const TAG_COLORS = {
   green:["#3e9a5c","#e9f6ed"], blue:["#4b62c8","#ecefff"], pink:["#d4508b","#fdedf4"],
   purple:["#8754c8","#f3ecfd"], orange:["#c7782a","#fdf1e5"], teal:["#2a8d93","#e5f4f4"], gray:["#6b7278","#eff1f2"]
 };
-const HEARTS = ["#5fd0c4","#f06aa4","#f0b429","#e0404f","#9b7be0","#6aa6f0","#3a3f45"];
+const HEARTS = ["#a8e6dc","#f8b4cf","#fbe08c","#f7a6a6","#cbb8f2","#aecdf6","#c3c8d0"]; /* 파스텔: 민트·핑크·레몬·코랄·라벤더·하늘·회색 */
+const HEART_OLD = {"#5fd0c4":"#a8e6dc","#f06aa4":"#f8b4cf","#f0b429":"#fbe08c","#e0404f":"#f7a6a6","#9b7be0":"#cbb8f2","#6aa6f0":"#aecdf6","#3a3f45":"#c3c8d0"};
+function heartOf(c){ const h=(c&&c.heart)||HEARTS[0]; return HEART_OLD[String(h).toLowerCase()]||h; }
 const PROMPT_TONES = [["#4a8fb5","#eef6fa"],["#58a46f","#eff8f1"],["#b57a4a","#faf3ec"],["#8a6ac0","#f4f0fa"]];
 const LS_KEY = "persona-gallery:v2";
 const OLD_KEY = "persona-drawer:v1";
@@ -702,7 +726,7 @@ function render(){
   const l0 = list();
   const tags = allTags();
   $("tagrow").innerHTML = `<button class="tagbtn" type="button" data-tag="" aria-pressed="${!filt.tag}">ALL<span class="n">${String(l0.length).padStart(2,"0")}</span></button>` +
-    tags.map(t=>`<button class="tagbtn" type="button" data-tag="${esc(t)}" aria-pressed="${filt.tag===t}">${esc(t)}<span class="n">${String(l0.filter(c=>(c.tags||[]).includes(t)).length).padStart(2,"0")}</span></button>`).join("") +
+    tags.map(t=>`<button class="tagbtn" type="button" data-tag="${esc(t)}" aria-pressed="${filt.tag===t}" style="--tc:${tagColor(t)}">${esc(t)}<span class="n">${String(l0.filter(c=>(c.tags||[]).includes(t)).length).padStart(2,"0")}</span></button>`).join("") +
     (canEdit ? `<button class="tagbtn manage" type="button" data-act="tags">태그 관리</button>` : "");
   document.querySelectorAll("#sortSeg [data-sort]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.sort===filt.sort));
   const n = [];
@@ -718,7 +742,7 @@ function render(){
     : `<div class="empty">조건에 맞는 항목이 없어요.</div>`;
 }
 function card(c){
-  const d = dday(c.start), hc = c.heart || HEARTS[0];
+  const d = dday(c.start), hc = heartOf(c);
   const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,false);
   return `<article class="card" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
     <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday"><span class="hdot" style="background:${esc(hc)}"></span>D+${d}</span>`:`<span class="hdot" style="background:${esc(hc)}"></span>`}</div>
@@ -730,7 +754,7 @@ function card(c){
     </div></article>`;
 }
 function listRow(c){
-  const d = dday(c.start), hc = c.heart || HEARTS[0], pn = pairNames(c);
+  const d = dday(c.start), hc = heartOf(c), pn = pairNames(c);
   const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,true);
   return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
     <span class="l-no">No.${numberOf(c.id)}</span>
@@ -750,7 +774,7 @@ function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}<
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
   openId=id; draft=null;
-  const hc = c.heart||HEARTS[0], d=dday(c.start);
+  const hc = heartOf(c), d=dday(c.start);
   const cover = c.cover ? `<div class="cover"><img src="${esc(src(c.cover))}" alt="${esc(c.name)}" data-zoom="${esc(c.cover)}"></div>`
     : `<div class="cover">${phHtml(c,true)}</div>`;
   const rows = [];
@@ -809,7 +833,7 @@ function editChar(id){
 function renderEditor(keep){
   const _m=$("modal"), _y=_m.scrollTop;
   const d = draft;
-  const heartBtns = HEARTS.map(h=>`<button type="button" class="cdot" style="background:${h}" data-heart="${h}" aria-pressed="${d.heart===h}" aria-label="하트 색 ${h}"></button>`).join("");
+  const heartBtns = HEARTS.map(h=>`<button type="button" class="cdot" style="background:${h}" data-heart="${h}" aria-pressed="${heartOf(d)===h}" aria-label="하트 색 ${h}"></button>`).join("");
   const blocks = (d.blocks||[]).map((b,i)=>{
     const kc = b.type==="tags"?"#4a8fb5":b.type==="images"?"#c7782a":b.type==="pair"?"#db2777":"#6b7278";
     const kn = b.type==="tags"?"태그":b.type==="images"?"이미지":b.type==="pair"?"페어":"텍스트";
@@ -841,7 +865,7 @@ function renderEditor(keep){
       <div class="tagpick" role="group" aria-label="분류 태그">${allTags().concat((d.tags||[]).filter(t=>!allTags().includes(t))).map(t=>`<button type="button" class="tagopt" data-tagpick="${esc(t)}" aria-pressed="${(d.tags||[]).includes(t)}" style="--tc:${tagColor(t)}">${esc(t)}</button>`).join("") || `<span class="busy">아직 태그가 없어요</span>`}</div>
       <div class="addrow"><input type="text" id="e-newtag" placeholder="새 태그 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addTagInEditor">+ 태그 만들기</button></div></div>
     <div class="two">
-      <div class="f"><span class="lab">하트 색</span><div class="colors">${heartBtns}<input type="color" id="e-heart" value="${esc(d.heart||HEARTS[0])}" aria-label="직접 고르기"></div></div>
+      <div class="f"><span class="lab">하트 색</span><div class="colors">${heartBtns}<input type="color" id="e-heart" value="${esc(heartOf(d))}" aria-label="직접 고르기"></div></div>
       <div class="f"><label for="e-start">D+ 시작일 <span class="hint">· 비우면 표시 안 함</span></label><input type="date" id="e-start" data-f="start" value="${esc(d.start||"")}"></div>
     </div>
     <div class="f"><label for="e-order">순서 <span class="hint">· 기본순 정렬에 쓰여요, 작을수록 앞</span></label><input type="number" id="e-order" value="${esc(d.order||0)}" style="max-width:120px"></div>
