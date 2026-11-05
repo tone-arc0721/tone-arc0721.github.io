@@ -447,6 +447,11 @@ html.ui-dark .kline .who{color:#f472b6}
 .closed svg{color:var(--muted)}
 .closed b{color:var(--ink);font-size:18px}
 .is-closed .stats{display:none}
+.hicon{display:inline-block;flex:none;vertical-align:-1px}
+.dday{gap:4px}
+.hbtn{border:0;background:none;padding:3px;border-radius:8px;line-height:0;display:inline-grid;place-items:center}
+.hbtn:hover{background:var(--soft)}
+.hbtn[aria-pressed="true"]{background:var(--soft);box-shadow:0 0 0 2px var(--ink)}
 </style>
 </head>
 <body>
@@ -543,7 +548,7 @@ function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show");
 function lsGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
 function hash(s){ let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h); }
-function heartSvg(c,size){ return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="${esc(c)}" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>`; }
+function heartSvg(c,size){ return `<svg class="hicon" width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="${esc(c)}" stroke="rgba(0,0,0,.18)" stroke-width="1.2" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>`; }
 function dday(d){
   if(!d) return null;
   const s = new Date(d+"T00:00:00"); if(isNaN(s)) return null;
@@ -1298,7 +1303,7 @@ function card(c){
   const d = kind==="friend" ? null : dday(c.start), hc = heartOf(c);
   const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,false);
   return `<article class="card" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
-    <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday"><span class="hdot" style="background:${esc(hc)}"></span>D+${d}</span>`:kind==="friend"?"":`<span class="hdot" style="background:${esc(hc)}"></span>`}</div>
+    <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday">${heartSvg(hc,12)}D+${d}</span>`:kind==="friend"?"":heartSvg(hc,12)}</div>
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
     <div class="info">
       <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
@@ -1315,7 +1320,7 @@ function listRow(c){
     <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>${kindLine(c)}
       ${c.hashtags||pn.length?`<div class="hash">${pn.length?`<span class="pairmark">× ${esc(pn.join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}</div>
     <div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>
-    <span class="dday">${kind==="friend"?"":`<span class="hdot" style="background:${esc(hc)}"></span>${d?`D+${d}`:""}`}</span>
+    <span class="dday">${kind==="friend"?"":`${heartSvg(hc,12)}${d?`D+${d}`:""}`}</span>
   </article>`;
 }
 
@@ -1366,7 +1371,7 @@ function viewChar(id){
       <div class="spec">
         <div class="spec-head"><h2>${esc(c.name||"이름 없음")}</h2>
           ${c.sub||c.hashtags?`<span class="sub">${esc(c.sub||"")}${c.sub&&c.hashtags?" · ":""}${esc(c.hashtags||"")}</span>`:""}
-          ${d?`<span class="dday"><span class="hdot" style="background:${esc(hc)};width:9px;height:9px"></span>D+${d}${since}</span>`:""}</div>
+          ${d?`<span class="dday">${heartSvg(hc,15)}D+${d}${since}</span>`:""}</div>
         ${rows.join("") || `<div class="busy" style="padding-top:14px">아직 적힌 내용이 없어요.</div>`}
       </div>
     </div>`, true);
@@ -1388,7 +1393,7 @@ function editChar(id){
 function renderEditor(keep){
   const _m=$("modal"), _y=_m.scrollTop;
   const d = draft;
-  const heartBtns = HEARTS.map(h=>`<button type="button" class="cdot" style="background:${h}" data-heart="${h}" aria-pressed="${heartOf(d)===h}" aria-label="하트 색 ${h}"></button>`).join("");
+  const heartBtns = HEARTS.map(h=>`<button type="button" class="hbtn" data-heart="${h}" aria-pressed="${heartOf(d)===h}" aria-label="하트 색 ${h}">${heartSvg(h,24)}</button>`).join("");
   const blocks = (d.blocks||[]).map((b,i)=>{
     const kc = b.type==="tags"?"#4a8fb5":b.type==="images"?"#c7782a":b.type==="pair"?"#db2777":"#6b7278";
     const kn = b.type==="tags"?"태그":b.type==="images"?"이미지":b.type==="pair"?"페어":"텍스트";
@@ -1594,7 +1599,7 @@ document.addEventListener("click", async e=>{
   if(ds.tcolor){ readTagNames(); const [i,h]=ds.tcolor.split("|"); tagDraft[+i].color=h; renderTagManager(true); return; }
   if(ds.tdelask!==undefined){ readTagNames(); tagDraft.forEach(x=>x.confirm=false); tagDraft[+ds.tdelask].confirm=true; renderTagManager(true); return; }
   if(ds.tdel!==undefined){ readTagNames(); tagDraft.splice(+ds.tdel,1); renderTagManager(true); return; }
-  if(ds.heart){ readEditor(); draft.heart=ds.heart; renderEditor(); return; }
+  if(ds.heart){ readEditor(); draft.heart=ds.heart; renderEditor(true); return; }
   if(ds.addblock==="pair"){ readEditor(); draft.blocks.push({id:newId(),type:"pair",label:"페어",name:"",link:"",groups:[{label:"외형",text:""},{label:"의상",text:""}],couple:"",note:""}); renderEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const pi=$("pn-"+draft.blocks[draft.blocks.length-1].id); if(pi) pi.focus(); return; }
   if(ds.pgadd){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.pgadd); if(b){ b.groups=b.groups||[]; b.groups.push({label:"",text:""}); } renderEditor(true); return; }
   if(ds.pgdel){ readEditor(); const [bid,gi]=ds.pgdel.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b&&b.groups) b.groups.splice(+gi,1); renderEditor(true); return; }
