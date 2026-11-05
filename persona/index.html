@@ -463,6 +463,8 @@ html.ui-dark .ppl{color:#93b4ff}
 .pm-badge{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:6px;background:#2563eb;color:#fff;font-size:11px;font-weight:700}
 .code.light{background:var(--soft);color:var(--ink)}
 .pg select{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:6px 8px;font-size:13px;width:100%}
+.fp-ed{border-color:color-mix(in srgb,#db2777 35%,var(--rule))}
+.fp-ed .bhead input{font-size:15px}
 </style>
 </head>
 <body>
@@ -788,6 +790,95 @@ function pairEditorHtml(d, b){
   </div>`;
 }
 
+/* ================= 친구 캐릭터: 친구 1명 = 카드 1장, 아래에 페르소나 여러 개 ================= */
+function fpBlocks(c){ return (c.blocks||[]).filter(b=>b.type==="fpersona"); }
+function newFp(){ return {id:newId(), type:"fpersona", name:"", image:"", groups:[{label:"외형",text:""},{label:"의상",text:""}], note:""}; }
+function fpCover(c){ if(c.cover) return c.cover; const f = fpBlocks(c).find(b=>b.image); return f ? f.image : ""; }
+function fpNames(c){ return fpBlocks(c).map(b=>b.name).filter(Boolean); }
+/* 예전 형식(캐릭터 1명 = 카드 1장)을 새 형식으로 */
+function fpUpgrade(d){
+  if(fpBlocks(d).length) return d;
+  const tags = (d.blocks||[]).filter(b=>b.type==="tags");
+  const texts = (d.blocks||[]).filter(b=>b.type==="text" && (b.text||"").trim());
+  const legacy = d.name || tags.some(b=>(b.text||"").trim());
+  const p = newFp();
+  if(legacy){
+    p.name = d.name || ""; p.image = d.cover || "";
+    if(tags.length) p.groups = tags.map(b=>({label:b.label||"태그", text:b.text||""}));
+    p.note = texts.map(b=>(b.label?b.label+": ":"")+b.text).join("\n");
+    d.name = d.owner || ""; d.owner = ""; delete d.cover;
+  }
+  d.blocks = [p];
+  return d;
+}
+function fpEditorHtml(b, i, n){
+  return `<div class="block fp-ed">
+    <div class="bhead"><span class="kind" style="color:#db2777">페르소나 ${i+1}</span>
+      <input id="fpn-${b.id}" data-fp="${b.id}|name" value="${esc(b.name||"")}" placeholder="캐릭터 이름" aria-label="캐릭터 이름">
+      <button class="icon-btn" type="button" data-fpmove="${i}|-1" aria-label="위로" ${i===0?"disabled":""}>↑</button>
+      <button class="icon-btn" type="button" data-fpmove="${i}|1" aria-label="아래로" ${i===n-1?"disabled":""}>↓</button>
+      <button class="icon-btn" type="button" data-fpdel="${i}" aria-label="페르소나 삭제" ${n===1?"disabled":""}>✕</button></div>
+    <div class="imgpick"><div class="pv" style="width:64px;height:84px">${b.image?`<img src="${esc(src(b.image))}" alt="">`:"이미지"}</div>
+      <div class="addrow"><button class="btn" type="button" data-fppick="${b.id}">${b.image?"이미지 바꾸기":"이미지 고르기"}</button>${b.image?`<button class="btn" type="button" data-fprm="${b.id}">빼기</button>`:""}<span class="busy" id="busy-${b.id}"></span></div></div>
+    ${(b.groups||[]).map((g,gi)=>`<div class="pg"><div class="bhead"><input data-fpg="${b.id}|${gi}|label" value="${esc(g.label||"")}" placeholder="묶음 이름 (예: 외형)" aria-label="묶음 이름"><button class="icon-btn" type="button" data-fpgdel="${b.id}|${gi}" aria-label="묶음 삭제">✕</button></div>
+      <textarea rows="3" data-fpg="${b.id}|${gi}|text" placeholder="1girl, pink hair … (쉼표로 구분)" aria-label="프롬">${esc(g.text||"")}</textarea></div>`).join("")}
+    <div><button class="btn" type="button" data-fpgadd="${b.id}">+ 프롬 묶음</button></div>
+    <label class="lab-s" for="fpm-${b.id}">메모 <span class="hint">· 설정, 사용 허락 범위 등</span><textarea id="fpm-${b.id}" rows="2" data-fp="${b.id}|note">${esc(b.note||"")}</textarea></label>
+  </div>`;
+}
+function renderFriendEditor(keep){
+  const _m=$("modal"), _y=_m.scrollTop, d=draft;
+  fpUpgrade(d);
+  const fps = fpBlocks(d);
+  openModal(`<div class="mtop"><span></span><button class="mbtn x" type="button" data-act="cancelEdit" aria-label="닫기">×</button></div>
+  <div class="mbody"><div class="form">
+    <h3>${d._new?"친구 추가":"친구 수정"}</h3>
+    <div class="two">
+      <div class="f"><label for="e-name">친구 닉네임</label><input type="text" id="e-name" data-f="name" value="${esc(d.name||"")}" placeholder="곰곰"></div>
+      <div class="f"><label for="k-owner">아이디 <span class="hint">· @아이디나 SNS 주소</span></label><input type="text" id="k-owner" data-f="owner" value="${esc(d.owner||"")}" placeholder="@gomgom"></div>
+    </div>
+    <div class="f"><span class="lab">분류 태그 <span class="hint">· 눌러서 고르기</span></span>
+      <div class="tagpick" role="group" aria-label="분류 태그">${allTags().concat((d.tags||[]).filter(t=>!allTags().includes(t))).map(t=>`<button type="button" class="tagopt" data-tagpick="${esc(t)}" aria-pressed="${(d.tags||[]).includes(t)}" style="--tc:${tagColor(t)}">${esc(t)}</button>`).join("") || `<span class="busy">아직 태그가 없어요</span>`}</div>
+      <div class="addrow"><input type="text" id="e-newtag" placeholder="새 태그 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addTagInEditor">+ 태그 만들기</button></div></div>
+    <div class="f"><span class="lab">이 친구의 페르소나 <span class="hint">· 캐릭터 이름, 이미지, 프롬</span></span></div>
+    ${fps.map((b,i)=>fpEditorHtml(b,i,fps.length)).join("")}
+    <div><button class="btn dark" type="button" data-act="fpAdd">+ 페르소나 추가</button></div>
+    <div class="foot">${!d._new?`<button class="btn danger left" type="button" data-act="askDel">삭제</button>`:""}
+      <button class="btn" type="button" data-act="cancelEdit">취소</button><button class="btn dark" type="button" data-act="saveEdit">저장</button></div>
+  </div></div>`, true);
+  if(keep) _m.scrollTop=_y;
+}
+function readFriendEditor(){
+  if(!draft) return;
+  document.querySelectorAll("[data-fp]").forEach(el=>{ const [bid,f]=el.dataset.fp.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b) b[f]=el.value; });
+  document.querySelectorAll("[data-fpg]").forEach(el=>{ const [bid,gi,f]=el.dataset.fpg.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b&&b.groups&&b.groups[+gi]) b.groups[+gi][f]=el.value; });
+}
+function fpItems(b){ return (b.groups||[]).map(g=>({label:g.label||"태그", items:splitTags(g.text)})).filter(g=>g.items.length); }
+function fpHtml(c, b){
+  const gs = fpItems(b); const all = gs.flatMap(g=>g.items);
+  return `<div class="pair">
+    <div class="pair-h">${b.image?`<img src="${esc(src(b.image))}" alt="" data-zoom="${esc(b.image)}">`:`<span class="pair-ph">${esc((b.name||"?").charAt(0))}</span>`}
+      <div><b>${esc(b.name||"이름 없음")}</b>${b.note?`<div class="txt" style="font-size:13px;color:var(--muted)">${richText(b.note)}</div>`:""}</div></div>
+    ${gs.map((g,gi)=>`<div class="pg-v"><div class="pg-l">${esc(g.label)}</div><div class="ptags">${g.items.map(x=>`<span class="ptag">${esc(x)}</span>`).join("")}</div><button class="copy" type="button" data-fpcopy="${esc(b.id)}|${gi}">COPY</button></div>`).join("")}
+    ${gs.length>=2?`<div class="pg-v"><div class="pg-l">종합 태그</div><div class="code">${esc(all.join(", "))}</div><button class="copy strong" type="button" data-fpcopy="${esc(b.id)}|all">COPY ALL</button></div>`:""}
+  </div>`;
+}
+document.addEventListener("click", async e=>{
+  const t = e.target.closest("button"); if(!t || !draft || kind!=="friend") return; const ds = t.dataset;
+  if(ds.act==="fpAdd"){ readEditor(); draft.blocks.push(newFp()); renderFriendEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const last=fpBlocks(draft).slice(-1)[0]; const inp=last&&$("fpn-"+last.id); if(inp) inp.focus(); return; }
+  if(ds.fpmove){ readEditor(); const [i,s2]=ds.fpmove.split("|").map(Number); const fps=fpBlocks(draft); const j=i+s2; if(j>=0&&j<fps.length){ const a=draft.blocks.indexOf(fps[i]), b2=draft.blocks.indexOf(fps[j]); [draft.blocks[a],draft.blocks[b2]]=[draft.blocks[b2],draft.blocks[a]]; } renderFriendEditor(true); return; }
+  if(ds.fpdel!==undefined){ readEditor(); const fps=fpBlocks(draft); if(fps.length>1){ draft.blocks.splice(draft.blocks.indexOf(fps[+ds.fpdel]),1); } renderFriendEditor(true); return; }
+  if(ds.fpgadd){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.fpgadd); if(b){ b.groups=b.groups||[]; b.groups.push({label:"",text:""}); } renderFriendEditor(true); return; }
+  if(ds.fpgdel){ readEditor(); const [bid,gi]=ds.fpgdel.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b&&b.groups) b.groups.splice(+gi,1); renderFriendEditor(true); return; }
+  if(ds.fprm){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.fprm); if(b) b.image=""; renderFriendEditor(true); return; }
+  if(ds.fppick){ readEditor(); const [f]=await pickFiles(false); if(!f) return; const sp=$("busy-"+ds.fppick); if(sp) sp.textContent="올리는 중…"; const r=await storeImage(f); const b=draft.blocks.find(x=>x.id===ds.fppick); if(r&&b) b.image=r; renderFriendEditor(true); return; }
+});
+document.addEventListener("click", e=>{
+  const t = e.target.closest("button[data-fpcopy]"); if(!t) return;
+  const [bid,k] = t.dataset.fpcopy.split("|"); const c = findChar(openId); const b = c && (c.blocks||[]).find(x=>x.id===bid); if(!b) return;
+  const gs = fpItems(b); copy((k==="all" ? gs.flatMap(g=>g.items) : (gs[+k]||{items:[]}).items).join(", "));
+});
+
 /* ================= 탭(종류)별 캐릭터 + 탭별 공개 설정 ================= */
 const KINDS = {
   mine:  {label:"내 페르소나", coll:"chars",       img:"images",       prefix:"fs:", defVis:"public"},
@@ -907,7 +998,7 @@ function kindLine(c){
     const st = AI_STATUS.find(x=>x[0]===c.status);
     return `<div class="kline">${c.platform?`<span class="pf">${esc(c.platform)}</span>`:""}${c.maker?`<span>${esc(c.maker)}</span>`:""}${c.chats?`<span>대화 ${esc(c.chats)}번</span>`:""}${st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""}</div>`;
   }
-  if(kind==="friend") return c.owner ? `<div class="kline"><span class="who">${esc(c.owner)}의 캐릭터</span></div>` : "";
+  if(kind==="friend"){ const nm = fpNames(c); return `<div class="kline">${c.owner?`<span class="who">${esc(c.owner)}</span>`:""}${nm.length?`<span>페르소나 ${nm.length} · ${esc(nm.join(", "))}</span>`:""}</div>`; }
   return "";
 }
 function withNames(c){ return (c.with||[]).map(id=>(store.mine||[]).find(x=>x.id===id)).filter(Boolean); }
@@ -919,7 +1010,7 @@ function kindRows(c){
     if(bits.length) out.push(row("정보", `<div class="kline big">${bits.map(b=>`<span>${b}</span>`).join("")}</div>`));
     if(c.link) out.push(row("봇 링크", `<div class="txt">${linkify(esc(c.link))}</div>`));
   }
-  if(kind==="friend" && c.owner) out.push(row("주인", `<div class="txt">${linkify(esc(c.owner))}</div>`));
+  if(kind==="friend" && c.owner) out.push(row("아이디", `<div class="txt">${linkify(esc(c.owner))}</div>`));
   if(kind!=="mine"){
     const w = withNames(c);
     if(w.length) out.push(row("함께하는 내 페르소나", `<div class="tagpick">${w.map(m=>`<button type="button" class="tagopt" data-gochar="${esc(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name)}</button>`).join("")}</div>`));
@@ -1101,7 +1192,12 @@ function readNoteEditor(){
 }
 function drawerCharOptions(){
   const groups = [["mine","내 페르소나"],["ai","AI 캐릭터"],["friend","친구 캐릭터"]].map(([k,l])=>{
-    const arr = (store[k] || (k==="mine" ? chars : [])).filter(c=>(c.blocks||[]).some(b=>b.type==="tags" && (b.text||"").trim()));
+    const all = store[k] || (k==="mine" ? chars : []);
+    if(k==="friend"){
+      const opts = all.flatMap(c=>fpBlocks(c).filter(b=>(b.groups||[]).some(g=>(g.text||"").trim())).map(b=>`<option value="friend|${esc(c.id)}|${esc(b.id)}">${esc(b.name||"이름 없음")} (${esc(c.name||"친구")})</option>`));
+      return opts.length ? `<optgroup label="${l}">${opts.join("")}</optgroup>` : "";
+    }
+    const arr = all.filter(c=>(c.blocks||[]).some(b=>b.type==="tags" && (b.text||"").trim()));
     return arr.length ? `<optgroup label="${l}">${arr.map(c=>`<option value="${k}|${esc(c.id)}">${esc(c.name||"이름 없음")}</option>`).join("")}</optgroup>` : "";
   }).join("");
   return groups || `<option value="" disabled>태그가 있는 캐릭터가 없어요</option>`;
@@ -1265,13 +1361,15 @@ document.addEventListener("input", e=>{
 });
 document.addEventListener("change", e=>{
   const el = e.target; if(!el.dataset || el.dataset.nechpull===undefined || !noteDraft) return;
-  const v = el.value; if(!v) return; const [k,id] = v.split("|");
+  const v = el.value; if(!v) return; const [k,id,bid] = v.split("|");
   const c = (store[k] || (k==="mine" ? chars : [])).find(x=>x.id===id); if(!c) return;
   readNoteEditor();
   const i = +el.dataset.nechpull; const ch = noteDraft.chars[i];
-  ch.text = (c.blocks||[]).filter(b=>b.type==="tags").flatMap(b=>splitTags(b.text)).join(", ");
-  if(!ch.name) ch.name = c.name || "";
-  renderNoteEditor(true); toast(`${c.name}의 태그를 불러왔어요`);
+  let nm = c.name || "";
+  if(bid){ const b = (c.blocks||[]).find(x=>x.id===bid); if(!b) return; ch.text = (b.groups||[]).flatMap(g=>splitTags(g.text)).join(", "); nm = b.name || nm; }
+  else ch.text = (c.blocks||[]).filter(b=>b.type==="tags").flatMap(b=>splitTags(b.text)).join(", ");
+  if(!ch.name) ch.name = nm;
+  renderNoteEditor(true); toast(`${nm}의 태그를 불러왔어요`);
 });
 document.addEventListener("keydown", e=>{ if(e.key==="Enter" && e.target.id==="c-new"){ e.preventDefault(); const x=document.querySelector('[data-nact="cAdd"]'); if(x) x.click(); } });
 
@@ -1288,7 +1386,7 @@ function filtered(){
   const q = filt.q.trim().toLowerCase();
   let l = list().filter(c=>{
     if(filt.tag && !(c.tags||[]).includes(filt.tag)) return false;
-    if(q && !(`${c.name} ${c.sub||""} ${c.hashtags||""} ${(c.tags||[]).join(" ")} ${pairNames(c).join(" ")} ${c.platform||""} ${c.maker||""} ${c.owner||""}}`.toLowerCase().includes(q))) return false;
+    if(q && !(`${c.name} ${c.sub||""} ${c.hashtags||""} ${(c.tags||[]).join(" ")} ${pairNames(c).join(" ")} ${c.platform||""} ${c.maker||""} ${c.owner||""} ${fpBlocks(c).map(b=>(b.name||"")+" "+(b.groups||[]).map(g=>g.text||"").join(" ")).join(" ")}}`.toLowerCase().includes(q))) return false;
     return true;
   });
   const by = {
@@ -1365,7 +1463,8 @@ function render(){
 }
 function card(c){
   const d = kind==="friend" ? null : dday(c.start), hc = heartOf(c);
-  const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,false);
+  const _cv = kind==="friend" ? fpCover(c) : c.cover;
+  const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,false);
   return `<article class="card" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
     <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday">${heartSvg(hc,12)}D+${d}</span>`:kind==="friend"?"":heartSvg(hc,12)}</div>
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
@@ -1377,7 +1476,8 @@ function card(c){
 }
 function listRow(c){
   const d = kind==="friend" ? null : dday(c.start), hc = heartOf(c), pn = pairNames(c);
-  const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,true);
+  const _cv = kind==="friend" ? fpCover(c) : c.cover;
+  const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,true);
   return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
     <span class="l-no">No.${numberOf(c.id)}</span>
     <div class="l-th">${img}</div>
@@ -1397,7 +1497,8 @@ function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
   openId=id; draft=null;
   const hc = heartOf(c), d = kind==="friend" ? null : dday(c.start);
-  const cover = c.cover ? `<div class="cover"><img src="${esc(src(c.cover))}" alt="${esc(c.name)}" data-zoom="${esc(c.cover)}"></div>`
+  const _cv = kind==="friend" ? fpCover(c) : c.cover;
+  const cover = _cv ? `<div class="cover"><img src="${esc(src(_cv))}" alt="${esc(c.name)}" data-zoom="${esc(_cv)}"></div>`
     : `<div class="cover">${phHtml(c,true)}</div>`;
   const rows = [];
   rows.push(...kindRows(c));
@@ -1414,6 +1515,8 @@ function viewChar(id){
     } else if(b.type==="text"){
       if(!b.text) return;
       rows.push(row(label, `<div class="txt">${richText(b.text)}</div><button class="copy" type="button" data-copytext="${esc(b.id)}">COPY</button>`));
+    } else if(b.type==="fpersona"){
+      rows.push(row(esc(b.name||"페르소나"), fpHtml(c, b)));
     } else if(b.type==="pair"){
       const h = pairHtml(c, b); if(h) rows.push(row(label||"페어", h));
     } else if(b.type==="images"){
@@ -1449,12 +1552,13 @@ function editChar(id){
   const maxOrder = chars.reduce((m,c)=>Math.max(m,c.order||0),0);
   draft = base ? JSON.parse(JSON.stringify(base)) : {
     id:newId(), name:"", sub:"", hashtags:"", tags: filt.tag?[filt.tag]:[], heart:HEARTS[hash(Date.now())%6], start:"", order:maxOrder+1,
-    blocks: kind==="friend" ? [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""}] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
+    blocks: kind==="friend" ? [newFp()] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
   };
   if(draft.example){ draft.wasExample = true; }
   openId = draft.id; renderEditor();
 }
 function renderEditor(keep){
+  if(kind==="friend") return renderFriendEditor(keep);
   const _m=$("modal"), _y=_m.scrollTop;
   const d = draft;
   const heartBtns = HEARTS.map(h=>`<button type="button" class="hbtn" data-heart="${h}" aria-pressed="${heartOf(d)===h}" aria-label="하트 색 ${h}">${heartSvg(h,24)}</button>`).join("");
@@ -1513,6 +1617,7 @@ function readEditor(){
   document.querySelectorAll("[data-btext]").forEach(el=>{ const b=draft.blocks.find(x=>x.id===el.dataset.btext); if(b) b.text=el.value; });
   document.querySelectorAll("[data-pf]").forEach(el=>{ const [bid,f]=el.dataset.pf.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b) b[f]=el.value; });
   document.querySelectorAll("[data-pg]").forEach(el=>{ const [bid,gi,f]=el.dataset.pg.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b&&b.groups&&b.groups[+gi]) b.groups[+gi][f]=el.value; });
+  if(kind==="friend") readFriendEditor();
 }
 async function saveEdit(){
   readEditor();
@@ -1521,7 +1626,7 @@ async function saveEdit(){
   delete c.example; delete c._new; delete c.wasExample;
   if(!c.name) c.name="이름 없음";
   c.createdAt = c.createdAt || now; c.updatedAt = now;
-  c.blocks = (c.blocks||[]).filter(b=> b.type==="images" ? (b.images||[]).length : (b.text||"").trim() || b.label);
+  c.blocks = (c.blocks||[]).filter(b=> b.type==="fpersona" ? ((b.name||"").trim() || b.image || (b.note||"").trim() || (b.groups||[]).some(g=>(g.text||"").trim())) : b.type==="images" ? (b.images||[]).length : (b.text||"").trim() || b.label);
   await saveChar(c);
   viewChar(c.id); toast("저장했어요");
 }
