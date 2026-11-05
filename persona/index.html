@@ -567,6 +567,18 @@ html.L-mo .grid.compact .ph-name b{font-size:calc(var(--fs) * .42)}
 #tagrow .tagbtn[aria-pressed="true"][style*="--tc"] .n{color:inherit;opacity:.8}
 #tagrow .tagbtn[data-tag=""][aria-pressed="true"]{background:var(--soft);color:var(--ink);border:1.5px solid var(--ink) !important;font-weight:700;padding:5.5px 12.5px}
 #tagrow .tagbtn[data-tag=""][aria-pressed="true"] .n{color:var(--muted);opacity:1}
+
+/* 순서 바꾸기 */
+.card,.mrow{position:relative}
+.card.moving,.mrow.moving{cursor:default;outline:1.5px dashed var(--muted);outline-offset:-1.5px}
+.card.moving:hover{transform:none;box-shadow:none}
+.mv{position:absolute;top:6px;right:6px;z-index:3;display:flex;gap:4px}
+.mv button{width:32px;height:32px;border-radius:50%;border:1px solid var(--rule);background:var(--surface);color:var(--ink);font-size:12px;line-height:1;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.mv button:hover{background:var(--ink);color:var(--surface)}
+html.L-mo .mv button{width:28px;height:28px;font-size:11px}
+html.L-mo .grid.compact .mv{top:3px;right:3px;gap:2px}
+html.L-mo .grid.compact .mv button{width:24px;height:24px;font-size:10px}
+#reSeg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:700}
 </style>
 </head>
 <body>
@@ -600,6 +612,7 @@ html.L-mo .grid.compact .ph-name b{font-size:calc(var(--fs) * .42)}
     <div class="seg" id="viewSeg" role="group" aria-label="보기 방식">
       <button type="button" data-view="card" aria-pressed="true">기본</button><button type="button" data-view="compact" aria-pressed="false">작게</button><button type="button" data-view="list" aria-pressed="false">목록</button>
     </div>
+    <div class="seg" id="reSeg" hidden><button type="button" id="reorderBtn" aria-pressed="false">순서 바꾸기</button></div>
     <button class="add-btn" id="addBtn" type="button" hidden>+ 새 항목</button>
   </div>
   <div class="tagbar platbar" id="platrow" role="group" aria-label="플랫폼으로 보기" hidden></div>
@@ -649,7 +662,7 @@ const OLD_KEY = "persona-drawer:v1";
 /* ---------- state ---------- */
 let chars = [], settings = {}, mode = "local", canEdit = true;
 let db = null, assets = null, uid = null, downloadsNs = null;
-let filt = {q:"", tag:null, platform:null, sort:"order", rev:false, view:"card"};
+let filt = {q:"", tag:null, platform:null, sort:"order", rev:false, view:"card", reorder:false};
 try{ const v=localStorage.getItem("persona-view"); if(v==="card"||v==="compact"||v==="list") filt.view=v; }catch(e){}
 let openId = null, draft = null, editingSettings = false;
 
@@ -905,7 +918,7 @@ function pairEditorHtml(d, b){
 const GENDERS = [["m","남"],["f","여"],["x","그 외"]];
 function genderBadge(g){ const x = GENDERS.find(v=>v[0]===g); return x ? `<span class="gbadge g-${g}" title="성별: ${x[1]}">${x[1]}</span>` : ""; }
 function genderSeg(cur, attr){ return `<div class="seg gseg" role="group" aria-label="성별">${GENDERS.map(([v,n])=>`<button type="button" ${attr}="${v}" aria-pressed="${cur===v}">${n}</button>`).join("")}</div>`; }
-/* ================= 친구 캐릭터: 친구 1명 = 카드 1장, 아래에 페르소나 여러 개 ================= */
+/* ================= 친구 페르소나: 친구 1명 = 카드 1장, 아래에 페르소나 여러 개 ================= */
 let fpOpen = new Set(), fpOpenFor = null;
 function fpBlocks(c){ return (c.blocks||[]).filter(b=>b.type==="fpersona"); }
 function newFp(){ return {id:newId(), type:"fpersona", name:"", image:"", groups:[{label:"외형",text:""},{label:"의상",text:""}], note:""}; }
@@ -1126,7 +1139,7 @@ document.addEventListener("keydown", e=>{
 const KINDS = {
   mine:  {label:"내 페르소나", coll:"chars",       img:"images",       prefix:"fs:", defVis:"public"},
   ai:    {label:"AI 캐릭터",   coll:"aiChars",     img:"aiImages",     prefix:"ai:", defVis:"public"},
-  friend:{label:"친구 캐릭터", coll:"friendChars", img:"friendImages", prefix:"fr:", defVis:"private"}
+  friend:{label:"친구 페르소나", coll:"friendChars", img:"friendImages", prefix:"fr:", defVis:"private"}
 };
 const PAGE_ORDER = ["mine","ai","friend","notes"];
 const IMG_PREFIX = {"fs:":"images","ai:":"aiImages","fr:":"friendImages","np:":"noteImages","si:":"siteImages"};
@@ -1206,7 +1219,7 @@ function setPage(p, fromHash){
   if(!vp.includes(p)) p = vp[0] || "mine";
   page = p;
   if(p!=="notes"){
-    if(kind!==p) { kind = p; filt.tag = null; filt.platform = null; }
+    if(kind!==p) { kind = p; filt.tag = null; filt.platform = null; filt.reorder = false; }
     if(store[p]) chars = store[p]; else if(p!=="mine") chars = [];
   }
   if(canEdit){ try{ localStorage.setItem("persona-page", page); }catch(e){} }
@@ -1264,7 +1277,7 @@ function kindEditorHtml(d){
   if(kind==="mine") return "";
   const mine = (store.mine||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
   const withPick = `<div class="f"><span class="lab">함께하는 내 페르소나 <span class="hint">· 눌러서 고르기</span></span><div class="tagpick">${mine.length ? mine.map(m=>`<button type="button" class="tagopt" data-kwith="${esc(m.id)}" aria-pressed="${(d.with||[]).includes(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name||"이름 없음")}</button>`).join("") : `<span class="busy">내 페르소나가 아직 없어요</span>`}</div></div>`;
-  if(kind==="friend") return `<div class="kbox"><div class="kbox-t">친구 캐릭터 정보</div>
+  if(kind==="friend") return `<div class="kbox"><div class="kbox-t">친구 정보</div>
     <div class="f"><label for="k-owner">주인 <span class="hint">· 친구 닉네임이나 SNS 주소</span></label><input type="text" id="k-owner" data-f="owner" value="${esc(d.owner||"")}" placeholder="@친구닉네임"></div></div>`;
   const plats = Array.from(new Set((store.ai||[]).map(c=>c.platform).filter(Boolean).concat(["CRACK","ZETA","CAVEDUCK"])));
   return `<div class="kbox"><div class="kbox-t">AI 캐릭터 정보</div>
@@ -1274,7 +1287,7 @@ function kindEditorHtml(d){
     <div class="f"><span class="lab">진행 상태</span><div class="seg" role="group" aria-label="진행 상태" style="width:fit-content">${AI_STATUS.map(([v,n])=>`<button type="button" data-kstatus="${v}" aria-pressed="${d.status===v}">${n}</button>`).join("")}</div></div>
     ${withPick}</div>`;
 }
-const PAGE_NAMES = {mine:"내 페르소나", ai:"AI 캐릭터", friend:"친구 캐릭터", notes:"프롬 노트"};
+const PAGE_NAMES = {mine:"내 페르소나", ai:"AI 캐릭터", friend:"친구 페르소나", notes:"프롬 노트"};
 function visSettingsHtml(){
   if(!multiKind() || !canEdit) return "";
   if(!visDraft) visDraft = {mine:visOf("mine"), ai:visOf("ai"), friend:visOf("friend"), notes:visOf("notes"), order:pageOrder()};
@@ -1433,7 +1446,7 @@ function readNoteEditor(){
   const fv=$("ne-fav"); if(fv) noteDraft.fav=fv.checked;
 }
 function drawerCharOptions(){
-  const groups = [["mine","내 페르소나"],["ai","AI 캐릭터"],["friend","친구 캐릭터"]].map(([k,l])=>{
+  const groups = [["mine","내 페르소나"],["ai","AI 캐릭터"],["friend","친구 페르소나"]].map(([k,l])=>{
     const all = store[k] || (k==="mine" ? chars : []);
     if(k==="friend"){
       const opts = all.flatMap(c=>fpBlocks(c).filter(b=>(b.groups||[]).some(g=>(g.text||"").trim())).map(b=>`<option value="friend|${esc(c.id)}|${esc(b.id)}">${esc(b.name||"이름 없음")} (${esc(c.name||"친구")})</option>`));
@@ -1624,6 +1637,21 @@ function allTags(){
   const used=[]; src.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(c=>(c.tags||[]).forEach(t=>{ if(!used.includes(t)) used.push(t); }));
   return order.concat(used.filter(t=>!order.includes(t)));
 }
+let mvBusy = false;
+async function moveChar(id, dir){
+  if(mvBusy || !canEdit) return;
+  const vis = filtered(); const i = vis.findIndex(c=>c.id===id), j = i+dir;
+  if(i<0 || j<0 || j>=vis.length) return;
+  const full = chars.slice().sort((a,b)=>(a.order||0)-(b.order||0) || (a.createdAt||0)-(b.createdAt||0));
+  const a = full.findIndex(c=>c.id===vis[i].id), b = full.findIndex(c=>c.id===vis[j].id);
+  [full[a], full[b]] = [full[b], full[a]];
+  const changed = []; full.forEach((c,k)=>{ if(c.order!==k+1) changed.push({...c, order:k+1}); });
+  if(!changed.length) return;
+  mvBusy = true;
+  try{ for(const c of changed){ if((await saveChar(c))===false) break; } }
+  finally{ mvBusy = false; }
+  const el = document.querySelector(`[data-mv="${CSS.escape(id)}:${dir}"]`); if(el) el.focus();
+}
 function filtered(){
   const q = filt.q.trim().toLowerCase();
   let l = list().filter(c=>{
@@ -1694,9 +1722,15 @@ function render(){
     tags.map(t=>`<button class="tagbtn" type="button" data-tag="${esc(t)}" aria-pressed="${filt.tag===t}" style="--tc:${tagColor(t)}">${esc(t)}<span class="n">${String(l0.filter(c=>(c.tags||[]).includes(t)).length).padStart(2,"0")}</span></button>`).join("") +
     (canEdit ? `<button class="tagbtn manage" type="button" data-act="tags">태그 관리</button>` : "");
   if(kind==="friend" && filt.sort==="dday") filt.sort="order";
+  if(!canEdit || !chars.length) filt.reorder = false;
+  if(filt.reorder){ filt.sort="order"; filt.rev=false; filt.q=""; if($("q")) $("q").value=""; }
+  $("reSeg").hidden = !canEdit || !chars.length;
+  $("reorderBtn").setAttribute("aria-pressed", filt.reorder); $("reorderBtn").textContent = filt.reorder ? "순서 바꾸기 끝" : "순서 바꾸기";
+  $("rev").setAttribute("aria-pressed", filt.rev);
   document.querySelectorAll("#sortSeg [data-sort]").forEach(b=>{ b.setAttribute("aria-pressed", b.dataset.sort===filt.sort); if(b.dataset.sort==="dday") b.hidden = kind==="friend"; });
   const n = [];
   if(!chars.length && list().length) n.push(`<div class="note">지금 보이는 카드 ${list().length}장은 예시예요.${canEdit?` 첫 항목을 추가하면 사라져요. <button class="add-btn" type="button" data-act="add">+ 새 항목</button>`:""}</div>`);
+  if(filt.reorder) n.push(`<div class="note reorder-note">카드의 ◀ ▶ 를 눌러 순서를 옮겨요. 옮기면 바로 저장되고, 방문자에게도 이 순서(기본순)로 보여요. <button class="btn dark" type="button" id="reorderDone">끝내기</button></div>`);
   if(migrateNote) n.push(migrateNote);
   if(mode!=="cloud" && localReason) n.push(`<div class="note">${esc(localReason)}</div>`);
   $("notes").innerHTML = n.join("");
@@ -1711,8 +1745,8 @@ function card(c){
   const d = (kind==="friend"||kind==="ai") ? null : dday(c.start), hc = heartOf(c);
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
   const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,false);
-  return `<article class="card" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
-    ${kind==="friend" ? "" : `<div class="card-top">${d?`<span class="dday">${heartSvg(hc,12)}D+${d}</span>`:heartSvg(hc,12)}</div>`}
+  return `<article class="card${filt.reorder?" moving":""}" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">${filt.reorder?`<div class="mv"><button type="button" data-mv="${esc(c.id)}:-1" aria-label="앞으로">◀</button><button type="button" data-mv="${esc(c.id)}:1" aria-label="뒤로">▶</button></div>`:""}
+    ${kind==="friend"||kind==="ai" ? "" : `<div class="card-top">${d?`<span class="dday">${heartSvg(hc,12)}D+${d}</span>`:heartSvg(hc,12)}</div>`}
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
     <div class="info">
       <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${genderBadge(c.gender)}${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
@@ -1725,7 +1759,7 @@ function listRow(c){
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
   const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,true);
   const tags = sortTags(c.tags);
-  return `<article class="mrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
+  return `<article class="mrow${filt.reorder?" moving":""}" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">${filt.reorder?`<div class="mv"><button type="button" data-mv="${esc(c.id)}:-1" aria-label="앞으로">◀</button><button type="button" data-mv="${esc(c.id)}:1" aria-label="뒤로">▶</button></div>`:""}
     <div class="m-th">${img}</div>
     <div class="m-tx">
       <div class="m-nm"><b>${esc(c.name||"이름 없음")}</b>${genderBadge(c.gender)}${c.example?`<span class="ex">예시</span>`:""}</div>
@@ -1850,11 +1884,10 @@ function renderEditor(keep){
     <div class="f"><span class="lab">분류 태그 <span class="hint">· 눌러서 고르기, 색과 순서는 ‘태그 관리’에서</span></span>
       <div class="tagpick" role="group" aria-label="분류 태그">${allTags().concat((d.tags||[]).filter(t=>!allTags().includes(t))).map(t=>`<button type="button" class="tagopt" data-tagpick="${esc(t)}" aria-pressed="${(d.tags||[]).includes(t)}" style="--tc:${tagColor(t)}">${esc(t)}</button>`).join("") || `<span class="busy">아직 태그가 없어요</span>`}</div>
       <div class="addrow"><input type="text" id="e-newtag" placeholder="새 태그 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addTagInEditor">+ 태그 만들기</button></div></div>
-    ${kind==="friend"?"":`<div class="two">
+    ${kind==="friend"||kind==="ai"?"":`<div class="two">
       <div class="f"><span class="lab">하트 색</span><div class="colors">${heartBtns}<input type="color" id="e-heart" value="${esc(heartOf(d))}" aria-label="직접 고르기"></div></div>
       ${kind==="ai"?"<div></div>":`<div class="f"><label for="e-start">D+ 시작일 <span class="hint">· 비우면 표시 안 함</span></label><input type="date" id="e-start" data-f="start" value="${esc(d.start||"")}"></div>`}
     </div>`}
-    ${kind==="ai"?"":`<div class="f"><label for="e-order">순서 <span class="hint">· 기본순 정렬에 쓰여요, 작을수록 앞</span></label><input type="number" id="e-order" value="${esc(d.order||0)}" style="max-width:120px"></div>`}
     <div class="f"><span class="lab">상세 항목</span></div>
     ${blocks || `<div class="busy">아직 항목이 없어요.</div>`}
     <div class="addrow"><button class="btn" type="button" data-addblock="pair">+ 페어</button><button class="btn" type="button" data-addblock="tags">+ 태그 묶음</button><button class="btn" type="button" data-addblock="text">+ 텍스트</button><button class="btn" type="button" data-addblock="images">+ 이미지</button></div>
@@ -2015,7 +2048,9 @@ document.addEventListener("click", async e=>{
   const t = e.target.closest("button,[data-open],[data-zoom]"); if(!t) return;
   const ds = t.dataset;
   if(ds.zoom){ $("lbImg").src = src(ds.zoom); $("lb").classList.add("open"); return; }
-  if(ds.open){ viewChar(ds.open); return; }
+  if(ds.mv){ const k=ds.mv.lastIndexOf(":"); moveChar(ds.mv.slice(0,k), Number(ds.mv.slice(k+1))); return; }
+  if(t.id==="reorderBtn"||t.id==="reorderDone"){ filt.reorder = t.id==="reorderBtn" ? !filt.reorder : false; render(); return; }
+  if(ds.open){ if(filt.reorder) return; viewChar(ds.open); return; }
   if(ds.tag!==undefined){ filt.tag = (ds.tag===""||filt.tag===ds.tag)?null:ds.tag; render(); return; }
   if(ds.sort){ filt.sort=ds.sort; render(); return; }
   if(ds.copytags){ const c=findChar(openId); const b=c&&c.blocks.find(x=>x.id===ds.copytags); if(b) copy(splitTags(b.text).join(", ")); return; }
