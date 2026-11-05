@@ -465,6 +465,26 @@ html.ui-dark .ppl{color:#93b4ff}
 .pg select{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:6px 8px;font-size:13px;width:100%}
 .fp-ed{border-color:color-mix(in srgb,#db2777 35%,var(--rule))}
 .fp-ed .bhead input{font-size:15px}
+.gbadge{display:inline-grid;place-items:center;min-width:22px;height:20px;padding:0 6px;border-radius:6px;font-size:11.5px;font-weight:700;vertical-align:3px;margin-left:4px}
+.g-m{background:color-mix(in srgb,#2563eb 14%,transparent);color:#2563eb}
+.g-f{background:color-mix(in srgb,#db2777 14%,transparent);color:#db2777}
+.g-x{background:var(--soft);color:var(--muted)}
+html.ui-dark .g-m{color:#93b4ff} html.ui-dark .g-f{color:#f9a8d4}
+.spec-head .gbadge{align-self:center;height:24px;font-size:13px}
+.gseg{width:fit-content}
+.fp-row{display:flex;align-items:center;gap:10px}
+.fp-closed{padding:6px 8px}
+.fp-sum{display:flex;align-items:center;gap:4px}
+.fp-toggle{flex:1;min-width:0;display:flex;align-items:center;gap:10px;border:0;background:none;padding:4px;border-radius:10px;text-align:left}
+.fp-toggle:hover{background:var(--soft)}
+.fp-toggle.mini{flex:none;padding:4px 6px}
+.fp-toggle img,.fp-ph{width:36px;height:46px;border-radius:7px;object-fit:cover;flex:none;background:var(--soft);display:grid;place-items:center;font-weight:700;color:var(--muted)}
+.fp-txt{min-width:0;display:flex;flex-direction:column}
+.fp-txt b{font-size:15px}
+.fp-txt small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chev{width:16px;color:var(--muted);font-size:12px;flex:none;text-align:center}
+.fp-line{display:flex;align-items:center;gap:2px}
+.fp-line .gbadge{vertical-align:0}
 </style>
 </head>
 <body>
@@ -790,7 +810,12 @@ function pairEditorHtml(d, b){
   </div>`;
 }
 
+/* ---------- 성별 ---------- */
+const GENDERS = [["m","남"],["f","여"],["x","그 외"]];
+function genderBadge(g){ const x = GENDERS.find(v=>v[0]===g); return x ? `<span class="gbadge g-${g}" title="성별: ${x[1]}">${x[1]}</span>` : ""; }
+function genderSeg(cur, attr){ return `<div class="seg gseg" role="group" aria-label="성별">${GENDERS.map(([v,n])=>`<button type="button" ${attr}="${v}" aria-pressed="${cur===v}">${n}</button>`).join("")}</div>`; }
 /* ================= 친구 캐릭터: 친구 1명 = 카드 1장, 아래에 페르소나 여러 개 ================= */
+let fpOpen = new Set(), fpOpenFor = null;
 function fpBlocks(c){ return (c.blocks||[]).filter(b=>b.type==="fpersona"); }
 function newFp(){ return {id:newId(), type:"fpersona", name:"", image:"", groups:[{label:"외형",text:""},{label:"의상",text:""}], note:""}; }
 function fpCover(c){ if(c.cover) return c.cover; const f = fpBlocks(c).find(b=>b.image); return f ? f.image : ""; }
@@ -811,13 +836,28 @@ function fpUpgrade(d){
   d.blocks = [p];
   return d;
 }
+function fpSummary(b){
+  const gs = (b.groups||[]).filter(g=>(g.text||"").trim());
+  const first = gs.length ? gs[0].text.split(",").slice(0,4).join(",").trim() : "";
+  return gs.length ? `프롬 ${gs.length}묶음 · ${esc(first)}${gs[0].text.split(",").length>4?" …":""}` : "아직 프롬이 없어요";
+}
 function fpEditorHtml(b, i, n){
-  return `<div class="block fp-ed">
-    <div class="bhead"><span class="kind" style="color:#db2777">페르소나 ${i+1}</span>
-      <input id="fpn-${b.id}" data-fp="${b.id}|name" value="${esc(b.name||"")}" placeholder="캐릭터 이름" aria-label="캐릭터 이름">
-      <button class="icon-btn" type="button" data-fpmove="${i}|-1" aria-label="위로" ${i===0?"disabled":""}>↑</button>
+  const open = fpOpen.has(b.id);
+  const tools = `<button class="icon-btn" type="button" data-fpmove="${i}|-1" aria-label="위로" ${i===0?"disabled":""}>↑</button>
       <button class="icon-btn" type="button" data-fpmove="${i}|1" aria-label="아래로" ${i===n-1?"disabled":""}>↓</button>
-      <button class="icon-btn" type="button" data-fpdel="${i}" aria-label="페르소나 삭제" ${n===1?"disabled":""}>✕</button></div>
+      <button class="icon-btn" type="button" data-fpdel="${i}" aria-label="페르소나 삭제" ${n===1?"disabled":""}>✕</button>`;
+  if(!open) return `<div class="block fp-ed fp-closed">
+    <div class="fp-sum">
+      <button class="fp-toggle" type="button" data-fptoggle="${b.id}" aria-expanded="false" aria-label="${esc(b.name||"페르소나 "+(i+1))} 펼치기">
+        <span class="chev" aria-hidden="true">▸</span>
+        ${b.image?`<img src="${esc(src(b.image))}" alt="">`:`<span class="fp-ph">${esc((b.name||"?").charAt(0))}</span>`}
+        <span class="fp-txt"><span class="fp-line"><b>${esc(b.name||"이름 없음")}</b>${genderBadge(b.gender)}</span><small>${fpSummary(b)}</small></span>
+      </button>${tools}</div></div>`;
+  return `<div class="block fp-ed">
+    <div class="bhead"><button class="fp-toggle mini" type="button" data-fptoggle="${b.id}" aria-expanded="true" aria-label="접기"><span class="chev" aria-hidden="true">▾</span></button><span class="kind" style="color:#db2777">페르소나 ${i+1}</span>
+      <input id="fpn-${b.id}" data-fp="${b.id}|name" value="${esc(b.name||"")}" placeholder="캐릭터 이름" aria-label="캐릭터 이름">
+      ${tools}</div>
+    <div class="fp-row"><span class="lab">성별</span>${genderSeg(b.gender, `data-fpgender`).replace(/data-fpgender="(\w)"/g, `data-fpgender="${b.id}|$1"`)}</div>
     <div class="imgpick"><div class="pv" style="width:64px;height:84px">${b.image?`<img src="${esc(src(b.image))}" alt="">`:"이미지"}</div>
       <div class="addrow"><button class="btn" type="button" data-fppick="${b.id}">${b.image?"이미지 바꾸기":"이미지 고르기"}</button>${b.image?`<button class="btn" type="button" data-fprm="${b.id}">빼기</button>`:""}<span class="busy" id="busy-${b.id}"></span></div></div>
     ${(b.groups||[]).map((g,gi)=>`<div class="pg"><div class="bhead"><input data-fpg="${b.id}|${gi}|label" value="${esc(g.label||"")}" placeholder="묶음 이름 (예: 외형)" aria-label="묶음 이름"><button class="icon-btn" type="button" data-fpgdel="${b.id}|${gi}" aria-label="묶음 삭제">✕</button></div>
@@ -830,6 +870,7 @@ function renderFriendEditor(keep){
   const _m=$("modal"), _y=_m.scrollTop, d=draft;
   fpUpgrade(d);
   const fps = fpBlocks(d);
+  if(fpOpenFor!==d.id){ fpOpenFor = d.id; fpOpen = new Set(fps.length===1 || d._new ? fps.map(b=>b.id) : []); }
   openModal(`<div class="mtop"><span></span><button class="mbtn x" type="button" data-act="cancelEdit" aria-label="닫기">×</button></div>
   <div class="mbody"><div class="form">
     <h3>${d._new?"친구 추가":"친구 수정"}</h3>
@@ -842,7 +883,7 @@ function renderFriendEditor(keep){
       <div class="addrow"><input type="text" id="e-newtag" placeholder="새 태그 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addTagInEditor">+ 태그 만들기</button></div></div>
     <div class="f"><span class="lab">이 친구의 페르소나 <span class="hint">· 캐릭터 이름, 이미지, 프롬</span></span></div>
     ${fps.map((b,i)=>fpEditorHtml(b,i,fps.length)).join("")}
-    <div><button class="btn dark" type="button" data-act="fpAdd">+ 페르소나 추가</button></div>
+    <div class="addrow"><button class="btn dark" type="button" data-act="fpAdd">+ 페르소나 추가</button>${fps.length>1?`<button class="btn" type="button" data-act="fpAll">${fps.every(b=>fpOpen.has(b.id))?"모두 접기":"모두 펼치기"}</button>`:""}</div>
     <div class="foot">${!d._new?`<button class="btn danger left" type="button" data-act="askDel">삭제</button>`:""}
       <button class="btn" type="button" data-act="cancelEdit">취소</button><button class="btn dark" type="button" data-act="saveEdit">저장</button></div>
   </div></div>`, true);
@@ -858,14 +899,18 @@ function fpHtml(c, b){
   const gs = fpItems(b); const all = gs.flatMap(g=>g.items);
   return `<div class="pair">
     <div class="pair-h">${b.image?`<img src="${esc(src(b.image))}" alt="" data-zoom="${esc(b.image)}">`:`<span class="pair-ph">${esc((b.name||"?").charAt(0))}</span>`}
-      <div><b>${esc(b.name||"이름 없음")}</b>${b.note?`<div class="txt" style="font-size:13px;color:var(--muted)">${richText(b.note)}</div>`:""}</div></div>
+      <div><b>${esc(b.name||"이름 없음")}</b> ${genderBadge(b.gender)}${b.note?`<div class="txt" style="font-size:13px;color:var(--muted)">${richText(b.note)}</div>`:""}</div></div>
     ${gs.map((g,gi)=>`<div class="pg-v"><div class="pg-l">${esc(g.label)}</div><div class="ptags">${g.items.map(x=>`<span class="ptag">${esc(x)}</span>`).join("")}</div><button class="copy" type="button" data-fpcopy="${esc(b.id)}|${gi}">COPY</button></div>`).join("")}
     ${gs.length>=2?`<div class="pg-v"><div class="pg-l">종합 태그</div><div class="code">${esc(all.join(", "))}</div><button class="copy strong" type="button" data-fpcopy="${esc(b.id)}|all">COPY ALL</button></div>`:""}
   </div>`;
 }
 document.addEventListener("click", async e=>{
   const t = e.target.closest("button"); if(!t || !draft || kind!=="friend") return; const ds = t.dataset;
-  if(ds.act==="fpAdd"){ readEditor(); draft.blocks.push(newFp()); renderFriendEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const last=fpBlocks(draft).slice(-1)[0]; const inp=last&&$("fpn-"+last.id); if(inp) inp.focus(); return; }
+  if(ds.fptoggle){ readEditor(); fpOpen.has(ds.fptoggle) ? fpOpen.delete(ds.fptoggle) : fpOpen.add(ds.fptoggle); renderFriendEditor(true); return; }
+  if(ds.act==="fpAll"){ readEditor(); const fps=fpBlocks(draft); const allOpen=fps.every(b=>fpOpen.has(b.id)); fpOpen = new Set(allOpen?[]:fps.map(b=>b.id)); renderFriendEditor(true); return; }
+  if(ds.fpgender){ readEditor(); const [bid,v]=ds.fpgender.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b) b.gender = b.gender===v ? "" : v; renderFriendEditor(true); return; }
+  if(ds.act==="fpAdd"){ readEditor(); const nb=newFp(); fpOpen.add(nb.id); draft.blocks.push(nb); renderFriendEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const inp=$("fpn-"+nb.id); if(inp) inp.focus(); return; }
+  if(ds.act==="fpAdd_old"){ readEditor(); draft.blocks.push(newFp()); renderFriendEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const last=fpBlocks(draft).slice(-1)[0]; const inp=last&&$("fpn-"+last.id); if(inp) inp.focus(); return; }
   if(ds.fpmove){ readEditor(); const [i,s2]=ds.fpmove.split("|").map(Number); const fps=fpBlocks(draft); const j=i+s2; if(j>=0&&j<fps.length){ const a=draft.blocks.indexOf(fps[i]), b2=draft.blocks.indexOf(fps[j]); [draft.blocks[a],draft.blocks[b2]]=[draft.blocks[b2],draft.blocks[a]]; } renderFriendEditor(true); return; }
   if(ds.fpdel!==undefined){ readEditor(); const fps=fpBlocks(draft); if(fps.length>1){ draft.blocks.splice(draft.blocks.indexOf(fps[+ds.fpdel]),1); } renderFriendEditor(true); return; }
   if(ds.fpgadd){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.fpgadd); if(b){ b.groups=b.groups||[]; b.groups.push({label:"",text:""}); } renderFriendEditor(true); return; }
@@ -1469,7 +1514,7 @@ function card(c){
     <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday">${heartSvg(hc,12)}D+${d}</span>`:kind==="friend"?"":heartSvg(hc,12)}</div>
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
     <div class="info">
-      <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
+      <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${genderBadge(c.gender)}${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
       ${kindLine(c)}${c.hashtags||pairNames(c).length?`<div class="hash">${pairNames(c).length?`<span class="pairmark">× ${esc(pairNames(c).join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}
       ${(c.tags||[]).length?`<div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>`:""}
     </div></article>`;
@@ -1481,7 +1526,7 @@ function listRow(c){
   return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
     <span class="l-no">No.${numberOf(c.id)}</span>
     <div class="l-th">${img}</div>
-    <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>${kindLine(c)}
+    <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${genderBadge(c.gender)}${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>${kindLine(c)}
       ${c.hashtags||pn.length?`<div class="hash">${pn.length?`<span class="pairmark">× ${esc(pn.join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}</div>
     <div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>
     <span class="dday">${kind==="friend"?"":`${heartSvg(hc,12)}${d?`D+${d}`:""}`}</span>
@@ -1536,7 +1581,7 @@ function viewChar(id){
     <div class="sheet">
       <div class="side">${cover}${c.example?`<div class="busy">예시 카드예요.${canEdit?" 수정해서 저장하면 내 항목이 돼요.":""}</div>`:""}</div>
       <div class="spec">
-        <div class="spec-head"><h2>${esc(c.name||"이름 없음")}</h2>
+        <div class="spec-head"><h2>${esc(c.name||"이름 없음")}</h2>${genderBadge(c.gender)}
           ${c.sub||c.hashtags?`<span class="sub">${esc(c.sub||"")}${c.sub&&c.hashtags?" · ":""}${esc(c.hashtags||"")}</span>`:""}
           ${d?`<span class="dday">${heartSvg(hc,15)}D+${d}${since}</span>`:""}</div>
         ${rows.join("") || `<div class="busy" style="padding-top:14px">아직 적힌 내용이 없어요.</div>`}
@@ -1548,6 +1593,7 @@ async function copy(t){ try{ await navigator.clipboard.writeText(t); toast("복�
 
 /* ---------- modal: edit ---------- */
 function editChar(id){
+  fpOpenFor = null;
   const base = id ? findChar(id) : null;
   const maxOrder = chars.reduce((m,c)=>Math.max(m,c.order||0),0);
   draft = base ? JSON.parse(JSON.stringify(base)) : {
@@ -1588,6 +1634,7 @@ function renderEditor(keep){
       <div class="f"><label for="e-name">이름</label><input type="text" id="e-name" data-f="name" value="${esc(d.name)}" placeholder="포포"></div>
       ${kind==="friend"?"":`<div class="f"><label for="e-sub">부제 <span class="hint">· 짝, 별칭 등</span></label><input type="text" id="e-sub" data-f="sub" value="${esc(d.sub||"")}" placeholder="제노"></div>`}
     </div>
+    ${kind==="mine"?`<div class="f"><span class="lab">성별</span>${genderSeg(d.gender,"data-gender")}</div>`:""}
     ${kindEditorHtml(d)}
     ${kind==="friend"?"":`<div class="f"><label for="e-hash">해시태그 <span class="hint">· 카드에 작게 보여요</span></label><input type="text" id="e-hash" data-f="hashtags" value="${esc(d.hashtags||"")}" placeholder="#Heliotrope #CherryPie"></div>`}
     <div class="f"><span class="lab">분류 태그 <span class="hint">· 눌러서 고르기, 색과 순서는 ‘태그 관리’에서</span></span>
@@ -1768,6 +1815,7 @@ document.addEventListener("click", async e=>{
   if(ds.tcolor){ readTagNames(); const [i,h]=ds.tcolor.split("|"); tagDraft[+i].color=h; renderTagManager(true); return; }
   if(ds.tdelask!==undefined){ readTagNames(); tagDraft.forEach(x=>x.confirm=false); tagDraft[+ds.tdelask].confirm=true; renderTagManager(true); return; }
   if(ds.tdel!==undefined){ readTagNames(); tagDraft.splice(+ds.tdel,1); renderTagManager(true); return; }
+  if(ds.gender && draft){ draft.gender = draft.gender===ds.gender ? "" : ds.gender; t.parentElement.querySelectorAll("[data-gender]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.gender===draft.gender)); return; }
   if(ds.heart){ readEditor(); draft.heart=ds.heart; renderEditor(true); return; }
   if(ds.addblock==="pair"){ readEditor(); draft.blocks.push({id:newId(),type:"pair",label:"페어",name:"",link:"",groups:[{label:"외형",text:""},{label:"의상",text:""}],couple:"",note:""}); renderEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const pi=$("pn-"+draft.blocks[draft.blocks.length-1].id); if(pi) pi.focus(); return; }
   if(ds.pgadd){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.pgadd); if(b){ b.groups=b.groups||[]; b.groups.push({label:"",text:""}); } renderEditor(true); return; }
