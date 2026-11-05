@@ -452,6 +452,8 @@ html.ui-dark .kline .who{color:#f472b6}
 .hbtn{border:0;background:none;padding:3px;border-radius:8px;line-height:0;display:inline-grid;place-items:center}
 .hbtn:hover{background:var(--soft)}
 .hbtn[aria-pressed="true"]{background:var(--soft);box-shadow:0 0 0 2px var(--ink)}
+.vis-name{display:flex;align-items:center;gap:2px}
+.vis-name span{margin-left:6px}
 </style>
 </head>
 <body>
@@ -793,9 +795,13 @@ function multiKind(){ return mode==="firebase" && !!fb; }
 function canSee(k){ return canEdit ? true : visOf(k)==="public"; }
 function notesVisible(){ return multiKind() && canSee("notes"); }
 function tagOrderKey(){ return kind==="mine" ? "tagOrder" : "tagOrder_"+kind; }
+function pageOrder(){
+  const o = (vis && Array.isArray(vis.order)) ? vis.order.filter(k=>PAGE_ORDER.includes(k)) : [];
+  return o.concat(PAGE_ORDER.filter(k=>!o.includes(k)));
+}
 function visiblePages(){
   if(!multiKind()) return ["mine"];
-  return PAGE_ORDER.filter(k=> k==="notes" ? notesVisible() : canSee(k));
+  return pageOrder().filter(k=> k==="notes" ? notesVisible() : canSee(k));
 }
 function imgTarget(){ const k = KINDS[kind] || KINDS.mine; return {coll:k.img, prefix:k.prefix}; }
 
@@ -835,7 +841,8 @@ function subVis(){
 function initialPage(){
   const h = location.hash.replace("#","");
   if(PAGE_ORDER.includes(h)) return h;
-  try{ const p = localStorage.getItem("persona-page"); return p==="chars" ? "mine" : (p||"mine"); }catch(e){ return "mine"; }
+  if(!canEdit) return "";  /* 방문자는 순서상 첫 번째 공개 탭부터 */
+  try{ const p = localStorage.getItem("persona-page"); return p==="chars" ? "mine" : (p||""); }catch(e){ return ""; }
 }
 function renderTabs(){
   const vp = visiblePages();
@@ -925,16 +932,18 @@ function kindEditorHtml(d){
       <div class="f"><label for="k-chats">대화 수</label><input type="number" id="k-chats" min="0" value="${esc(d.chats||0)}" style="max-width:140px"></div></div>
     ${withPick}</div>`;
 }
+const PAGE_NAMES = {mine:"내 페르소나", ai:"AI 캐릭터", friend:"친구 캐릭터", notes:"프롬 노트"};
 function visSettingsHtml(){
   if(!multiKind() || !canEdit) return "";
-  visDraft = {mine:visOf("mine"), ai:visOf("ai"), friend:visOf("friend"), notes:visOf("notes")};
-  return `<div class="f"><span class="lab">탭별 공개 범위 <span class="hint">· 나만 보기 탭은 방문자에게 탭도 내용도 보이지 않아요</span></span>
-    <div class="visrows">${[["mine","내 페르소나"],["ai","AI 캐릭터"],["friend","친구 캐릭터"],["notes","프롬 노트"]].map(([k,n])=>`<div class="visrow"><span>${n}</span>
-      <div class="seg" role="group" aria-label="${n} 공개 범위"><button type="button" data-vis="${k}|public" aria-pressed="${visDraft[k]==="public"}">공개</button><button type="button" data-vis="${k}|private" aria-pressed="${visDraft[k]==="private"}">나만 보기</button></div></div>`).join("")}</div></div>`;
+  if(!visDraft) visDraft = {mine:visOf("mine"), ai:visOf("ai"), friend:visOf("friend"), notes:visOf("notes"), order:pageOrder()};
+  return `<div class="f" id="visBox"><span class="lab">탭 순서와 공개 범위 <span class="hint">· 위에서부터 탭 순서예요. 나만 보기 탭은 방문자에게 탭도 내용도 보이지 않아요</span></span>
+    <div class="visrows">${visDraft.order.map((k,i)=>`<div class="visrow">
+      <div class="vis-name"><button class="icon-btn" type="button" data-vmove="${i}|-1" aria-label="${PAGE_NAMES[k]} 위로" ${i===0?"disabled":""}>↑</button><button class="icon-btn" type="button" data-vmove="${i}|1" aria-label="${PAGE_NAMES[k]} 아래로" ${i===visDraft.order.length-1?"disabled":""}>↓</button><span>${PAGE_NAMES[k]}</span></div>
+      <div class="seg" role="group" aria-label="${PAGE_NAMES[k]} 공개 범위"><button type="button" data-vis="${k}|public" aria-pressed="${visDraft[k]==="public"}">공개</button><button type="button" data-vis="${k}|private" aria-pressed="${visDraft[k]==="private"}">나만 보기</button></div></div>`).join("")}</div></div>`;
 }
 async function saveVis(){
   if(!visDraft || !multiKind() || !canEdit) return true;
-  const same = Object.keys(visDraft).every(k=>visDraft[k]===visOf(k));
+  const same = ["mine","ai","friend","notes"].every(k=>visDraft[k]===visOf(k)) && visDraft.order.join()===pageOrder().join();
   if(same) return true;
   try{ await fb.fs.setDoc(fb.fs.doc(fb.db,"site","visibility"), visDraft); vis = Object.assign({}, visDraft); return true; }
   catch(e){ fbFailed(e); return false; }
@@ -943,6 +952,7 @@ async function saveVis(){
 document.addEventListener("click", e=>{
   const b = e.target.closest("button"); if(!b) return; const d = b.dataset;
   if(d.page){ setPage(d.page); return; }
+  if(d.vmove && visDraft){ const [i,s2]=d.vmove.split("|").map(Number); const j=i+s2; const o=visDraft.order; if(j>=0&&j<o.length){ [o[i],o[j]]=[o[j],o[i]]; } const box=$("visBox"); if(box) box.outerHTML = visSettingsHtml(); return; }
   if(d.vis){ const [k,v]=d.vis.split("|"); visDraft[k]=v; b.parentElement.querySelectorAll("[data-vis]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.vis===d.vis)); return; }
   if(d.kstatus && draft){ draft.status = draft.status===d.kstatus ? "" : d.kstatus; b.parentElement.querySelectorAll("[data-kstatus]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.kstatus===draft.status)); return; }
   if(d.kwith && draft){ const w = draft.with = draft.with||[]; const on = !w.includes(d.kwith); draft.with = on ? [...w, d.kwith] : w.filter(x=>x!==d.kwith); b.setAttribute("aria-pressed", on); return; }
@@ -1327,7 +1337,7 @@ function listRow(c){
 /* ---------- modal: view ---------- */
 function findChar(id){ return chars.find(x=>x.id===id) || EXAMPLES.find(x=>x.id===id); }
 function openModal(html, wide){ const m=$("modal"); m.className="modal"+(wide?"":" narrow"); m.innerHTML=html; $("ov").classList.add("open"); m.scrollTop=0; }
-function closeModal(){ $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; if(typeof noteDraft!=="undefined"){ noteDraft=null; catDraft=null; } }
+function closeModal(){ visDraft = null; $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; if(typeof noteDraft!=="undefined"){ noteDraft=null; catDraft=null; } }
 function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}</div><div class="val">${inner}</div></div>`; }
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
