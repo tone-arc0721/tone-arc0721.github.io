@@ -1609,7 +1609,7 @@ function viewChar(id){
   if((c.tags||[]).length) rows.push(row("분류", `<div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>`));
   let lastTagRow = -1; const tagBlocks = [];
   (c.blocks||[]).forEach(b=>{
-    const label = esc(b.label||"");
+    const label = esc(fixLabel(b.label||""));
     if(b.type==="tags"){
       const items = splitTags(b.text); if(!items.length) return;
       tagBlocks.push(items);
@@ -1654,15 +1654,18 @@ function copyIcon(){ return `<svg width="13" height="13" viewBox="0 0 24 24" fil
 async function copy(t){ try{ await navigator.clipboard.writeText(t); toast("복사했어요"); }catch(e){ toast("복사가 막혀 있어요. 직접 선택해서 복사해 주세요."); } }
 
 /* ---------- modal: edit ---------- */
+const AI_LABEL_FIX = {"노벨AI용":"Novel AI 용","니지저니용":"niji · journey","PixAI용":"Pix AI 용"};
+function fixLabel(l){ return AI_LABEL_FIX[l] || l; }
 function editChar(id){
   fpOpenFor = null;
   const base = id ? findChar(id) : null;
   const maxOrder = chars.reduce((m,c)=>Math.max(m,c.order||0),0);
   draft = base ? JSON.parse(JSON.stringify(base)) : {
     id:newId(), name:"", sub:"", hashtags:"", tags: filt.tag?[filt.tag]:[], heart:HEARTS[hash(Date.now())%6], start:"", order:maxOrder+1,
-    blocks: kind==="friend" ? [newFp()] : kind==="ai" ? [{id:newId(),type:"tags",label:"노벨AI용",text:""},{id:newId(),type:"tags",label:"니지저니용",text:""},{id:newId(),type:"tags",label:"PixAI용",text:""}] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
+    blocks: kind==="friend" ? [newFp()] : kind==="ai" ? [{id:newId(),type:"tags",label:"Novel AI 용",text:""},{id:newId(),type:"tags",label:"niji · journey",text:""},{id:newId(),type:"tags",label:"Pix AI 용",text:""}] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
   };
   if(draft.example){ draft.wasExample = true; }
+  (draft.blocks||[]).forEach(b=>{ if(b.label) b.label = fixLabel(b.label); });
   openId = draft.id; renderEditor();
 }
 function renderEditor(keep){
