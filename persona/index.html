@@ -396,7 +396,7 @@ const EXAMPLES = [
 function cache(){ const ok = lsSet(LS_KEY, {chars, settings, savedAt:Date.now()}); if(!ok && standaloneEdit) toast("브라우저 저장 공간이 가득 찼어요. 지금 내보내기로 data.json을 받아 두세요."); }
 async function saveChar(c){
   if(mode==="firebase"){
-    if(!fb || !canEdit){ toast("편집하려면 로그인해 주세요."); return; }
+    if(!fb || !canEdit){ toast("편집하려면 로그인해 주세요."); return false; }
     const before = chars.find(x=>x.id===c.id);
     try{
       c = await fsNormalizeChar(c);
@@ -404,8 +404,8 @@ async function saveChar(c){
       const j = chars.findIndex(x=>x.id===c.id); if(j>=0) chars[j]=c; else chars.push(c);
       render();
       if(before) await fsDeleteUnused(charRefs(before).filter(r=>!charRefs(c).includes(r)), null);
-    }catch(e){ fbFailed(e); }
-    return;
+      return true;
+    }catch(e){ fbFailed(e); return false; }
   }
   const i = chars.findIndex(x=>x.id===c.id);
   if(i>=0) chars[i]=c; else chars.push(c);
@@ -428,18 +428,19 @@ async function deleteChar(id){
 }
 async function saveSettings(s){
   if(mode==="firebase"){
-    if(!fb || !canEdit) return;
+    if(!fb || !canEdit){ toast("편집하려면 로그인해 주세요."); return false; }
     try{
       s = JSON.parse(JSON.stringify(s));
       s.banner = await fsNormalizeRef(s.banner); s.avatar = await fsNormalizeRef(s.avatar);
       Object.keys(s).forEach(k=>{ if(s[k]===undefined||s[k]===null) delete s[k]; });
       await fb.fs.setDoc(fb.fs.doc(fb.db,"site","settings"), s);
       settings = s; renderBanner(); render();
-    }catch(e){ fbFailed(e); }
-    return;
+      return true;
+    }catch(e){ fbFailed(e); return false; }
   }
   settings = s; cache(); renderBanner(); render();
-  if(mode==="cloud"){ try{ await db.doc("site/settings").set(s); }catch(e){ writeFailed(e); } }
+  if(mode==="cloud"){ try{ await db.doc("site/settings").set(s); }catch(e){ writeFailed(e); return false; } }
+  return true;
 }
 function writeFailed(e){
   if(e && e.code==="quota_exceeded"){ toast("저장 공간이 가득 찼어요. 안 쓰는 항목을 지워 주세요."); return; }
@@ -523,6 +524,7 @@ function renderTagManager(keep){
     </div>`);
   if(keep) m.scrollTop = y;
 }
+function restoreTagSave(){ const b=document.querySelector('[data-act="tSave"]'); if(b) b.disabled=false; }
 async function saveTags(){
   readTagNames();
   const live = tagDraft.map(t=>({...t, name:t.name.trim()})).filter(t=>t.name);
@@ -538,10 +540,10 @@ async function saveTags(){
     const nc = JSON.parse(JSON.stringify(c));
     nc.tags = nc.tags.filter(t=>!removed.includes(t)).map(t=>rename[t]||t).filter((v,i,a)=>a.indexOf(v)===i);
     nc.updatedAt = Date.now();
-    await saveChar(nc);
+    if((await saveChar(nc))===false){ restoreTagSave(); return; }
   }
   if(filt.tag && (removed.includes(filt.tag) || rename[filt.tag])) filt.tag = rename[filt.tag] || null;
-  await saveSettings(s);
+  if(!(await saveSettings(s))){ restoreTagSave(); return; }
   closeModal(); render(); toast("태그를 저장했어요");
 }
 
@@ -549,7 +551,9 @@ async function saveTags(){
 function list(){ return chars.length ? chars : EXAMPLES; }
 function allTags(){
   const order = (settings.tagOrder||[]).slice();
-  const used=[]; list().slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(c=>(c.tags||[]).forEach(t=>{ if(!used.includes(t)) used.push(t); }));
+  // 예시 카드의 태그는, 아직 캐릭터도 태그 설정도 없을 때만 보여줘요 (지운 태그가 예시에서 되살아나지 않게)
+  const src = chars.length || Array.isArray(settings.tagOrder) ? chars : EXAMPLES;
+  const used=[]; src.slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(c=>(c.tags||[]).forEach(t=>{ if(!used.includes(t)) used.push(t); }));
   return order.concat(used.filter(t=>!order.includes(t)));
 }
 function filtered(){
