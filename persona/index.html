@@ -488,6 +488,44 @@ html.ui-dark .g-m{color:#93b4ff} html.ui-dark .g-f{color:#f9a8d4}
 .pair-in{border-style:dashed;background:var(--surface)}
 .card-top{justify-content:flex-end}
 .card>.thumb:first-child{margin-top:12px}
+/* 목록 보기 = 3열 미니 카드 (모바일 2열, 작은 이미지) */
+.grid.list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;background:none;border:0;border-radius:0;overflow:visible}
+.mrow{background:var(--surface);border:1px solid var(--dash);border-radius:14px;padding:10px;display:flex;gap:12px;align-items:center;min-width:0;cursor:pointer}
+.mrow:hover{border-color:var(--ink)}
+.m-th{width:56px;height:72px;border-radius:10px;overflow:hidden;position:relative;flex:none;background:var(--paper)}
+.m-th img{width:100%;height:100%;object-fit:cover}
+.m-th .ph b{font-size:20px}
+.m-th .ph-name b{font-size:calc(var(--fs) * .45)}
+.m-tx{min-width:0;flex:1;display:flex;flex-direction:column;gap:1px}
+.m-nm{display:flex;align-items:center;gap:2px;min-width:0}
+.m-nm b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-sub{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mrow .kline{font-size:12px;flex-wrap:nowrap;overflow:hidden;white-space:nowrap}
+.mrow .kline>*{overflow:hidden;text-overflow:ellipsis}
+.m-foot{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:3px}
+.m-foot .dday{font-size:11.5px;font-family:var(--f-body)}
+.m-foot .chip{font-size:10.5px;padding:0 6px}
+@media (max-width:1080px){ .grid.list{grid-template-columns:repeat(2,minmax(0,1fr))} }
+html.L-mo .grid.list{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+html.L-mo .mrow{padding:8px;gap:8px;border-radius:12px}
+html.L-mo .m-th{width:40px;height:52px;border-radius:8px}
+html.L-mo .m-th .ph b{font-size:15px}
+html.L-mo .m-nm b{font-size:13.5px}
+html.L-mo .mrow .kline,html.L-mo .m-sub{font-size:11px}
+html.L-mo .m-foot .chip{display:none}
+/* 친구: 이미지가 없으면 이름 전체 */
+.ph-name{display:grid;place-items:center;padding:10px}
+.ph-name b{position:static !important;display:block;font-size:var(--fs);line-height:1.25;text-align:center;word-break:keep-all;overflow-wrap:anywhere;color:rgba(255,255,255,.95)}
+html.L-mo .m-th .ph-name b{font-size:calc(var(--fs) * .34)}
+.m-th .ph-name{padding:3px}
+.pages{overflow-x:auto;scrollbar-width:none}
+.pages::-webkit-scrollbar{display:none}
+.pages button{white-space:nowrap;flex:none}
+.mrow .kline{flex-direction:column;align-items:flex-start;gap:0;flex-wrap:nowrap;white-space:normal;overflow:visible}
+.mrow .kline>*{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+html.L-mo .pages{gap:14px}
+html.L-mo .pages button{font-size:14px;gap:5px}
+.kline .who{flex:none;display:inline;gap:0;align-items:initial;min-width:0}
 </style>
 </head>
 <body>
@@ -1058,7 +1096,7 @@ async function migrateSiteImages(){
 function kindLine(c){
   if(kind==="ai"){
     const st = AI_STATUS.find(x=>x[0]===c.status);
-    return `<div class="kline">${c.platform?`<span class="pf">${esc(c.platform)}</span>`:""}${c.maker?`<span>${esc(c.maker)}</span>`:""}${c.chats?`<span>대화 ${esc(c.chats)}번</span>`:""}${st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""}</div>`;
+    return `<div class="kline">${c.platform?`<span class="pf">${esc(c.platform)}</span>`:""}${c.maker?`<span>${esc(c.maker)}</span>`:""}${st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""}</div>`;
   }
   if(kind==="friend"){ const nm = fpNames(c); return `<div class="kline">${c.owner?`<span class="who">${esc(c.owner)}</span>`:""}${nm.length?`<span>페르소나 ${nm.length} · ${esc(nm.join(", "))}</span>`:""}</div>`; }
   return "";
@@ -1068,7 +1106,7 @@ function kindRows(c){
   const out = [];
   if(kind==="ai"){
     const st = AI_STATUS.find(x=>x[0]===c.status);
-    const bits = [c.platform?`<span class="pf">${esc(c.platform)}</span>`:"", c.maker?esc(c.maker):"", c.chats?`대화 ${esc(c.chats)}번`:"", st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""].filter(Boolean);
+    const bits = [c.platform?`<span class="pf">${esc(c.platform)}</span>`:"", c.maker?esc(c.maker):"", st?`<span class="kst" style="--c:${st[2]}">${st[1]}</span>`:""].filter(Boolean);
     if(bits.length) out.push(row("정보", `<div class="kline big">${bits.map(b=>`<span>${b}</span>`).join("")}</div>`));
     if(c.link) out.push(row("봇 링크", `<div class="txt">${linkify(esc(c.link))}</div>`));
   }
@@ -1090,8 +1128,7 @@ function kindEditorHtml(d){
     <div class="two"><div class="f"><label for="k-platform">플랫폼</label><input type="text" id="k-platform" data-f="platform" list="k-plats" value="${esc(d.platform||"")}" placeholder="CRACK, ZETA …"><datalist id="k-plats">${plats.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist></div>
       <div class="f"><label for="k-maker">제작자</label><input type="text" id="k-maker" data-f="maker" value="${esc(d.maker||"")}" placeholder="@제작자"></div></div>
     <div class="f"><label for="k-link">봇 링크</label><input type="text" id="k-link" data-f="link" value="${esc(d.link||"")}" placeholder="https://"></div>
-    <div class="two"><div class="f"><span class="lab">진행 상태</span><div class="seg" role="group" aria-label="진행 상태">${AI_STATUS.map(([v,n])=>`<button type="button" data-kstatus="${v}" aria-pressed="${d.status===v}">${n}</button>`).join("")}</div></div>
-      <div class="f"><label for="k-chats">대화 수</label><input type="number" id="k-chats" min="0" value="${esc(d.chats||0)}" style="max-width:140px"></div></div>
+    <div class="f"><span class="lab">진행 상태</span><div class="seg" role="group" aria-label="진행 상태" style="width:fit-content">${AI_STATUS.map(([v,n])=>`<button type="button" data-kstatus="${v}" aria-pressed="${d.status===v}">${n}</button>`).join("")}</div></div>
     ${withPick}</div>`;
 }
 const PAGE_NAMES = {mine:"내 페르소나", ai:"AI 캐릭터", friend:"친구 캐릭터", notes:"프롬 노트"};
@@ -1497,6 +1534,8 @@ function numberOf(id){
 }
 function phHtml(c, big){
   const h = hash(c.name||c.id)%360;
+  if(kind==="friend"){ const nm = c.name || "이름 없음"; const fs = nm.length<=3 ? 30 : nm.length<=6 ? 22 : nm.length<=10 ? 17 : 14;
+    return `<div class="ph ph-name" style="background:linear-gradient(160deg,hsl(${h} 45% var(--ph-l)),hsl(${(h+40)%360} 40% var(--ph-d)))"><b style="--fs:${fs}px">${esc(nm)}</b></div>`; }
   return `<div class="ph" style="background:linear-gradient(160deg,hsl(${h} 45% var(--ph-l)),hsl(${(h+40)%360} 40% var(--ph-d)))"><b>${esc((c.name||"?").charAt(0))}</b>${big?"":"IMAGE"}</div>`;
 }
 
@@ -1524,7 +1563,7 @@ function render(){
     : `<div class="empty">조건에 맞는 항목이 없어요.</div>`;
 }
 function card(c){
-  const d = kind==="friend" ? null : dday(c.start), hc = heartOf(c);
+  const d = (kind==="friend"||kind==="ai") ? null : dday(c.start), hc = heartOf(c);
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
   const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,false);
   return `<article class="card" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
@@ -1537,15 +1576,19 @@ function card(c){
     </div></article>`;
 }
 function listRow(c){
-  const d = kind==="friend" ? null : dday(c.start), hc = heartOf(c), pn = pairNames(c);
+  const d = (kind==="friend"||kind==="ai") ? null : dday(c.start), hc = heartOf(c), pn = pairNames(c);
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
   const img = _cv ? `<img src="${esc(src(_cv))}" alt="" loading="lazy">` : phHtml(c,true);
-  return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
-    <div class="l-th">${img}</div>
-    <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${genderBadge(c.gender)}${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>${kindLine(c)}
-      ${c.hashtags||pn.length?`<div class="hash">${pn.length?`<span class="pairmark">× ${esc(pn.join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}</div>
-    <div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>
-    <span class="dday">${kind==="friend"?"":`${heartSvg(hc,12)}${d?`D+${d}`:""}`}</span>
+  const tags = sortTags(c.tags);
+  return `<article class="mrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
+    <div class="m-th">${img}</div>
+    <div class="m-tx">
+      <div class="m-nm"><b>${esc(c.name||"이름 없음")}</b>${genderBadge(c.gender)}${c.example?`<span class="ex">예시</span>`:""}</div>
+      ${c.sub?`<div class="m-sub">${esc(c.sub)}</div>`:""}
+      ${kindLine(c)}
+      ${pn.length?`<div class="m-sub"><span class="pairmark">× ${esc(pn.join(", "))}</span></div>`:""}
+      ${d||tags.length?`<div class="m-foot">${d?`<span class="dday">${heartSvg(hc,11)}D+${d}</span>`:""}${tags.slice(0,3).map(chipHtml).join("")}</div>`:""}
+    </div>
   </article>`;
 }
 
@@ -1557,7 +1600,7 @@ function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}<
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
   openId=id; draft=null;
-  const hc = heartOf(c), d = kind==="friend" ? null : dday(c.start);
+  const hc = heartOf(c), d = (kind==="friend"||kind==="ai") ? null : dday(c.start);
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
   const cover = _cv ? `<div class="cover"><img src="${esc(src(_cv))}" alt="${esc(c.name)}" data-zoom="${esc(_cv)}"></div>`
     : `<div class="cover">${phHtml(c,true)}</div>`;
@@ -1617,7 +1660,7 @@ function editChar(id){
   const maxOrder = chars.reduce((m,c)=>Math.max(m,c.order||0),0);
   draft = base ? JSON.parse(JSON.stringify(base)) : {
     id:newId(), name:"", sub:"", hashtags:"", tags: filt.tag?[filt.tag]:[], heart:HEARTS[hash(Date.now())%6], start:"", order:maxOrder+1,
-    blocks: kind==="friend" ? [newFp()] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
+    blocks: kind==="friend" ? [newFp()] : kind==="ai" ? [{id:newId(),type:"tags",label:"노벨AI용",text:""},{id:newId(),type:"tags",label:"니지저니용",text:""},{id:newId(),type:"tags",label:"PixAI용",text:""}] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
   };
   if(draft.example){ draft.wasExample = true; }
   openId = draft.id; renderEditor();
@@ -1661,7 +1704,7 @@ function renderEditor(keep){
       <div class="addrow"><input type="text" id="e-newtag" placeholder="새 태그 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addTagInEditor">+ 태그 만들기</button></div></div>
     ${kind==="friend"?"":`<div class="two">
       <div class="f"><span class="lab">하트 색</span><div class="colors">${heartBtns}<input type="color" id="e-heart" value="${esc(heartOf(d))}" aria-label="직접 고르기"></div></div>
-      <div class="f"><label for="e-start">D+ 시작일 <span class="hint">· 비우면 표시 안 함</span></label><input type="date" id="e-start" data-f="start" value="${esc(d.start||"")}"></div>
+      ${kind==="ai"?"<div></div>":`<div class="f"><label for="e-start">D+ 시작일 <span class="hint">· 비우면 표시 안 함</span></label><input type="date" id="e-start" data-f="start" value="${esc(d.start||"")}"></div>`}
     </div>`}
     <div class="f"><label for="e-order">순서 <span class="hint">· 기본순 정렬에 쓰여요, 작을수록 앞</span></label><input type="number" id="e-order" value="${esc(d.order||0)}" style="max-width:120px"></div>
     <div class="f"><span class="lab">상세 항목</span></div>
