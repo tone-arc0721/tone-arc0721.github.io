@@ -579,6 +579,37 @@ html.L-mo .mv button{width:28px;height:28px;font-size:11px}
 html.L-mo .grid.compact .mv{top:3px;right:3px;gap:2px}
 html.L-mo .grid.compact .mv button{width:24px;height:24px;font-size:10px}
 #reSeg button[aria-pressed="true"]{background:var(--ink);color:var(--surface);font-weight:700}
+
+/* 함께하는 캐릭터 */
+.lk-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:520px}
+.lk{border:1px solid var(--rule);border-radius:12px;background:var(--bg);overflow:hidden}
+.lk.on{border-color:var(--ink)}
+.lk-card{width:100%;display:flex;align-items:center;gap:12px;border:0;background:none;padding:8px 12px 8px 8px;text-align:left}
+.lk-card:hover .lk-more{color:var(--ink)}
+.lk-th{width:42px;height:56px;border-radius:8px;overflow:hidden;flex:none;display:block;background:var(--soft)}
+.lk-th img{width:100%;height:100%;object-fit:cover;display:block}
+.lk-th.big{width:64px;height:86px}
+.lk-ph{width:100%;height:100%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:18px}
+.lk-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.lk-tx b{font-size:15px}
+.lk-meta{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:12px;color:var(--muted)}
+.lk-more{font-size:12px;color:var(--muted);white-space:nowrap}
+.lk.on .lk-more{color:var(--ink);font-weight:700}
+.lk-in{border-top:1px solid var(--rule);padding:12px;display:flex;flex-direction:column;gap:12px;background:var(--surface)}
+.lk-groups{display:flex;flex-direction:column;gap:12px}
+.lk-g{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.lk-l{font-size:12px;font-weight:700;color:var(--muted)}
+.lk-go{border:1px solid var(--rule);background:var(--surface);border-radius:10px;padding:8px 12px;font-size:13px;width:100%}
+#lkdim{position:fixed;z-index:1;background:rgba(0,0,0,.18);border-radius:18px}
+#lkp{position:fixed;z-index:2;border-radius:0 18px 18px 0;overflow:hidden;background:var(--surface);border-left:1px solid var(--rule);box-shadow:-12px 0 32px rgba(0,0,0,.14);display:flex;flex-direction:column;animation:lkin .18s ease}
+@keyframes lkin{from{transform:translateX(24px);opacity:0}}
+@media (prefers-reduced-motion:reduce){#lkp{animation:none}}
+.lkp-top{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--rule);font-size:13px;font-weight:700}
+.lkp-in{padding:16px;overflow:auto;display:flex;flex-direction:column;gap:16px;flex:1}
+.lkp-who{display:flex;gap:14px;align-items:center}
+.lkp-who b{font-size:22px;letter-spacing:-.4px;display:block;margin-bottom:4px}
+html.L-mo .lk-list{max-width:none}
+html.L-mo .lk-in .copy{min-height:36px;padding:6px 16px}
 </style>
 </head>
 <body>
@@ -1267,14 +1298,15 @@ function kindRows(c){
     if(c.link) out.push(row("봇 링크", `<div class="txt">${linkify(esc(c.link))}</div>`));
   }
   if(kind==="friend" && c.owner) out.push(row("아이디", `<div class="txt">${linkify(esc(c.owner))}</div>`));
-  if(kind!=="mine"){
-    const w = withNames(c);
-    if(w.length) out.push(row("함께하는 내 페르소나", `<div class="tagpick">${w.map(m=>`<button type="button" class="tagopt" data-gochar="${esc(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name)}</button>`).join("")}</div>`));
-  }
+  { const lk = linkedOf(c); if(lk.length) out.push(row(kind==="mine" ? "함께하는 AI 캐릭터" : "함께하는 내 페르소나", linkedHtml(c, lk))); }
   return out;
 }
 function kindEditorHtml(d){
-  if(kind==="mine") return "";
+  if(kind==="mine"){
+    if(!store.ai) return "";
+    const ais = store.ai.slice().sort((a,b)=>(a.order||0)-(b.order||0));
+    return `<div class="f"><span class="lab">함께하는 AI 캐릭터 <span class="hint">· 눌러서 고르기, AI 캐릭터 쪽에도 같이 연결돼요</span></span><div class="tagpick">${ais.length ? ais.map(a=>`<button type="button" class="tagopt" data-kai="${esc(a.id)}" aria-pressed="${(d._ai||[]).includes(a.id)}" style="--tc:${esc(platColor(a.platform||""))}">${esc(a.name||"이름 없음")}${a.platform?` <small style="opacity:.6;font-weight:500">${esc(a.platform)}</small>`:""}</button>`).join("") : `<span class="busy">AI 캐릭터가 아직 없어요</span>`}</div></div>`;
+  }
   const mine = (store.mine||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
   const withPick = `<div class="f"><span class="lab">함께하는 내 페르소나 <span class="hint">· 눌러서 고르기</span></span><div class="tagpick">${mine.length ? mine.map(m=>`<button type="button" class="tagopt" data-kwith="${esc(m.id)}" aria-pressed="${(d.with||[]).includes(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name||"이름 없음")}</button>`).join("") : `<span class="busy">내 페르소나가 아직 없어요</span>`}</div></div>`;
   if(kind==="friend") return `<div class="kbox"><div class="kbox-t">친구 정보</div>
@@ -1311,7 +1343,11 @@ document.addEventListener("click", e=>{
   if(d.vis){ const [k,v]=d.vis.split("|"); visDraft[k]=v; b.parentElement.querySelectorAll("[data-vis]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.vis===d.vis)); return; }
   if(d.kstatus && draft){ draft.status = draft.status===d.kstatus ? "" : d.kstatus; b.parentElement.querySelectorAll("[data-kstatus]").forEach(x=>x.setAttribute("aria-pressed", x.dataset.kstatus===draft.status)); return; }
   if(d.kwith && draft){ const w = draft.with = draft.with||[]; const on = !w.includes(d.kwith); draft.with = on ? [...w, d.kwith] : w.filter(x=>x!==d.kwith); b.setAttribute("aria-pressed", on); return; }
+  if(d.kai && draft){ const w = draft._ai = draft._ai||[]; const on = !w.includes(d.kai); draft._ai = on ? [...w, d.kai] : w.filter(x=>x!==d.kai); b.setAttribute("aria-pressed", on); return; }
   if(d.gochar){ const id = d.gochar; closeModal(); setPage("mine"); setTimeout(()=>viewChar(id), 30); return; }
+  if(d.lk){ const m=$("modal"), y=m.scrollTop; lkOpen = lkOpen===d.lk ? null : d.lk; if(openId) viewChar(openId); m.scrollTop=y; return; }
+  if(d.lkgo){ const [k,id] = splitLk(d.lkgo); closeModal(); setPage(k); setTimeout(()=>viewChar(id), 30); return; }
+  if(d.lkcopy){ const [k,id,bid] = d.lkcopy.split("|"); const c=(store[k]||[]).find(x=>x.id===id); const bl=c&&(c.blocks||[]).find(x=>x.id===bid); if(bl) copy(bl.type==="tags" ? splitTags(bl.text).join(", ") : bl.text); return; }
 });
 
 /* ================= 프롬 노트 (나만 보기) ================= */
@@ -1774,10 +1810,78 @@ function listRow(c){
 /* ---------- modal: view ---------- */
 function findChar(id){ return chars.find(x=>x.id===id) || EXAMPLES.find(x=>x.id===id); }
 function openModal(html, wide){ const m=$("modal"); m.className="modal"+(wide?"":" narrow"); m.innerHTML=html; $("ov").classList.add("open"); m.scrollTop=0; }
-function closeModal(){ visDraft = null; platDraft = null; $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; if(typeof noteDraft!=="undefined"){ noteDraft=null; catDraft=null; } }
+function closeModal(){ lkOpen = null; lkFor = null; drawLinkPanel(); visDraft = null; platDraft = null; $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; if(typeof noteDraft!=="undefined"){ noteDraft=null; catDraft=null; } }
+/* ---------- 함께하는 캐릭터: 모바일 = 그 자리에서 펼치기, PC = 옆 서랍 ---------- */
+let lkOpen = null, lkFor = null;
+const isMo = ()=>document.documentElement.classList.contains("L-mo");
+function splitLk(v){ const i=v.indexOf(":"); return [v.slice(0,i), v.slice(i+1)]; }
+function linkedOf(c){
+  const byOrder = (a,b)=>(a.order||0)-(b.order||0);
+  if(kind==="mine") return (store.ai||[]).filter(a=>(a.with||[]).includes(c.id)).sort(byOrder).map(x=>({k:"ai", c:x}));
+  return withNames(c).sort(byOrder).map(x=>({k:"mine", c:x}));
+}
+function lkThumb(k, c){
+  if(c.cover) return `<img src="${esc(src(c.cover))}" alt="" loading="lazy">`;
+  const h = hash(c.name||c.id)%360;
+  return `<span class="lk-ph" style="background:linear-gradient(160deg,hsl(${h} 45% var(--ph-l)),hsl(${(h+40)%360} 40% var(--ph-d)))">${esc((c.name||"?").charAt(0))}</span>`;
+}
+function lkMeta(k, c){
+  if(k==="ai") return `${c.platform?pfChip(c.platform):`<span>AI 캐릭터</span>`}${c.maker?`<span>${esc(c.maker)}</span>`:""}`;
+  const d = dday(c.start); return `<span>내 페르소나</span>${d?`<span class="dday">${heartSvg(heartOf(c),11)}D+${d}</span>`:""}`;
+}
+function lkBody(k, c){
+  const parts = (c.blocks||[]).map(b=>{
+    const label = esc(fixLabel(b.label||""));
+    if(b.type==="tags"){ const items = splitTags(b.text); if(!items.length) return "";
+      return `<div class="lk-g"><div class="lk-l">${label}</div><div class="ptags">${items.map(x=>`<span class="ptag">${esc(x)}</span>`).join("")}</div><button class="copy" type="button" data-lkcopy="${k}|${esc(c.id)}|${esc(b.id)}">COPY</button></div>`; }
+    if(b.type==="text" && b.text) return `<div class="lk-g"><div class="lk-l">${label}</div><div class="txt">${richText(b.text)}</div><button class="copy" type="button" data-lkcopy="${k}|${esc(c.id)}|${esc(b.id)}">COPY</button></div>`;
+    return "";
+  }).filter(Boolean);
+  return `<div class="lk-groups">${parts.join("") || `<div class="busy">적힌 프롬이 없어요.</div>`}</div>
+    <button class="lk-go" type="button" data-lkgo="${k}:${esc(c.id)}">${k==="ai"?"AI 캐릭터":"내 페르소나"} 상세 전체 보기 →</button>`;
+}
+function linkedHtml(owner, list){
+  const mo = isMo();
+  return `<div class="lk-list">${list.map(({k,c})=>{
+    const key = `${k}:${c.id}`, on = lkOpen===key;
+    return `<div class="lk${on?" on":""}"><button type="button" class="lk-card" data-lk="${esc(key)}" aria-expanded="${on}">
+      <span class="lk-th">${lkThumb(k,c)}</span>
+      <span class="lk-tx"><b>${esc(c.name||"이름 없음")}</b><span class="lk-meta">${lkMeta(k,c)}</span></span>
+      <span class="lk-more">${on ? (mo?"접기 ▲":"보는 중") : "프롬 보기 "+(mo?"▼":"→")}</span></button>
+      ${on && mo ? `<div class="lk-in">${lkBody(k,c)}</div>` : ""}</div>`;
+  }).join("")}</div>`;
+}
+function drawLinkPanel(){
+  let el = $("lkp"), dim = $("lkdim");
+  const show = lkOpen && !isMo() && $("ov").classList.contains("open") && !draft;
+  if(!show){ if(el) el.remove(); if(dim) dim.remove(); return; }
+  const [k,id] = splitLk(lkOpen); const c = (store[k]||[]).find(x=>x.id===id);
+  if(!c){ lkOpen=null; if(el) el.remove(); if(dim) dim.remove(); return; }
+  if(!dim){ dim = document.createElement("div"); dim.id="lkdim"; dim.setAttribute("data-lkclose",""); $("ov").appendChild(dim); }
+  if(!el){ el = document.createElement("aside"); el.id="lkp"; el.setAttribute("role","dialog"); $("ov").appendChild(el); }
+  const r = $("modal").getBoundingClientRect();
+  const w = Math.min(420, Math.round(r.width*0.46));
+  Object.assign(dim.style,{top:r.top+"px",left:r.left+"px",width:r.width+"px",height:r.height+"px"});
+  Object.assign(el.style,{top:r.top+"px",left:(r.right-w)+"px",width:w+"px",height:r.height+"px"});
+  el.setAttribute("aria-label", c.name||"");
+  el.innerHTML = `<div class="lkp-top"><span>${k==="ai"?"함께하는 AI 캐릭터":"함께하는 내 페르소나"}</span><button class="mbtn x" type="button" data-lkclose aria-label="닫기">✕</button></div>
+    <div class="lkp-in"><div class="lkp-who"><span class="lk-th big">${lkThumb(k,c)}</span><div><b>${esc(c.name||"이름 없음")}</b><div class="lk-meta">${lkMeta(k,c)}</div></div></div>${lkBody(k,c)}</div>`;
+}
+async function setAiWith(aiId, mineId, on){
+  const a = (store.ai||[]).find(x=>x.id===aiId); if(!a) return;
+  const w = (a.with||[]).filter(x=>x!==mineId); if(on) w.push(mineId);
+  const nc = Object.assign({}, a, {with:w});
+  if(mode==="firebase"){ if(!fb) return false; try{ await fb.fs.setDoc(fb.fs.doc(fb.db,"aiChars",aiId), nc); }catch(e){ fbFailed(e); return false; } }
+  const j = store.ai.findIndex(x=>x.id===aiId); if(j>=0) store.ai[j] = nc;
+  return true;
+}
+document.addEventListener("click", e=>{ if(!e.target.closest("[data-lkclose]")) return; lkOpen = null; drawLinkPanel(); if(openId && !draft){ const m=$("modal"), y=m.scrollTop; viewChar(openId); m.scrollTop=y; } });
+window.addEventListener("resize", ()=>{ if(lkOpen) { if(isMo()) { if(openId && !draft){ const m=$("modal"), y=m.scrollTop; viewChar(openId); m.scrollTop=y; } } else drawLinkPanel(); } });
 function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}</div><div class="val">${inner}</div></div>`; }
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
+  if(lkFor!==id){ lkOpen = null; lkFor = id; }
+  setTimeout(drawLinkPanel, 0);
   openId=id; draft=null;
   const hc = heartOf(c), d = (kind==="friend"||kind==="ai") ? null : dday(c.start);
   const _cv = kind==="friend" ? fpCover(c) : c.cover;
@@ -1844,6 +1948,7 @@ function editChar(id){
     blocks: kind==="friend" ? [newFp()] : kind==="ai" ? [{id:newId(),type:"tags",label:"Novel AI 용",text:""},{id:newId(),type:"tags",label:"niji · journey",text:""},{id:newId(),type:"tags",label:"Pix AI 용",text:""}] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
   };
   if(draft.example){ draft.wasExample = true; }
+  if(kind==="mine") draft._ai = (store.ai||[]).filter(a=>(a.with||[]).includes(draft.id)).map(a=>a.id);
   (draft.blocks||[]).forEach(b=>{ if(b.label) b.label = fixLabel(b.label); });
   openId = draft.id; renderEditor();
 }
@@ -1913,11 +2018,19 @@ async function saveEdit(){
   readEditor();
   const now=Date.now(), c = JSON.parse(JSON.stringify(draft));
   if(c.example){ c.id=newId(); }
-  delete c.example; delete c._new; delete c.wasExample;
+  const pickedAi = c._ai, exId = draft.id;
+  delete c.example; delete c._new; delete c.wasExample; delete c._ai;
   if(!c.name) c.name="이름 없음";
   c.createdAt = c.createdAt || now; c.updatedAt = now;
   c.blocks = (c.blocks||[]).filter(b=> b.type==="fpersona" ? ((b.name||"").trim() || b.image || (b.note||"").trim() || (b.groups||[]).some(g=>(g.text||"").trim())) : b.type==="images" ? (b.images||[]).length : (b.text||"").trim() || b.label);
-  await saveChar(c);
+  const ok = await saveChar(c);
+  if(kind==="mine" && Array.isArray(pickedAi) && ok!==false && store.ai){
+    for(const a of store.ai.slice()){
+      const has = (a.with||[]).includes(c.id) || (exId!==c.id && (a.with||[]).includes(exId));
+      const want = pickedAi.includes(a.id);
+      if(has!==want || (want && !(a.with||[]).includes(c.id))) await setAiWith(a.id, c.id, want);
+    }
+  }
   viewChar(c.id); toast("저장했어요");
 }
 
