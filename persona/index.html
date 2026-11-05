@@ -419,9 +419,8 @@ async function deleteChar(id){
   if(mode==="firebase"){
     if(!fb || !canEdit) return;
     const old = chars.find(x=>x.id===id);
-    try{ await fb.fs.deleteDoc(fb.fs.doc(fb.db,"chars",id)); chars = chars.filter(x=>x.id!==id); render(); if(old) await fsDeleteUnused(charRefs(old), id); }
-    catch(e){ fbFailed(e); }
-    return;
+    try{ await fb.fs.deleteDoc(fb.fs.doc(fb.db,"chars",id)); chars = chars.filter(x=>x.id!==id); render(); if(old) await fsDeleteUnused(charRefs(old), id); return true; }
+    catch(e){ fbFailed(e); return false; }
   }
   chars = chars.filter(x=>x.id!==id); cache(); render();
   if(mode==="cloud"){ try{ await db.doc("chars/"+id).delete(); }catch(e){ writeFailed(e); } }
@@ -548,7 +547,7 @@ async function saveTags(){
 }
 
 /* ---------- derived ---------- */
-function list(){ return chars.length ? chars : EXAMPLES; }
+function list(){ if(chars.length) return chars; const hid = settings.hiddenExamples||[]; return EXAMPLES.filter(e=>!hid.includes(e.id)); }
 function allTags(){
   const order = (settings.tagOrder||[]).slice();
   // 예시 카드의 태그는, 아직 캐릭터도 태그 설정도 없을 때만 보여줘요 (지운 태그가 예시에서 되살아나지 않게)
@@ -620,13 +619,15 @@ function render(){
     (canEdit ? `<button class="tagbtn manage" type="button" data-act="tags">태그 관리</button>` : "");
   document.querySelectorAll("#sortSeg [data-sort]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.sort===filt.sort));
   const n = [];
-  if(!chars.length) n.push(`<div class="note">지금 보이는 카드 3장은 예시예요.${canEdit?` 첫 항목을 추가하면 사라져요. <button class="add-btn" type="button" data-act="add">+ 새 항목</button>`:""}</div>`);
+  if(!chars.length && list().length) n.push(`<div class="note">지금 보이는 카드 ${list().length}장은 예시예요.${canEdit?` 첫 항목을 추가하면 사라져요. <button class="add-btn" type="button" data-act="add">+ 새 항목</button>`:""}</div>`);
   if(migrateNote) n.push(migrateNote);
   if(mode!=="cloud" && localReason) n.push(`<div class="note">${esc(localReason)}</div>`);
   $("notes").innerHTML = n.join("");
   const l = filtered();
   const g = $("grid"); g.classList.toggle("compact", filt.compact);
-  g.innerHTML = l.length ? l.map(card).join("") : `<div class="empty">조건에 맞는 항목이 없어요.</div>`;
+  g.innerHTML = l.length ? l.map(card).join("") : !chars.length && !filt.q && !filt.tag
+    ? `<div class="empty">아직 캐릭터가 없어요.${canEdit?` <button class="add-btn" type="button" data-act="add" style="height:34px;margin-left:8px">+ 새 항목</button>`:""}</div>`
+    : `<div class="empty">조건에 맞는 항목이 없어요.</div>`;
 }
 function card(c){
   const d = dday(c.start), hc = c.heart || HEARTS[0];
@@ -677,7 +678,7 @@ function viewChar(id){
   }
   const since = c.start ? " · since "+c.start.replace(/-/g,".") : "";
   openModal(`<div class="mtop"><span>PERSONA INDEX / No.${numberOf(c.id)}</span>
-      <div class="acts">${canEdit?`<button class="mbtn" type="button" data-act="edit">수정</button>`:""}
+      <div class="acts" id="viewActs">${canEdit?`<button class="mbtn" type="button" data-act="delView">삭제</button><button class="mbtn" type="button" data-act="edit">수정</button>`:""}
       <button class="mbtn x" type="button" data-act="close" aria-label="닫기">✕</button></div></div>
     <div class="sheet">
       <div class="side">${cover}${c.example?`<div class="busy">예시 카드예요.${canEdit?" 수정해서 저장하면 내 항목이 돼요.":""}</div>`:""}</div>
@@ -931,7 +932,22 @@ document.addEventListener("click", async e=>{
       break;
     }
     case "cancelDel": readEditor(); renderEditor(); break;
-    case "confirmDel": { const id=draft.id; closeModal(); await deleteChar(id); toast("삭제했어요"); break; }
+    case "confirmDel": { const id=draft.id; closeModal(); if(await deleteChar(id)!==false) toast("삭제했어요"); break; }
+    case "delView": {
+      const c=findChar(openId); if(!c) return;
+      $("viewActs").innerHTML=`<span class="busy" style="align-self:center">“${esc(c.name||"이름 없음")}” 삭제할까요?</span><button class="mbtn" type="button" data-act="delViewCancel">취소</button><button class="mbtn" type="button" data-act="delViewOk" style="background:var(--danger);border-color:var(--danger);color:#fff">삭제</button>`;
+      break;
+    }
+    case "delViewCancel": viewChar(openId); break;
+    case "delViewOk": {
+      const c=findChar(openId); if(!c) return;
+      closeModal();
+      if(c.example){
+        const s=JSON.parse(JSON.stringify(settings)); s.hiddenExamples=Array.from(new Set([...(s.hiddenExamples||[]), c.id]));
+        if(await saveSettings(s)) toast("예시 카드를 지웠어요");
+      } else { if(await deleteChar(c.id)!==false) toast("삭제했어요"); }
+      break;
+    }
     case "copyAllTags": { const c=findChar(openId); if(c) copy((c.blocks||[]).filter(b=>b.type==="tags").flatMap(b=>splitTags(b.text)).join(", ")); break; }
     case "settings": openSettings(); break;
     case "tags": openTagManager(); break;
