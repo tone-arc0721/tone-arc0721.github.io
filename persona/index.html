@@ -485,6 +485,7 @@ html.ui-dark .g-m{color:#93b4ff} html.ui-dark .g-f{color:#f9a8d4}
 .chev{width:16px;color:var(--muted);font-size:12px;flex:none;text-align:center}
 .fp-line{display:flex;align-items:center;gap:2px}
 .fp-line .gbadge{vertical-align:0}
+.pair-in{border-style:dashed;background:var(--surface)}
 </style>
 </head>
 <body>
@@ -763,16 +764,24 @@ async function saveTags(){
 }
 
 /* ---------- pair (페어) ---------- */
+function resolvePairLink(link){
+  if(!link) return null;
+  if(link.startsWith("mine:")) return (store.mine||[]).find(x=>x.id===link.slice(5)) || null;
+  return chars.find(x=>x.id===link) || null;
+}
 function pairData(c, b){
-  const linked = b.link ? chars.find(x=>x.id===b.link) : null;
+  const linked = resolvePairLink(b.link);
   let groups = (b.groups||[]).map(g=>({label:g.label||"태그", items:splitTags(g.text)})).filter(g=>g.items.length);
   if(!groups.length && linked) groups = (linked.blocks||[]).filter(x=>x.type==="tags").map(x=>({label:x.label||"태그", items:splitTags(x.text)})).filter(g=>g.items.length);
   const coupleItems = splitTags(b.couple);
   const pairAll = groups.flatMap(g=>g.items);
-  const mainAll = (c.blocks||[]).filter(x=>x.type==="tags").flatMap(x=>splitTags(x.text));
+  const owner = b.of ? (c.blocks||[]).find(x=>x.id===b.of) : null;
+  const mainAll = owner ? (owner.groups||[]).flatMap(g=>splitTags(g.text)) : (c.blocks||[]).filter(x=>x.type==="tags").flatMap(x=>splitTags(x.text));
+  const mainName = owner ? (owner.name||"") : (c.name||"");
   const name = (b.name||"").trim() || (linked && linked.name) || "";
   const img = b.image || (linked && linked.cover) || "";
-  return {linked, groups, coupleItems, pairAll, mainAll, name, img, full:[...coupleItems, ...mainAll, ...pairAll]};
+  const linkMine = !!(b.link && b.link.startsWith("mine:"));
+  return {linked, linkMine, groups, coupleItems, pairAll, mainAll, mainName, name, img, full:[...coupleItems, ...mainAll, ...pairAll]};
 }
 function pairNames(c){ return (c.blocks||[]).filter(b=>b.type==="pair").map(b=>pairData(c,b).name).filter(Boolean); }
 function pairHtml(c, b){
@@ -782,15 +791,15 @@ function pairHtml(c, b){
   return `<div class="pair">
     <div class="pair-h">${p.img?`<img src="${esc(src(p.img))}" alt="" data-zoom="${esc(p.img)}">`:`<span class="pair-ph">${esc((p.name||"?").charAt(0))}</span>`}
       <div><b>${esc(p.name||"이름 없음")}</b>${b.note?`<div class="txt" style="font-size:13px;color:var(--muted)">${richText(b.note)}</div>`:""}</div>
-      ${p.linked?`<button class="copy" type="button" data-open="${esc(p.linked.id)}">카드 열기</button>`:""}</div>
+      ${p.linked?(p.linkMine?`<button class="copy" type="button" data-gochar="${esc(p.linked.id)}">내 페르소나 열기</button>`:`<button class="copy" type="button" data-open="${esc(p.linked.id)}">카드 열기</button>`):""}</div>
     ${gHtml}
     ${p.coupleItems.length?`<div class="pg-v"><div class="pg-l">커플 프롬</div><div class="code">${esc(p.coupleItems.join(", "))}</div><button class="copy" type="button" data-copypair="${esc(b.id)}|couple">COPY</button></div>`:""}
-    ${p.pairAll.length && p.mainAll.length?`<div class="pg-v"><div class="pg-l">둘이 함께 (커플 프롬 + ${esc(c.name||"")} + ${esc(p.name||"페어")})</div><div class="code">${esc(p.full.join(", "))}</div><button class="copy strong" type="button" data-copypair="${esc(b.id)}|all">COPY ALL</button></div>`:""}
+    ${p.pairAll.length && p.mainAll.length?`<div class="pg-v"><div class="pg-l">둘이 함께 (커플 프롬 + ${esc(p.mainName||"")} + ${esc(p.name||"페어")})</div><div class="code">${esc(p.full.join(", "))}</div><button class="copy strong" type="button" data-copypair="${esc(b.id)}|all">COPY ALL</button></div>`:""}
   </div>`;
 }
 function pairEditorHtml(d, b){
-  const others = chars.filter(x=>x.id!==d.id);
-  const linked = b.link ? chars.find(x=>x.id===b.link) : null;
+  const others = kind==="friend" ? (store.mine||[]).map(x=>Object.assign({}, x, {id:"mine:"+x.id})) : chars.filter(x=>x.id!==d.id);
+  const linked = resolvePairLink(b.link);
   const im = b.image || (linked && linked.cover) || "";
   return `<div class="pair-ed">
     <div class="imgpick"><div class="pv" style="width:64px;height:84px">${im?`<img src="${esc(src(im))}" alt="">`:"이미지"}</div>
@@ -798,7 +807,7 @@ function pairEditorHtml(d, b){
         <input type="text" id="pn-${b.id}" data-pf="${b.id}|name" value="${esc(b.name||"")}" placeholder="페어 캐릭터 이름" aria-label="페어 캐릭터 이름">
         <div class="addrow"><button class="btn" type="button" data-ppick="${b.id}">${b.image?"이미지 바꾸기":"이미지 고르기"}</button>${b.image?`<button class="btn" type="button" data-prm="${b.id}">빼기</button>`:""}<span class="busy" id="busy-${b.id}"></span></div>
       </div></div>
-    ${others.length?`<label class="lab-s" for="pl-${b.id}">서랍에 있는 캐릭터와 연결 <span class="hint">· 연결하면 그 캐릭터의 이미지·태그를 그대로 써요 (아래에 적으면 그게 우선)</span>
+    ${others.length?`<label class="lab-s" for="pl-${b.id}">${kind==="friend"?"내 페르소나와 연결":"서랍에 있는 캐릭터와 연결"} <span class="hint">· 연결하면 그 캐릭터의 이미지·태그를 그대로 써요 (아래에 적으면 그게 우선)</span>
       <select id="pl-${b.id}" data-pf="${b.id}|link"><option value="">연결 안 함</option>${others.map(o=>`<option value="${esc(o.id)}" ${b.link===o.id?"selected":""}>${esc(o.name||"이름 없음")}</option>`).join("")}</select></label>`:""}
     ${(b.groups||[]).map((g,gi)=>`<div class="pg"><div class="bhead"><input data-pg="${b.id}|${gi}|label" value="${esc(g.label||"")}" placeholder="묶음 이름 (예: 외형)" aria-label="묶음 이름"><button class="icon-btn" type="button" data-pgdel="${b.id}|${gi}" aria-label="묶음 삭제">✕</button></div>
       <textarea rows="3" data-pg="${b.id}|${gi}|text" placeholder="1boy, black hair … (쉼표로 구분)" aria-label="페어 태그">${esc(g.text||"")}</textarea></div>`).join("")}
@@ -836,10 +845,12 @@ function fpUpgrade(d){
   d.blocks = [p];
   return d;
 }
+function fpPairs(b){ return (draft && draft.blocks || []).filter(x=>x.type==="pair" && x.of===b.id); }
 function fpSummary(b){
   const gs = (b.groups||[]).filter(g=>(g.text||"").trim());
   const first = gs.length ? gs[0].text.split(",").slice(0,4).join(",").trim() : "";
-  return gs.length ? `프롬 ${gs.length}묶음 · ${esc(first)}${gs[0].text.split(",").length>4?" …":""}` : "아직 프롬이 없어요";
+  const pc = fpPairs(b).length;
+  return (gs.length ? `프롬 ${gs.length}묶음 · ${esc(first)}${gs[0].text.split(",").length>4?" …":""}` : "아직 프롬이 없어요") + (pc ? ` · 페어 ${pc}` : "");
 }
 function fpEditorHtml(b, i, n){
   const open = fpOpen.has(b.id);
@@ -864,6 +875,8 @@ function fpEditorHtml(b, i, n){
       <textarea rows="3" data-fpg="${b.id}|${gi}|text" placeholder="1girl, pink hair … (쉼표로 구분)" aria-label="프롬">${esc(g.text||"")}</textarea></div>`).join("")}
     <div><button class="btn" type="button" data-fpgadd="${b.id}">+ 프롬 묶음</button></div>
     <label class="lab-s" for="fpm-${b.id}">메모 <span class="hint">· 설정, 사용 허락 범위 등</span><textarea id="fpm-${b.id}" rows="2" data-fp="${b.id}|note">${esc(b.note||"")}</textarea></label>
+    ${fpPairs(b).map(p=>`<div class="block pair-in"><div class="bhead"><span class="kind" style="color:#db2777">페어</span><span class="busy" style="flex:1">${esc((p.name||"").trim()||(resolvePairLink(p.link)||{}).name||"")}</span><button class="icon-btn" type="button" data-fppairdel="${p.id}" aria-label="페어 삭제">✕</button></div>${pairEditorHtml(draft,p)}</div>`).join("")}
+    <div><button class="btn" type="button" data-fppair="${b.id}">+ 페어</button></div>
   </div>`;
 }
 function renderFriendEditor(keep){
@@ -906,13 +919,15 @@ function fpHtml(c, b){
 }
 document.addEventListener("click", async e=>{
   const t = e.target.closest("button"); if(!t || !draft || kind!=="friend") return; const ds = t.dataset;
+  if(ds.fppair){ readEditor(); draft.blocks.push({id:newId(), type:"pair", label:"페어", of:ds.fppair, name:"", link:"", groups:[{label:"외형",text:""},{label:"의상",text:""}], couple:"", note:""}); fpOpen.add(ds.fppair); renderFriendEditor(true); return; }
+  if(ds.fppairdel){ readEditor(); draft.blocks = draft.blocks.filter(x=>x.id!==ds.fppairdel); renderFriendEditor(true); return; }
   if(ds.fptoggle){ readEditor(); fpOpen.has(ds.fptoggle) ? fpOpen.delete(ds.fptoggle) : fpOpen.add(ds.fptoggle); renderFriendEditor(true); return; }
   if(ds.act==="fpAll"){ readEditor(); const fps=fpBlocks(draft); const allOpen=fps.every(b=>fpOpen.has(b.id)); fpOpen = new Set(allOpen?[]:fps.map(b=>b.id)); renderFriendEditor(true); return; }
   if(ds.fpgender){ readEditor(); const [bid,v]=ds.fpgender.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b) b.gender = b.gender===v ? "" : v; renderFriendEditor(true); return; }
   if(ds.act==="fpAdd"){ readEditor(); const nb=newFp(); fpOpen.add(nb.id); draft.blocks.push(nb); renderFriendEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const inp=$("fpn-"+nb.id); if(inp) inp.focus(); return; }
   if(ds.act==="fpAdd_old"){ readEditor(); draft.blocks.push(newFp()); renderFriendEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const last=fpBlocks(draft).slice(-1)[0]; const inp=last&&$("fpn-"+last.id); if(inp) inp.focus(); return; }
   if(ds.fpmove){ readEditor(); const [i,s2]=ds.fpmove.split("|").map(Number); const fps=fpBlocks(draft); const j=i+s2; if(j>=0&&j<fps.length){ const a=draft.blocks.indexOf(fps[i]), b2=draft.blocks.indexOf(fps[j]); [draft.blocks[a],draft.blocks[b2]]=[draft.blocks[b2],draft.blocks[a]]; } renderFriendEditor(true); return; }
-  if(ds.fpdel!==undefined){ readEditor(); const fps=fpBlocks(draft); if(fps.length>1){ draft.blocks.splice(draft.blocks.indexOf(fps[+ds.fpdel]),1); } renderFriendEditor(true); return; }
+  if(ds.fpdel!==undefined){ readEditor(); const fps=fpBlocks(draft); if(fps.length>1){ const gone=fps[+ds.fpdel]; draft.blocks.splice(draft.blocks.indexOf(gone),1); draft.blocks = draft.blocks.filter(x=>!(x.type==="pair" && x.of===gone.id)); } renderFriendEditor(true); return; }
   if(ds.fpgadd){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.fpgadd); if(b){ b.groups=b.groups||[]; b.groups.push({label:"",text:""}); } renderFriendEditor(true); return; }
   if(ds.fpgdel){ readEditor(); const [bid,gi]=ds.fpgdel.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b&&b.groups) b.groups.splice(+gi,1); renderFriendEditor(true); return; }
   if(ds.fprm){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.fprm); if(b) b.image=""; renderFriendEditor(true); return; }
@@ -1562,6 +1577,9 @@ function viewChar(id){
       rows.push(row(label, `<div class="txt">${richText(b.text)}</div><button class="copy" type="button" data-copytext="${esc(b.id)}">COPY</button>`));
     } else if(b.type==="fpersona"){
       rows.push(row(esc(b.name||"페르소나"), fpHtml(c, b)));
+      (c.blocks||[]).filter(x=>x.type==="pair" && x.of===b.id).forEach(p=>{ const h = pairHtml(c, p); if(h) rows.push(row(`<span style="padding-left:10px">↳ ${esc(b.name||"")}의 페어</span>`, h)); });
+    } else if(b.type==="pair" && b.of){
+      /* 친구 페르소나의 페어는 그 페르소나 바로 아래에 보여줘요 */
     } else if(b.type==="pair"){
       const h = pairHtml(c, b); if(h) rows.push(row(label||"페어", h));
     } else if(b.type==="images"){
