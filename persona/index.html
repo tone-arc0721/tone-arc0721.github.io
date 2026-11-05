@@ -910,7 +910,7 @@ function kindEditorHtml(d){
   const mine = (store.mine||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
   const withPick = `<div class="f"><span class="lab">함께하는 내 페르소나 <span class="hint">· 눌러서 고르기</span></span><div class="tagpick">${mine.length ? mine.map(m=>`<button type="button" class="tagopt" data-kwith="${esc(m.id)}" aria-pressed="${(d.with||[]).includes(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name||"이름 없음")}</button>`).join("") : `<span class="busy">내 페르소나가 아직 없어요</span>`}</div></div>`;
   if(kind==="friend") return `<div class="kbox"><div class="kbox-t">친구 캐릭터 정보</div>
-    <div class="f"><label for="k-owner">주인 <span class="hint">· 친구 닉네임이나 SNS 주소</span></label><input type="text" id="k-owner" data-f="owner" value="${esc(d.owner||"")}" placeholder="@친구닉네임"></div>${withPick}</div>`;
+    <div class="f"><label for="k-owner">주인 <span class="hint">· 친구 닉네임이나 SNS 주소</span></label><input type="text" id="k-owner" data-f="owner" value="${esc(d.owner||"")}" placeholder="@친구닉네임"></div></div>`;
   const plats = Array.from(new Set((store.ai||[]).map(c=>c.platform).filter(Boolean).concat(["CRACK","ZETA","CAVEDUCK"])));
   return `<div class="kbox"><div class="kbox-t">AI 캐릭터 정보</div>
     <div class="two"><div class="f"><label for="k-platform">플랫폼</label><input type="text" id="k-platform" data-f="platform" list="k-plats" value="${esc(d.platform||"")}" placeholder="CRACK, ZETA …"><datalist id="k-plats">${plats.map(p=>`<option value="${esc(p)}"></option>`).join("")}</datalist></div>
@@ -1280,7 +1280,8 @@ function render(){
   $("tagrow").innerHTML = `<button class="tagbtn" type="button" data-tag="" aria-pressed="${!filt.tag}">ALL<span class="n">${String(l0.length).padStart(2,"0")}</span></button>` +
     tags.map(t=>`<button class="tagbtn" type="button" data-tag="${esc(t)}" aria-pressed="${filt.tag===t}" style="--tc:${tagColor(t)}">${esc(t)}<span class="n">${String(l0.filter(c=>(c.tags||[]).includes(t)).length).padStart(2,"0")}</span></button>`).join("") +
     (canEdit ? `<button class="tagbtn manage" type="button" data-act="tags">태그 관리</button>` : "");
-  document.querySelectorAll("#sortSeg [data-sort]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.sort===filt.sort));
+  if(kind==="friend" && filt.sort==="dday") filt.sort="order";
+  document.querySelectorAll("#sortSeg [data-sort]").forEach(b=>{ b.setAttribute("aria-pressed", b.dataset.sort===filt.sort); if(b.dataset.sort==="dday") b.hidden = kind==="friend"; });
   const n = [];
   if(!chars.length && list().length) n.push(`<div class="note">지금 보이는 카드 ${list().length}장은 예시예요.${canEdit?` 첫 항목을 추가하면 사라져요. <button class="add-btn" type="button" data-act="add">+ 새 항목</button>`:""}</div>`);
   if(migrateNote) n.push(migrateNote);
@@ -1294,10 +1295,10 @@ function render(){
     : `<div class="empty">조건에 맞는 항목이 없어요.</div>`;
 }
 function card(c){
-  const d = dday(c.start), hc = heartOf(c);
+  const d = kind==="friend" ? null : dday(c.start), hc = heartOf(c);
   const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,false);
   return `<article class="card" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
-    <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday"><span class="hdot" style="background:${esc(hc)}"></span>D+${d}</span>`:`<span class="hdot" style="background:${esc(hc)}"></span>`}</div>
+    <div class="card-top"><span>No.${numberOf(c.id)}</span>${d?`<span class="dday"><span class="hdot" style="background:${esc(hc)}"></span>D+${d}</span>`:kind==="friend"?"":`<span class="hdot" style="background:${esc(hc)}"></span>`}</div>
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
     <div class="info">
       <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
@@ -1306,7 +1307,7 @@ function card(c){
     </div></article>`;
 }
 function listRow(c){
-  const d = dday(c.start), hc = heartOf(c), pn = pairNames(c);
+  const d = kind==="friend" ? null : dday(c.start), hc = heartOf(c), pn = pairNames(c);
   const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,true);
   return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
     <span class="l-no">No.${numberOf(c.id)}</span>
@@ -1314,7 +1315,7 @@ function listRow(c){
     <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>${kindLine(c)}
       ${c.hashtags||pn.length?`<div class="hash">${pn.length?`<span class="pairmark">× ${esc(pn.join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}</div>
     <div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>
-    <span class="dday"><span class="hdot" style="background:${esc(hc)}"></span>${d?`D+${d}`:""}</span>
+    <span class="dday">${kind==="friend"?"":`<span class="hdot" style="background:${esc(hc)}"></span>${d?`D+${d}`:""}`}</span>
   </article>`;
 }
 
@@ -1326,7 +1327,7 @@ function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}<
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
   openId=id; draft=null;
-  const hc = heartOf(c), d=dday(c.start);
+  const hc = heartOf(c), d = kind==="friend" ? null : dday(c.start);
   const cover = c.cover ? `<div class="cover"><img src="${esc(src(c.cover))}" alt="${esc(c.name)}" data-zoom="${esc(c.cover)}"></div>`
     : `<div class="cover">${phHtml(c,true)}</div>`;
   const rows = [];
@@ -1379,7 +1380,7 @@ function editChar(id){
   const maxOrder = chars.reduce((m,c)=>Math.max(m,c.order||0),0);
   draft = base ? JSON.parse(JSON.stringify(base)) : {
     id:newId(), name:"", sub:"", hashtags:"", tags: filt.tag?[filt.tag]:[], heart:HEARTS[hash(Date.now())%6], start:"", order:maxOrder+1,
-    blocks:[{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
+    blocks: kind==="friend" ? [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""}] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
   };
   if(draft.example){ draft.wasExample = true; }
   openId = draft.id; renderEditor();
@@ -1410,19 +1411,19 @@ function renderEditor(keep){
       <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
         <button class="btn" type="button" data-act="pickCover">${d.cover?"이미지 바꾸기":"이미지 고르기"}</button>
         ${d.cover?`<button class="btn" type="button" data-act="rmCover">이미지 빼기</button>`:""}<span class="busy" id="busy-cover"></span></div></div>
-    <div class="two">
+    <div class="${kind==="friend"?"":"two"}">
       <div class="f"><label for="e-name">이름</label><input type="text" id="e-name" data-f="name" value="${esc(d.name)}" placeholder="포포"></div>
-      <div class="f"><label for="e-sub">부제 <span class="hint">· 짝, 별칭 등</span></label><input type="text" id="e-sub" data-f="sub" value="${esc(d.sub||"")}" placeholder="제노"></div>
+      ${kind==="friend"?"":`<div class="f"><label for="e-sub">부제 <span class="hint">· 짝, 별칭 등</span></label><input type="text" id="e-sub" data-f="sub" value="${esc(d.sub||"")}" placeholder="제노"></div>`}
     </div>
     ${kindEditorHtml(d)}
-    <div class="f"><label for="e-hash">해시태그 <span class="hint">· 카드에 작게 보여요</span></label><input type="text" id="e-hash" data-f="hashtags" value="${esc(d.hashtags||"")}" placeholder="#Heliotrope #CherryPie"></div>
+    ${kind==="friend"?"":`<div class="f"><label for="e-hash">해시태그 <span class="hint">· 카드에 작게 보여요</span></label><input type="text" id="e-hash" data-f="hashtags" value="${esc(d.hashtags||"")}" placeholder="#Heliotrope #CherryPie"></div>`}
     <div class="f"><span class="lab">분류 태그 <span class="hint">· 눌러서 고르기, 색과 순서는 ‘태그 관리’에서</span></span>
       <div class="tagpick" role="group" aria-label="분류 태그">${allTags().concat((d.tags||[]).filter(t=>!allTags().includes(t))).map(t=>`<button type="button" class="tagopt" data-tagpick="${esc(t)}" aria-pressed="${(d.tags||[]).includes(t)}" style="--tc:${tagColor(t)}">${esc(t)}</button>`).join("") || `<span class="busy">아직 태그가 없어요</span>`}</div>
       <div class="addrow"><input type="text" id="e-newtag" placeholder="새 태그 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addTagInEditor">+ 태그 만들기</button></div></div>
-    <div class="two">
+    ${kind==="friend"?"":`<div class="two">
       <div class="f"><span class="lab">하트 색</span><div class="colors">${heartBtns}<input type="color" id="e-heart" value="${esc(heartOf(d))}" aria-label="직접 고르기"></div></div>
       <div class="f"><label for="e-start">D+ 시작일 <span class="hint">· 비우면 표시 안 함</span></label><input type="date" id="e-start" data-f="start" value="${esc(d.start||"")}"></div>
-    </div>
+    </div>`}
     <div class="f"><label for="e-order">순서 <span class="hint">· 기본순 정렬에 쓰여요, 작을수록 앞</span></label><input type="number" id="e-order" value="${esc(d.order||0)}" style="max-width:120px"></div>
     <div class="f"><span class="lab">상세 항목</span></div>
     ${blocks || `<div class="busy">아직 항목이 없어요.</div>`}
