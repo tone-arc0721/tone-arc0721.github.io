@@ -291,6 +291,44 @@ html.L-mo .top-in{padding:10px 16px;gap:6px}html.L-mo .logo span{display:none}ht
 html.L-mo .wrap,html.L-mo .head-in,html.L-mo .top-in{max-width:560px}
 html.L-mo .modal,html.L-mo .modal.narrow{max-width:560px}
 html.L-mo .overlay{justify-content:center}
+/* list view */
+.grid.list{display:flex;flex-direction:column;gap:0;background:var(--surface);border:1px solid var(--dash);border-radius:16px;overflow:hidden}
+.lrow{display:grid;grid-template-columns:64px 44px minmax(0,1.3fr) minmax(0,1fr) 120px;gap:14px;align-items:center;padding:10px 16px;border-top:1px solid var(--dash);cursor:pointer}
+.lrow:first-child{border-top:0}
+.lrow:hover{background:var(--soft)}
+.l-no{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.l-th{width:44px;height:58px;border-radius:8px;overflow:hidden;position:relative;background:var(--paper)}
+.l-th img{width:100%;height:100%;object-fit:cover}
+.l-th .ph b{font-size:18px}
+.l-main{min-width:0;display:flex;flex-direction:column;gap:2px}
+.l-main .nm h2{font-size:16px}
+.l-main .hash{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .dday{justify-content:flex-end;font-family:var(--f-mono);font-size:12.5px}
+.lrow .ex{position:static;margin-left:6px}
+.pairmark{color:var(--ink);font-weight:500}
+html.L-mo .lrow{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"th main dd" "th chips chips";gap:4px 12px;padding:10px 12px}
+html.L-mo .lrow .l-no{display:none}
+html.L-mo .lrow .l-th{grid-area:th}
+html.L-mo .lrow .l-main{grid-area:main}
+html.L-mo .lrow .chips{grid-area:chips;padding-top:0}
+html.L-mo .lrow .dday{grid-area:dd;align-self:start}
+@media (max-width:1080px){ .lrow{grid-template-columns:56px 44px minmax(0,1.3fr) minmax(0,1fr) 100px} }
+
+/* pair section */
+.pair{border:1px solid var(--dash);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px;width:100%;background:var(--paper)}
+.pair-h{display:flex;align-items:center;gap:12px}
+.pair-h img,.pair-ph{width:48px;height:62px;border-radius:8px;object-fit:cover;flex:none;cursor:zoom-in;background:var(--soft)}
+.pair-ph{display:grid;place-items:center;font-weight:700;font-size:20px;color:var(--muted);cursor:default}
+.pair-h>div{flex:1;min-width:0}
+.pair-h b{font-size:16px}
+.pg-v{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.pg-l{font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.ptag.pt-pair{background:color-mix(in srgb,#db2777 12%,var(--surface));color:color-mix(in srgb,#db2777 80%,var(--ink))}
+.pair-ed{display:flex;flex-direction:column;gap:8px}
+.pair-ed input[type=text],.pair-ed select,.pair-ed textarea,.pg .bhead input{border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:8px 10px;width:100%}
+.pg{border:1px dashed var(--rule);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.pg .bhead input{border-radius:8px;padding:5px 8px;font-weight:600}
+.lab-s{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 </style>
 </head>
 <body>
@@ -319,8 +357,8 @@ html.L-mo .overlay{justify-content:center}
       <button type="button" data-sort="created" aria-pressed="false">최근</button>
       <button type="button" id="rev" aria-pressed="false" aria-label="정렬 뒤집기">↑↓</button>
     </div>
-    <div class="seg" role="group" aria-label="카드 크기">
-      <button type="button" id="viewBtn" aria-pressed="false">작게</button>
+    <div class="seg" id="viewSeg" role="group" aria-label="보기 방식">
+      <button type="button" data-view="card" aria-pressed="true">기본</button><button type="button" data-view="compact" aria-pressed="false">작게</button><button type="button" data-view="list" aria-pressed="false">목록</button>
     </div>
     <button class="add-btn" id="addBtn" type="button" hidden>+ 새 항목</button>
   </div>
@@ -351,7 +389,8 @@ const OLD_KEY = "persona-drawer:v1";
 /* ---------- state ---------- */
 let chars = [], settings = {}, mode = "local", canEdit = true;
 let db = null, assets = null, uid = null, downloadsNs = null;
-let filt = {q:"", tag:null, sort:"order", rev:false, compact:false};
+let filt = {q:"", tag:null, sort:"order", rev:false, view:"card"};
+try{ const v=localStorage.getItem("persona-view"); if(v==="card"||v==="compact"||v==="list") filt.view=v; }catch(e){}
 let openId = null, draft = null, editingSettings = false;
 
 const $ = id => document.getElementById(id);
@@ -546,6 +585,54 @@ async function saveTags(){
   closeModal(); render(); toast("태그를 저장했어요");
 }
 
+/* ---------- pair (페어) ---------- */
+function pairData(c, b){
+  const linked = b.link ? chars.find(x=>x.id===b.link) : null;
+  let groups = (b.groups||[]).map(g=>({label:g.label||"태그", items:splitTags(g.text)})).filter(g=>g.items.length);
+  if(!groups.length && linked) groups = (linked.blocks||[]).filter(x=>x.type==="tags").map(x=>({label:x.label||"태그", items:splitTags(x.text)})).filter(g=>g.items.length);
+  const coupleItems = splitTags(b.couple);
+  const pairAll = groups.flatMap(g=>g.items);
+  const mainAll = (c.blocks||[]).filter(x=>x.type==="tags").flatMap(x=>splitTags(x.text));
+  const name = (b.name||"").trim() || (linked && linked.name) || "";
+  const img = b.image || (linked && linked.cover) || "";
+  return {linked, groups, coupleItems, pairAll, mainAll, name, img, full:[...coupleItems, ...mainAll, ...pairAll]};
+}
+function pairNames(c){ return (c.blocks||[]).filter(b=>b.type==="pair").map(b=>pairData(c,b).name).filter(Boolean); }
+function pairHtml(c, b){
+  const p = pairData(c, b);
+  if(!p.name && !p.groups.length && !p.coupleItems.length && !b.note) return "";
+  const gHtml = p.groups.map((g,gi)=>`<div class="pg-v"><div class="pg-l">${esc(g.label)}</div><div class="ptags">${g.items.map(x=>`<span class="ptag pt-pair">${esc(x)}</span>`).join("")}</div><button class="copy" type="button" data-copypair="${esc(b.id)}|${gi}">COPY</button></div>`).join("");
+  return `<div class="pair">
+    <div class="pair-h">${p.img?`<img src="${esc(src(p.img))}" alt="" data-zoom="${esc(p.img)}">`:`<span class="pair-ph">${esc((p.name||"?").charAt(0))}</span>`}
+      <div><b>${esc(p.name||"이름 없음")}</b>${b.note?`<div class="txt" style="font-size:13px;color:var(--muted)">${richText(b.note)}</div>`:""}</div>
+      ${p.linked?`<button class="copy" type="button" data-open="${esc(p.linked.id)}">카드 열기</button>`:""}</div>
+    ${gHtml}
+    ${p.coupleItems.length?`<div class="pg-v"><div class="pg-l">커플 프롬</div><div class="code">${esc(p.coupleItems.join(", "))}</div><button class="copy" type="button" data-copypair="${esc(b.id)}|couple">COPY</button></div>`:""}
+    ${p.pairAll.length && p.mainAll.length?`<div class="pg-v"><div class="pg-l">둘이 함께 (커플 프롬 + ${esc(c.name||"")} + ${esc(p.name||"페어")})</div><div class="code">${esc(p.full.join(", "))}</div><button class="copy strong" type="button" data-copypair="${esc(b.id)}|all">COPY ALL</button></div>`:""}
+  </div>`;
+}
+function pairEditorHtml(d, b){
+  const others = chars.filter(x=>x.id!==d.id);
+  const linked = b.link ? chars.find(x=>x.id===b.link) : null;
+  const im = b.image || (linked && linked.cover) || "";
+  return `<div class="pair-ed">
+    <div class="imgpick"><div class="pv" style="width:64px;height:84px">${im?`<img src="${esc(src(im))}" alt="">`:"이미지"}</div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;min-width:0">
+        <input type="text" id="pn-${b.id}" data-pf="${b.id}|name" value="${esc(b.name||"")}" placeholder="페어 캐릭터 이름" aria-label="페어 캐릭터 이름">
+        <div class="addrow"><button class="btn" type="button" data-ppick="${b.id}">${b.image?"이미지 바꾸기":"이미지 고르기"}</button>${b.image?`<button class="btn" type="button" data-prm="${b.id}">빼기</button>`:""}<span class="busy" id="busy-${b.id}"></span></div>
+      </div></div>
+    ${others.length?`<label class="lab-s" for="pl-${b.id}">서랍에 있는 캐릭터와 연결 <span class="hint">· 연결하면 그 캐릭터의 이미지·태그를 그대로 써요 (아래에 적으면 그게 우선)</span>
+      <select id="pl-${b.id}" data-pf="${b.id}|link"><option value="">연결 안 함</option>${others.map(o=>`<option value="${esc(o.id)}" ${b.link===o.id?"selected":""}>${esc(o.name||"이름 없음")}</option>`).join("")}</select></label>`:""}
+    ${(b.groups||[]).map((g,gi)=>`<div class="pg"><div class="bhead"><input data-pg="${b.id}|${gi}|label" value="${esc(g.label||"")}" placeholder="묶음 이름 (예: 외형)" aria-label="묶음 이름"><button class="icon-btn" type="button" data-pgdel="${b.id}|${gi}" aria-label="묶음 삭제">✕</button></div>
+      <textarea rows="3" data-pg="${b.id}|${gi}|text" placeholder="1boy, black hair … (쉼표로 구분)" aria-label="페어 태그">${esc(g.text||"")}</textarea></div>`).join("")}
+    <div><button class="btn" type="button" data-pgadd="${b.id}">+ 페어 태그 묶음</button></div>
+    <label class="lab-s" for="pc-${b.id}">커플 프롬 <span class="hint">· 둘이 함께 나올 때 쓰는 태그 (예: 2boys, couple, holding hands)</span>
+      <textarea id="pc-${b.id}" rows="2" data-pf="${b.id}|couple">${esc(b.couple||"")}</textarea></label>
+    <label class="lab-s" for="pm-${b.id}">메모 <span class="hint">· 관계, 설정 등</span>
+      <textarea id="pm-${b.id}" rows="2" data-pf="${b.id}|note">${esc(b.note||"")}</textarea></label>
+  </div>`;
+}
+
 /* ---------- derived ---------- */
 function list(){ if(chars.length) return chars; const hid = settings.hiddenExamples||[]; return EXAMPLES.filter(e=>!hid.includes(e.id)); }
 function allTags(){
@@ -559,7 +646,7 @@ function filtered(){
   const q = filt.q.trim().toLowerCase();
   let l = list().filter(c=>{
     if(filt.tag && !(c.tags||[]).includes(filt.tag)) return false;
-    if(q && !(`${c.name} ${c.sub||""} ${c.hashtags||""} ${(c.tags||[]).join(" ")}`.toLowerCase().includes(q))) return false;
+    if(q && !(`${c.name} ${c.sub||""} ${c.hashtags||""} ${(c.tags||[]).join(" ")} ${pairNames(c).join(" ")}`.toLowerCase().includes(q))) return false;
     return true;
   });
   const by = {
@@ -624,8 +711,9 @@ function render(){
   if(mode!=="cloud" && localReason) n.push(`<div class="note">${esc(localReason)}</div>`);
   $("notes").innerHTML = n.join("");
   const l = filtered();
-  const g = $("grid"); g.classList.toggle("compact", filt.compact);
-  g.innerHTML = l.length ? l.map(card).join("") : !chars.length && !filt.q && !filt.tag
+  document.querySelectorAll("#viewSeg [data-view]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.view===filt.view));
+  const g = $("grid"); g.className = "grid" + (filt.view==="compact" ? " compact" : filt.view==="list" ? " list" : "");
+  g.innerHTML = l.length ? l.map(filt.view==="list" ? listRow : card).join("") : !chars.length && !filt.q && !filt.tag
     ? `<div class="empty">아직 캐릭터가 없어요.${canEdit?` <button class="add-btn" type="button" data-act="add" style="height:34px;margin-left:8px">+ 새 항목</button>`:""}</div>`
     : `<div class="empty">조건에 맞는 항목이 없어요.</div>`;
 }
@@ -637,9 +725,21 @@ function card(c){
     <div class="thumb">${img}${c.example?`<span class="ex">예시</span>`:""}</div>
     <div class="info">
       <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
-      ${c.hashtags?`<div class="hash">${esc(c.hashtags)}</div>`:""}
+      ${c.hashtags||pairNames(c).length?`<div class="hash">${pairNames(c).length?`<span class="pairmark">× ${esc(pairNames(c).join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}
       ${(c.tags||[]).length?`<div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>`:""}
     </div></article>`;
+}
+function listRow(c){
+  const d = dday(c.start), hc = c.heart || HEARTS[0], pn = pairNames(c);
+  const img = c.cover ? `<img src="${esc(src(c.cover))}" alt="" loading="lazy">` : phHtml(c,true);
+  return `<article class="lrow" tabindex="0" data-open="${esc(c.id)}" aria-label="${esc(c.name)}">
+    <span class="l-no">No.${numberOf(c.id)}</span>
+    <div class="l-th">${img}</div>
+    <div class="l-main"><div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}${c.example?`<span class="ex">예시</span>`:""}</div>
+      ${c.hashtags||pn.length?`<div class="hash">${pn.length?`<span class="pairmark">× ${esc(pn.join(", "))}</span> `:""}${esc(c.hashtags||"")}</div>`:""}</div>
+    <div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>
+    <span class="dday"><span class="hdot" style="background:${esc(hc)}"></span>${d?`D+${d}`:""}</span>
+  </article>`;
 }
 
 /* ---------- modal: view ---------- */
@@ -667,6 +767,8 @@ function viewChar(id){
     } else if(b.type==="text"){
       if(!b.text) return;
       rows.push(row(label, `<div class="txt">${richText(b.text)}</div><button class="copy" type="button" data-copytext="${esc(b.id)}">COPY</button>`));
+    } else if(b.type==="pair"){
+      const h = pairHtml(c, b); if(h) rows.push(row(label||"페어", h));
     } else if(b.type==="images"){
       const imgs=(b.images||[]); if(!imgs.length) return;
       const cls = imgs.length===1?"one":imgs.length===2?"two":"";
@@ -709,13 +811,14 @@ function renderEditor(keep){
   const d = draft;
   const heartBtns = HEARTS.map(h=>`<button type="button" class="cdot" style="background:${h}" data-heart="${h}" aria-pressed="${d.heart===h}" aria-label="하트 색 ${h}"></button>`).join("");
   const blocks = (d.blocks||[]).map((b,i)=>{
-    const kc = b.type==="tags"?"#4a8fb5":b.type==="images"?"#c7782a":"#6b7278";
-    const kn = b.type==="tags"?"태그":b.type==="images"?"이미지":"텍스트";
+    const kc = b.type==="tags"?"#4a8fb5":b.type==="images"?"#c7782a":b.type==="pair"?"#db2777":"#6b7278";
+    const kn = b.type==="tags"?"태그":b.type==="images"?"이미지":b.type==="pair"?"페어":"텍스트";
     let body="";
     if(b.type==="tags") body=`<textarea id="bt-${b.id}" data-btext="${b.id}" rows="3" placeholder="1boy, pink hair, long hair … (쉼표로 구분)">${esc(b.text||"")}</textarea>`;
     if(b.type==="text") body=`<textarea id="bt-${b.id}" data-btext="${b.id}" rows="5" placeholder="자유롭게 적어 주세요. 링크와 #FF69B4 같은 색상 코드는 자동으로 표시돼요.">${esc(b.text||"")}</textarea>`;
     if(b.type==="images") body=`<div class="thumbs">${(b.images||[]).map((r,j)=>`<div class="t"><img src="${esc(src(r))}" alt=""><button type="button" data-delimg="${b.id}:${j}" aria-label="이미지 빼기">×</button></div>`).join("")}</div>
       <div><button class="btn" type="button" data-addimgs="${b.id}">이미지 추가</button> <span class="busy" id="busy-${b.id}"></span></div>`;
+    if(b.type==="pair") body = pairEditorHtml(d, b);
     return `<div class="block"><div class="bhead"><span class="kind" style="color:${kc}">${kn}</span>
       <input id="bl-${b.id}" data-blabel="${b.id}" value="${esc(b.label||"")}" placeholder="항목 이름 (예: 외형)" aria-label="항목 이름">
       <button class="icon-btn" type="button" data-bmove="${i}:-1" aria-label="위로" ${i===0?"disabled":""}>↑</button>
@@ -744,7 +847,7 @@ function renderEditor(keep){
     <div class="f"><label for="e-order">순서 <span class="hint">· 기본순 정렬에 쓰여요, 작을수록 앞</span></label><input type="number" id="e-order" value="${esc(d.order||0)}" style="max-width:120px"></div>
     <div class="f"><span class="lab">상세 항목</span></div>
     ${blocks || `<div class="busy">아직 항목이 없어요.</div>`}
-    <div class="addrow"><button class="btn" type="button" data-addblock="tags">+ 태그 묶음</button><button class="btn" type="button" data-addblock="text">+ 텍스트</button><button class="btn" type="button" data-addblock="images">+ 이미지</button></div>
+    <div class="addrow"><button class="btn" type="button" data-addblock="pair">+ 페어</button><button class="btn" type="button" data-addblock="tags">+ 태그 묶음</button><button class="btn" type="button" data-addblock="text">+ 텍스트</button><button class="btn" type="button" data-addblock="images">+ 이미지</button></div>
     <label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="e-comb" ${d.combined!==false?"checked":""}> 태그 묶음이 2개 이상이면 ‘종합 태그’도 보여주기</label>
     <div class="foot">${!d._new && !d.example?`<button class="btn danger left" type="button" data-act="askDel">삭제</button>`:""}
       <button class="btn" type="button" data-act="cancelEdit">취소</button><button class="btn dark" type="button" data-act="saveEdit">저장</button></div>
@@ -758,6 +861,8 @@ function readEditor(){
   const cb=$("e-comb"); if(cb) draft.combined = cb.checked;
   document.querySelectorAll("[data-blabel]").forEach(el=>{ const b=draft.blocks.find(x=>x.id===el.dataset.blabel); if(b) b.label=el.value; });
   document.querySelectorAll("[data-btext]").forEach(el=>{ const b=draft.blocks.find(x=>x.id===el.dataset.btext); if(b) b.text=el.value; });
+  document.querySelectorAll("[data-pf]").forEach(el=>{ const [bid,f]=el.dataset.pf.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b) b[f]=el.value; });
+  document.querySelectorAll("[data-pg]").forEach(el=>{ const [bid,gi,f]=el.dataset.pg.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b&&b.groups&&b.groups[+gi]) b.groups[+gi][f]=el.value; });
 }
 async function saveEdit(){
   readEditor();
@@ -828,14 +933,14 @@ async function inlineRef(ref, memo){
 async function exportSite(){
   const memo={}, out=JSON.parse(JSON.stringify({app:"persona-gallery",version:2,exportedAt:new Date().toISOString(),settings,chars}));
   let total=0, done=0;
-  out.chars.forEach(c=>{ if(c.cover) total++; (c.blocks||[]).forEach(b=>total+=(b.images||[]).length); });
+  out.chars.forEach(c=>{ if(c.cover) total++; (c.blocks||[]).forEach(b=>{ total+=(b.images||[]).length; if(b.image) total++; }); });
   if(out.settings.banner) total++; if(out.settings.avatar) total++;
   const tick=()=>{ const el=$("busy-exp"); if(el) el.textContent=`이미지 담는 중… ${++done}/${total}`; };
   if(out.settings.banner){ out.settings.banner=await inlineRef(out.settings.banner,memo); tick(); }
   if(out.settings.avatar){ out.settings.avatar=await inlineRef(out.settings.avatar,memo); tick(); }
   for(const c of out.chars){
     if(c.cover){ c.cover=await inlineRef(c.cover,memo); tick(); }
-    for(const b of (c.blocks||[])) if(b.images) for(let i=0;i<b.images.length;i++){ b.images[i]=await inlineRef(b.images[i],memo); tick(); }
+    for(const b of (c.blocks||[])){ if(b.images) for(let i=0;i<b.images.length;i++){ b.images[i]=await inlineRef(b.images[i],memo); tick(); } if(b.image){ b.image=await inlineRef(b.image,memo); tick(); } }
   }
   const text = JSON.stringify(out);
   try{ await downloadText("data.json", text); const el=$("busy-exp"); if(el) el.textContent=`data.json을 만들었어요 (${(text.length/1048576).toFixed(1)}MB).`; }
@@ -908,6 +1013,15 @@ document.addEventListener("click", async e=>{
   if(ds.tdelask!==undefined){ readTagNames(); tagDraft.forEach(x=>x.confirm=false); tagDraft[+ds.tdelask].confirm=true; renderTagManager(true); return; }
   if(ds.tdel!==undefined){ readTagNames(); tagDraft.splice(+ds.tdel,1); renderTagManager(true); return; }
   if(ds.heart){ readEditor(); draft.heart=ds.heart; renderEditor(); return; }
+  if(ds.addblock==="pair"){ readEditor(); draft.blocks.push({id:newId(),type:"pair",label:"페어",name:"",link:"",groups:[{label:"외형",text:""},{label:"의상",text:""}],couple:"",note:""}); renderEditor(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const pi=$("pn-"+draft.blocks[draft.blocks.length-1].id); if(pi) pi.focus(); return; }
+  if(ds.pgadd){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.pgadd); if(b){ b.groups=b.groups||[]; b.groups.push({label:"",text:""}); } renderEditor(true); return; }
+  if(ds.pgdel){ readEditor(); const [bid,gi]=ds.pgdel.split("|"); const b=draft.blocks.find(x=>x.id===bid); if(b&&b.groups) b.groups.splice(+gi,1); renderEditor(true); return; }
+  if(ds.prm){ readEditor(); const b=draft.blocks.find(x=>x.id===ds.prm); if(b) delete b.image; renderEditor(true); return; }
+  if(ds.ppick){ readEditor(); const [f]=await pickFiles(false); if(!f) return; const sp=$("busy-"+ds.ppick); if(sp) sp.textContent="올리는 중…"; const r=await storeImage(f); const b=draft.blocks.find(x=>x.id===ds.ppick); if(r&&b) b.image=r; renderEditor(true); return; }
+  if(ds.copypair){
+    const [bid,k]=ds.copypair.split("|"); const c=findChar(openId); const b=c&&(c.blocks||[]).find(x=>x.id===bid); if(!b) return;
+    const p=pairData(c,b); copy((k==="all"?p.full:k==="couple"?p.coupleItems:(p.groups[+k]||{items:[]}).items).join(", ")); return;
+  }
   if(ds.addblock){ readEditor(); draft.blocks.push({id:newId(),type:ds.addblock,label:ds.addblock==="tags"?"태그":ds.addblock==="images"?"갤러리":"",text:"",images:[]}); renderEditor(); const m=$("modal"); m.scrollTop=m.scrollHeight; return; }
   if(ds.bmove){ readEditor(); const [i,dir]=ds.bmove.split(":").map(Number); const a=draft.blocks; const j=i+dir; if(j>=0&&j<a.length){ [a[i],a[j]]=[a[j],a[i]]; } renderEditor(); return; }
   if(ds.bdel){ readEditor(); draft.blocks.splice(Number(ds.bdel),1); renderEditor(); return; }
@@ -1007,7 +1121,7 @@ document.addEventListener("keydown", e=>{
 });
 $("q").addEventListener("input", e=>{ filt.q=e.target.value; render(); });
 $("rev").addEventListener("click", ()=>{ filt.rev=!filt.rev; $("rev").setAttribute("aria-pressed",filt.rev); render(); });
-$("viewBtn").addEventListener("click", ()=>{ filt.compact=!filt.compact; $("viewBtn").setAttribute("aria-pressed",filt.compact); render(); });
+$("viewSeg").addEventListener("click", e=>{ const b=e.target.closest("[data-view]"); if(!b) return; filt.view=b.dataset.view; try{ localStorage.setItem("persona-view", filt.view); }catch(_){} render(); });
 $("addBtn").addEventListener("click", ()=>editChar(null));
 
 /* ---------- Firebase: 내 주소(tone-arc0721.github.io)에서 쓸 때의 저장소 ---------- */
@@ -1071,10 +1185,10 @@ async function fsNormalizeRef(ref){
 async function fsNormalizeChar(c){
   c = JSON.parse(JSON.stringify(c));
   if(c.cover) c.cover = await fsNormalizeRef(c.cover);
-  for(const b of (c.blocks||[])) if(Array.isArray(b.images)) for(let i=0;i<b.images.length;i++) b.images[i] = await fsNormalizeRef(b.images[i]);
+  for(const b of (c.blocks||[])){ if(Array.isArray(b.images)) for(let i=0;i<b.images.length;i++) b.images[i] = await fsNormalizeRef(b.images[i]); if(b.image) b.image = await fsNormalizeRef(b.image); }
   return c;
 }
-function charRefs(c){ const r=[]; if(c.cover) r.push(c.cover); (c.blocks||[]).forEach(b=>(b.images||[]).forEach(x=>r.push(x))); return r; }
+function charRefs(c){ const r=[]; if(c.cover) r.push(c.cover); (c.blocks||[]).forEach(b=>{ (b.images||[]).forEach(x=>r.push(x)); if(b.image) r.push(b.image); }); return r; }
 async function fsDeleteUnused(refs, ignoreId){
   const inUse = new Set(); chars.filter(c=>c.id!==ignoreId).forEach(c=>charRefs(c).forEach(r=>inUse.add(r)));
   if(settings.banner) inUse.add(settings.banner); if(settings.avatar) inUse.add(settings.avatar);
