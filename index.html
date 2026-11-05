@@ -221,6 +221,7 @@ details.acc .acc-b>label.f:first-child{margin-top:0}
 #sheet .corner{position:absolute;z-index:3;font-size:18px;line-height:1;pointer-events:none}
 #sheet .c-tl{left:10px;top:10px}#sheet .c-tr{right:10px;top:10px}#sheet .c-bl{left:10px;bottom:10px}#sheet .c-br{right:10px;bottom:10px}
 #sheet .dlg{font-weight:var(--dlgw);color:var(--dlgc)}
+#sheet .dlg.dlgb{color:inherit}
 #sheet .tb{margin:0 0 var(--pgap,1em);text-align:var(--talign);text-indent:var(--ind,0)}
 #sheet:not(.ind-dlg) .tb.dlgp{text-indent:0}
 #sheet .tb.sysp,#sheet .tb.q{text-indent:0}
@@ -969,7 +970,7 @@ html.ui-dark .fabb{color:#111}
   </div>
   <p style="margin:22px 0 8px">작업 화면 색</p>
   <div class="seg" id="uiSeg" style="max-width:360px;margin:0 auto"><button data-ui="system">시스템 설정 따라가기</button><button data-ui="light">라이트</button><button data-ui="dark">다크</button></div>
-  <p class="hint" id="verTag" style="text-align:center;margin-top:10px">V.1.1</p>
+  <p class="hint" id="verTag" style="text-align:center;margin-top:10px">V.1.2</p>
   <button class="btn ghost" id="chClose" style="margin-top:16px;max-width:360px">닫기</button>
 </div></div>
 <div class="split" id="splitH" aria-label="크기 조절"><i></i></div>
@@ -1119,14 +1120,14 @@ function synt(p){const o={text:p,tr:'',time:'',sys:false,wantImg:false,onlyTr:fa
   if(/\[사진\]/.test(t)){o.wantImg=true;t=t.replace(/\s*\[사진\]\s*/g,' ')}
   const sm=t.match(/^\s*\[s\]\s?([\s\S]*)$/i);if(sm){o.sys=true;t=sm[1]}
   o.text=t.replace(/[ \t]+$/gm,'').trim();return o}
-function emph(h){const m=Object.assign({dq:true,sq:true,cj:true,ang:false,paren:false},S.dlgMarks||{});const X='(?:[^<]|<br>)';const pats=[];
+function emph(h,whole){const m=Object.assign({dq:true,sq:true,cj:true,ang:false,paren:false},S.dlgMarks||{});const X='(?:[^<]|<br>)';const pats=[];
   if(m.dq){pats.push('“'+X.replace('[^<]','[^”<]')+'*?”','&quot;'+'(?:(?!&quot;)'+X+')*?&quot;')}
   if(m.sq){pats.push('‘'+X.replace('[^<]','[^’<]')+'*?’',"&#39;(?:(?!&#39;)"+X+")*?&#39;","'(?:[^'<]|<br>)*?'")}
   if(m.cj){pats.push('「'+X.replace('[^<]','[^」<]')+'*?」','『'+X.replace('[^<]','[^』<]')+'*?』')}
   if(m.ang){pats.push('《'+X.replace('[^<]','[^》<]')+'*?》','〈'+X.replace('[^<]','[^〉<]')+'*?〉','&lt;(?:(?!&lt;|&gt;)'+X+')*?&gt;')}
   if(m.paren){pats.push('\\('+X.replace('[^<]','[^)<]')+'*?\\)','（'+X.replace('[^<]','[^）<]')+'*?）')}
-  if(!pats.length)return h;
-  return h.replace(new RegExp('('+pats.join('|')+')','g'),(all)=>all.split('<br>').map(x=>x?'<span class="dlg">'+x+'</span>':x).join('<br>'))}
+  if(!pats.length)return whole&&h?'<span class="dlg dlgb">'+h+'</span>':h;
+  const o=h.replace(new RegExp('('+pats.join('|')+')','g'),(all)=>all.split('<br>').map(x=>x?'<span class="dlg">'+x+'</span>':x).join('<br>'));return whole&&o===h&&h?'<span class="dlg dlgb">'+h+'</span>':o}
 function trHTML(tr,tag){return tr?`<${tag||'span'} class="tr">${fmt(tr)}</${tag||'span'}>`:''}
 function parse(quiet){
   S.raw=$('#raw').value;S.me=$('#meName').value.trim()||'나';S.ai=$('#aiName').value.trim()||'캐릭터';
@@ -1407,7 +1408,7 @@ function onWholeChange(){
 }
 const setters=[seg('#wholeSeg','whole',onWholeChange),
   seg('#modeSeg','mode',onModeChange,'.fmt'),seg('#phSeg','phPos',onPhPos),seg('#phR','phR',applyStyle),
-  rng('#phW','phW',v=>v+'%'),rng('#phGap','phGap',v=>Math.round(S.fs*v)+'px'),seg('#phRatioSeg','phRatio',applyStyle),rng('#phHr','phHr',v=>v+'%',()=>{S.phRatio='custom';applyStyle()}),rng('#phZoom','phZoom',v=>v+'%'),seg('#creditAlignSeg','creditAlign',applyStyle),seg('#creditPosSeg','creditPos',applyStyle),seg('#creditSizeSeg','creditSize',()=>{if(S.creditSize==='custom')S.creditPx=Math.round(S.fs*0.9);applyStyle()}),rng('#creditPx','creditPx',v=>v+'px',()=>{S.creditSize='custom';applyStyle()}),tog('#tDate','showDate'),txt('#chatDate','chatDate'),tog('#tTime','showTime'),txt('#timeStart','timeStart'),seg('#timeStepSeg','timeStep',applyStyle),seg('#timeFmtSeg','timeFmt',applyStyle),tog('#tUnread','unread'),tog('#tCreditLabel','creditLabel'),seg('#chatStyleSeg','chatStyle',onSkin),tog('#tDim','dim',()=>{if(S.dim){if(S.ink==='theme')S.ink='#ffffff'}else if(S.ink==='#ffffff')S.ink='theme';save();applyStyle()}),rng('#dimA','dimA',v=>v+'%'),rng('#freeH','freeH',v=>v+'px'),tog('#tFitText','fitText'),tog('#tXGuide','xGuide'),tog('#tParC','parOn'),tog('#tFgnC','fgnOn'),col('#parColor','parColor'),col('#fgnColor','fgnColor'),col('#trColor','trColor'),rng('#trSize','trSize',v=>Math.round(v*100)+'%'),tog('#tAutoTr','autoTr'),tog('#tCharAcc','charAccent',()=>{renderThemes();$$('#themes .sw').forEach(x=>x.classList.toggle('on',x.dataset.t===S.theme));applyStyle()}),seg('#nonameSeg','noname',()=>{if(!S.whole&&S.blocks.length){parse(true);selectionChanged(true);toast('다시 나눴어요')}else selectionChanged()}),seg('#talignSeg','talign',applyStyle),seg('#valignSeg2','valign',applyStyle),seg('#decoSeg','deco',()=>{const dd=DECO_DEF[S.deco];if(dd){S.decoC1=dd[0];S.decoC2=dd[1]}if(DK_FRAMES.includes(S.deco)&&S.pad<34)S.pad=34;setters.forEach(f=>typeof f==='function'&&f());save();applyStyle()}),col('#decoC1','decoC1'),col('#decoC2','decoC2'),seg('#dlgSeg','dlg',()=>{applyStyle();if(S.dlg!=='none'&&!body.querySelector('.dlg'))toast('‘대사로 볼 기호’로 감싼 대사가 로그에 없어서 바뀐 곳이 없어요')}),col('#dlgColor','dlgColor',()=>{if(S.dlg==='none'||S.dlg==='bold')S.dlg='both';applyStyle()}),tog('#tDlgChar','dlgChar',()=>{if(S.dlg==='none'||S.dlg==='bold')S.dlg='both';applyStyle()}),rng('#ebSize','ebSize',v=>v+'px'),tog('#tRepAuto','repAuto',()=>{selectionChanged();toast(S.repAuto?'발췌할 때 자동으로 바꿔서 보여줘요':'자동 적용을 껐어요')}),seg('#tlCardSeg','tlCard',applyStyle),seg('#tlNodeSeg','tlNode',applyStyle),seg('#tlTimeSeg','tlTime',applyStyle),col('#tlLine','tlLine'),tog('#tPanel','panel'),col('#panelColor','panelColor'),rng('#panelA','panelA',v=>v+'%'),seg('#mixSplitSeg','mixSplit',()=>confirmRebuild()),mixTog('#mxPhoto','photo'),mixTog('#mxChat','chat'),mixTog('#mxProse','prose'),mixTog('#mxQuote','quote'),tog('#tShowMe','showMe'),
+  rng('#phW','phW',v=>v+'%'),rng('#phGap','phGap',v=>Math.round(S.fs*v)+'px'),seg('#phRatioSeg','phRatio',applyStyle),rng('#phHr','phHr',v=>v+'%',()=>{S.phRatio='custom';applyStyle()}),rng('#phZoom','phZoom',v=>v+'%'),seg('#creditAlignSeg','creditAlign',applyStyle),seg('#creditPosSeg','creditPos',applyStyle),seg('#creditSizeSeg','creditSize',()=>{if(S.creditSize==='custom')S.creditPx=Math.round(S.fs*0.9);applyStyle()}),rng('#creditPx','creditPx',v=>v+'px',()=>{S.creditSize='custom';applyStyle()}),tog('#tDate','showDate'),txt('#chatDate','chatDate'),tog('#tTime','showTime'),txt('#timeStart','timeStart'),seg('#timeStepSeg','timeStep',applyStyle),seg('#timeFmtSeg','timeFmt',applyStyle),tog('#tUnread','unread'),tog('#tCreditLabel','creditLabel'),seg('#chatStyleSeg','chatStyle',onSkin),tog('#tDim','dim',()=>{if(S.dim){if(S.ink==='theme')S.ink='#ffffff'}else if(S.ink==='#ffffff')S.ink='theme';save();applyStyle()}),rng('#dimA','dimA',v=>v+'%'),rng('#freeH','freeH',v=>v+'px'),tog('#tFitText','fitText'),tog('#tXGuide','xGuide'),tog('#tParC','parOn'),tog('#tFgnC','fgnOn'),col('#parColor','parColor'),col('#fgnColor','fgnColor'),col('#trColor','trColor'),rng('#trSize','trSize',v=>Math.round(v*100)+'%'),tog('#tAutoTr','autoTr'),tog('#tCharAcc','charAccent',()=>{renderThemes();$$('#themes .sw').forEach(x=>x.classList.toggle('on',x.dataset.t===S.theme));applyStyle()}),seg('#nonameSeg','noname',()=>{if(!S.whole&&S.blocks.length){parse(true);selectionChanged(true);toast('다시 나눴어요')}else selectionChanged()}),seg('#talignSeg','talign',applyStyle),seg('#valignSeg2','valign',applyStyle),seg('#decoSeg','deco',()=>{const dd=DECO_DEF[S.deco];if(dd){S.decoC1=dd[0];S.decoC2=dd[1]}if(DK_FRAMES.includes(S.deco)&&S.pad<34)S.pad=34;setters.forEach(f=>typeof f==='function'&&f());save();applyStyle()}),col('#decoC1','decoC1'),col('#decoC2','decoC2'),seg('#dlgSeg','dlg',()=>{applyStyle();if(S.dlg==='none')return;const nb=body.querySelector('.dlg:not(.dlgb)'),bb=body.querySelector('.dlgb');if(!nb&&!bb)toast('‘대사로 볼 기호’로 감싼 대사가 로그에 없어서 바뀐 곳이 없어요');else if(!nb&&S.dlg==='color')toast('말풍선 대사는 말풍선 색과 겹쳐서 ‘굵게’로만 강조돼요');else if(!nb)toast('말풍선 대사는 굵게로 강조했어요 (색은 말풍선 색 유지)')}),col('#dlgColor','dlgColor',()=>{if(S.dlg==='none'||S.dlg==='bold')S.dlg='both';applyStyle()}),tog('#tDlgChar','dlgChar',()=>{if(S.dlg==='none'||S.dlg==='bold')S.dlg='both';applyStyle()}),rng('#ebSize','ebSize',v=>v+'px'),tog('#tRepAuto','repAuto',()=>{selectionChanged();toast(S.repAuto?'발췌할 때 자동으로 바꿔서 보여줘요':'자동 적용을 껐어요')}),seg('#tlCardSeg','tlCard',applyStyle),seg('#tlNodeSeg','tlNode',applyStyle),seg('#tlTimeSeg','tlTime',applyStyle),col('#tlLine','tlLine'),tog('#tPanel','panel'),col('#panelColor','panelColor'),rng('#panelA','panelA',v=>v+'%'),seg('#mixSplitSeg','mixSplit',()=>confirmRebuild()),mixTog('#mxPhoto','photo'),mixTog('#mxChat','chat'),mixTog('#mxProse','prose'),mixTog('#mxQuote','quote'),tog('#tShowMe','showMe'),
   seg('#bgSeg','bgType',applyStyle),seg('#bgFitSeg','bgFit',applyStyle),col('#bgBase','bgBase'),tog('#tBgFade','bgFade'),col('#bgColor','bgColor'),col('#g1','g1'),col('#g2','g2'),seg('#gTypeSeg','gType',applyStyle),rng('#gAngle','gAngle',v=>v+'°'),
   seg('#patSeg','pat',applyStyle),col('#patColor','patColor'),rng('#patSize','patSize',v=>v+'px'),rng('#patA','patA',v=>v+'%'),col('#ovColor','ovColor'),rng('#ovA','ovA',v=>v+'%'),
   seg('#inkSeg','ink',applyStyle),col('#inkColor','inkColor',()=>{S.ink='custom';applyStyle()}),
@@ -1621,7 +1622,7 @@ function buildMix(){
     const chat=it.type==='say'||it.type==='pic';
     if(chat&&!inChat){h+='<div class="msgs mix">';inChat=true}
     if(!chat&&inChat){h+='</div>';inChat=false}
-    if(it.type==='say')h+=`<div class="row" data-k="${esc(it.k)}">${avHTML(it.k)}<div class="col"><div class="nm">${esc(it.k)}</div><div class="bw"><div class="bubble" contenteditable="true">${emph(fmt(it.t))}${trHTML(it.tr,'div')}</div></div></div></div>`;
+    if(it.type==='say')h+=`<div class="row" data-k="${esc(it.k)}">${avHTML(it.k)}<div class="col"><div class="nm">${esc(it.k)}</div><div class="bw"><div class="bubble" contenteditable="true">${emph(fmt(it.t),true)}${trHTML(it.tr,'div')}</div></div></div></div>`;
     else if(it.type==='pic')h+=`<div class="row" data-k="${esc(it.k)}" data-bid="${it.bid}">${avHTML(it.k)}<div class="col"><div class="nm">${esc(it.k)}</div><div class="bw"><div class="bubble picb"><img src="${it.src}" alt=""></div></div></div></div>`;
     else if(it.type==='quote')h+=`<p class="tb q" contenteditable="true">${fmt(it.t)}${trHTML(it.tr)}</p>`;
     else h+=`<p class="tb${it.sys?' sysp':''}" contenteditable="true">${it.who?`<span class="who">${esc(it.who)}</span>`:''}${emph(fmt(it.t))}${trHTML(it.tr)}</p>`;
@@ -1651,7 +1652,7 @@ function buildBody(keep){
     body.innerHTML='<div class="msgs">'+bl.map(b=>{
       if(b.sp==='narr'){prev=null;return`<div class="row C${b.sys?' sys':''}" data-bid="${b.id}"><span class="cdot"></span><span class="ln"></span><div class="bubble" contenteditable="true">${emph(fmt(b.text))}${trHTML(b.tr,'div')}</div><span class="ln"></span></div>`}
       const k=nameOf(b);const cont=prev===k;prev=k;const meta='<span class="meta"><span class="ur">1</span><span class="tm"></span></span>';
-      return`<div class="row ${cont?'cont':''}" data-k="${esc(k)}" data-bid="${b.id}">${avHTML(k)}<div class="col"><div class="nm">${esc(k)}</div><div class="bw"><div class="bubble" contenteditable="true">${emph(fmt(b.text))}${trHTML(b.tr,'div')}</div>${meta}</div></div></div>`
+      return`<div class="row ${cont?'cont':''}" data-k="${esc(k)}" data-bid="${b.id}">${avHTML(k)}<div class="col"><div class="nm">${esc(k)}</div><div class="bw"><div class="bubble" contenteditable="true">${emph(fmt(b.text),true)}${trHTML(b.tr,'div')}</div>${meta}</div></div></div>`
         +(!b.img&&b.wantImg?`<div class="row cont slotrow" data-k="${esc(k)}" data-bid="${b.id}">${avHTML(k)}<div class="col"><div class="nm">${esc(k)}</div><div class="bw"><div class="bubble picb slot">📷 사진 자리<br><small>2번 목록에서 첨부하세요</small></div>${meta}</div></div></div>`:'')
         +(b.img?`<div class="row cont" data-k="${esc(k)}" data-bid="${b.id}">${avHTML(k)}<div class="col"><div class="nm">${esc(k)}</div><div class="bw"><div class="bubble picb"><img src="${b.img}" alt=""></div>${meta}</div></div></div>`:'');
     }).join('')+'</div>';
