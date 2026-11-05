@@ -548,6 +548,7 @@ html.studio.L-mo .wrap{position:fixed;left:0;right:0;top:calc(var(--abh,57px) + 
 html.studio.L-mo body{overflow:hidden}
 html.studio.L-mo .wrap>.sec{margin-bottom:12px}
 html.studio.L-mo .stkbar,html.studio.L-mo .hlpop{bottom:calc(70px + env(safe-area-inset-bottom))}
+html.studio.L-mo .hlpop{z-index:80;max-height:calc(100vh - 220px);overflow-y:auto}
 /* pc */
 html.studio.L-pc .dock{left:0;top:var(--abh,57px);bottom:0;width:68px;flex-direction:column;gap:4px;padding:10px 6px;border-right:1px solid var(--line)}
 html.studio.L-pc .wrap{margin-left:68px;max-width:none;grid-template-columns:var(--pnw,420px) 1fr;grid-template-areas:none;grid-template-rows:none;column-gap:28px;align-items:start;min-width:0}
@@ -968,7 +969,7 @@ html.ui-dark .fabb{color:#111}
   </div>
   <p style="margin:22px 0 8px">작업 화면 색</p>
   <div class="seg" id="uiSeg" style="max-width:360px;margin:0 auto"><button data-ui="system">시스템 설정 따라가기</button><button data-ui="light">라이트</button><button data-ui="dark">다크</button></div>
-  <p class="hint" id="verTag" style="text-align:center;margin-top:10px">V.1.0</p>
+  <p class="hint" id="verTag" style="text-align:center;margin-top:10px">V.1.1</p>
   <button class="btn ghost" id="chClose" style="margin-top:16px;max-width:360px">닫기</button>
 </div></div>
 <div class="split" id="splitH" aria-label="크기 조절"><i></i></div>
@@ -2138,7 +2139,9 @@ function onTool(e){
   if(c==='anno'){openAnno();return}
   exec(c,b.dataset.v);
 }
-document.addEventListener('pointerdown',e=>{if(!e.target.closest('.hlwrap')){['#hlpop','#tcpop','#cenpop','#upop','#spop'].forEach(q=>$(q).classList.remove('on'))}});
+['#hlpop','#tcpop','#cenpop','#upop','#spop'].forEach(q=>{const p=$(q);p.__home=p.parentElement;p.addEventListener('touchstart',e=>{if(p.parentElement===document.body)onTool(e)},{passive:false});p.addEventListener('mousedown',e=>{if(p.parentElement===document.body)onTool(e)})});
+window.placePops=()=>{const mo=document.documentElement.classList.contains('studio')&&document.documentElement.classList.contains('L-mo');['#hlpop','#tcpop','#cenpop','#upop','#spop'].forEach(q=>{const p=$(q);if(mo&&p.parentElement!==document.body)document.body.appendChild(p);else if(!mo&&p.parentElement===document.body)p.__home.appendChild(p)})};placePops();
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('.hlwrap,.hlpop')){['#hlpop','#tcpop','#cenpop','#upop','#spop'].forEach(q=>$(q).classList.remove('on'))}});
 $('#toolbar').addEventListener('touchstart',onTool,{passive:false});
 $('#toolbar').addEventListener('mousedown',onTool);
 document.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey))return;const sel=getSelection();if(!sel.rangeCount||sel.isCollapsed||!body.contains(sel.anchorNode))return;const k=e.key.toLowerCase();let done=true;
@@ -2633,7 +2636,7 @@ document.documentElement.classList.toggle('studio',STUDIO);
     else{root.style.setProperty('--pvh',bigPrev.h+'px');S.zoomMode=bigPrev.z||'all';bigPrev=null;$('#bigPv').textContent='⛶ 크게'}fitSoon()};
   $('#bigPv').onclick=toggleBig;let lastTap=0;$('#stage').addEventListener('touchend',e=>{if(e.touches.length)return;const now=Date.now();if(now-lastTap<300&&!window.getSelection().toString()){e.preventDefault();toggleBig();lastTap=0}else lastTap=now},{passive:false});
   $('#stage').addEventListener('dblclick',e=>{if(root.classList.contains('L-mo')&&!window.getSelection().toString())toggleBig()});
-  const pvHome=$('#secPrev').nextElementSibling;window.placePrev=()=>{const pv=$('#secPrev');if(STUDIO&&root.classList.contains('L-mo')){if(pv.parentElement!==document.body)document.body.insertBefore(pv,$('#splitH'))}else if(pv.parentElement===document.body){$('.wrap').insertBefore(pv,pvHome&&pvHome.parentElement?pvHome:null)}};placePrev();
+  const pvHome=$('#secPrev').nextElementSibling;window.placePrev=()=>{if(window.placePops)placePops();const pv=$('#secPrev');if(STUDIO&&root.classList.contains('L-mo')){if(pv.parentElement!==document.body)document.body.insertBefore(pv,$('#splitH'))}else if(pv.parentElement===document.body){$('.wrap').insertBefore(pv,pvHome&&pvHome.parentElement?pvHome:null)}};placePrev();
   if(STUDIO){if(!S.zoomMode)S.zoomMode='all';setTab(cur);setTimeout(()=>{$('#toolbar').scrollLeft=0},300)}})();
 function setLayout(m,remember){const h=document.documentElement;h.classList.remove('L-pc','L-mo');h.classList.add('L-'+m);
   $('#vp').setAttribute('content',m==='pc'&&screen.width<1000?'width=1200':'width=device-width, initial-scale=1');
