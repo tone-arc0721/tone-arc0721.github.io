@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="../icon.svg">
 <meta name="theme-color" content="#ffffff">
-<script>(function(){var d=document.documentElement;function ap(){var u="system";try{u=localStorage.getItem("excerpt-ui")||"system"}catch(e){}var dt=d.getAttribute("data-theme");var dk=u==="dark"||(u==="system"&&(dt?dt==="dark":!!(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)));d.classList.toggle("ui-dark",dk)}window.__applyUI=ap;ap();try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",ap)}catch(e){}try{new MutationObserver(ap).observe(d,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}})();</script>
+<script>(function(){var d=document.documentElement;function ap(){var u="system";try{u=localStorage.getItem("excerpt-ui")||"system"}catch(e){}var dt=d.getAttribute("data-theme");var dk=u==="dark"||(u==="system"&&(dt?dt==="dark":!!(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)));d.classList.toggle("ui-dark",dk)}window.__applyUI=ap;ap();function lay(){var p=null;try{p=localStorage.getItem("excerpt-layout")}catch(e){}var m=p==="pc"||p==="mo"?p:((window.innerWidth||screen.width)<960?"mo":"pc");d.classList.toggle("L-mo",m==="mo");d.classList.toggle("L-pc",m==="pc");var v=document.querySelector("meta[name=viewport]");if(v)v.setAttribute("content",m==="pc"&&screen.width<1000?"width=1200":"width=device-width, initial-scale=1");window.__layout=m}window.__applyLayout=lay;lay();try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",ap)}catch(e){}try{new MutationObserver(ap).observe(d,{attributes:true,attributeFilter:["data-theme"]})}catch(e){}})();</script>
 <style>
 /* Layout: shared "스크랩" app bar (logo · 발췌|페르소나 switch · 화면 설정) → persona index header with stats → search + segmented sort → tag chips → 4-col (PC) / 2-col (phone) index cards; detail is a two-column spec sheet (PC) or full-screen sheet (phone). Palette, type and dark mode follow the 발췌 site (zinc neutrals, Noto Sans KR, html.ui-dark + the shared 'excerpt-ui' setting). */
 :root{
@@ -191,45 +191,7 @@ a{color:var(--accent)}
   .grid.compact{grid-template-columns:repeat(4,minmax(0,1fr))}
 }
 /* phone */
-@media (max-width:680px){
-  body{font-size:14.5px}
-  .strip{height:96px}
-  .head-in{padding:20px 16px 16px;gap:14px;position:relative}
-  .gear{position:absolute;top:16px;right:16px}
-  .who{padding-right:52px}
-  .who{flex-basis:100%;gap:12px}
-  .av{width:52px;height:52px;font-size:20px}
-  .who h1{font-size:30px}
-  .stats{gap:0;width:100%;border-top:1px solid var(--rule);padding-top:12px}
-  .stat{flex:1}
-  .stat b{font-size:20px}
-  .wrap{padding:16px 16px 56px;gap:14px}
-  .search{flex-basis:100%}
-  #sortSeg{flex:1 1 100%}
-  .bar .seg button{flex:1 0 auto;padding:0 12px}
-  .bar>.add-btn{flex:1 1 auto}
-  .side .cover{max-width:280px}
-  .tagbar{width:100%}
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .grid.compact{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-  .card:hover{transform:none;box-shadow:none}
-  .card-top{padding:7px 9px;font-size:11px}
-  .thumb{margin:8px}
-  .info{padding:0 10px 10px;gap:4px}
-  .nm h2{font-size:16px}
-  .nm span{font-size:12px}
-  .hash{font-size:12px}
-  .overlay{padding:0;align-items:stretch}
-  .modal,.modal.narrow{width:100%;max-height:none;height:100%;border:0}
-  .side{border-right:0;border-bottom:1px solid var(--rule);padding:16px}
-  .side .cover{width:100%;margin:0 auto}
-  .spec{padding:18px 16px 28px}
-  .spec-head h2{font-size:30px}
-  .spec-head .dday{margin-left:0}
-  .rowx{grid-template-columns:1fr;gap:6px}
-  .form{padding:18px 16px 24px}
-  .two{grid-template-columns:1fr}
-}
+html.L-mo body{font-size:14.5px}html.L-mo .strip{height:96px}html.L-mo .head-in{padding:20px 16px 16px;gap:14px;position:relative}html.L-mo .gear{position:absolute;top:16px;right:16px}html.L-mo .who{padding-right:52px}html.L-mo .who{flex-basis:100%;gap:12px}html.L-mo .av{width:52px;height:52px;font-size:20px}html.L-mo .who h1{font-size:30px}html.L-mo .stats{gap:0;width:100%;border-top:1px solid var(--rule);padding-top:12px}html.L-mo .stat{flex:1}html.L-mo .stat b{font-size:20px}html.L-mo .wrap{padding:16px 16px 56px;gap:14px}html.L-mo .search{flex-basis:100%}html.L-mo #sortSeg{flex:1 1 100%}html.L-mo .bar .seg button{flex:1 0 auto;padding:0 12px}html.L-mo .bar>.add-btn{flex:1 1 auto}html.L-mo .side .cover{max-width:280px}html.L-mo .tagbar{width:100%}html.L-mo .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}html.L-mo .grid.compact{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}html.L-mo .card:hover{transform:none;box-shadow:none}html.L-mo .card-top{padding:7px 9px;font-size:11px}html.L-mo .thumb{margin:8px}html.L-mo .info{padding:0 10px 10px;gap:4px}html.L-mo .nm h2{font-size:16px}html.L-mo .nm span{font-size:12px}html.L-mo .hash{font-size:12px}html.L-mo .overlay{padding:0;align-items:stretch}html.L-mo .modal,html.L-mo .modal.narrow{width:100%;max-height:none;height:100%;border:0}html.L-mo .side{border-right:0;border-bottom:1px solid var(--rule);padding:16px}html.L-mo .side .cover{width:100%;margin:0 auto}html.L-mo .spec{padding:18px 16px 28px}html.L-mo .spec-head h2{font-size:30px}html.L-mo .spec-head .dday{margin-left:0}html.L-mo .rowx{grid-template-columns:1fr;gap:6px}html.L-mo .form{padding:18px 16px 24px}html.L-mo .two{grid-template-columns:1fr}
 /* ---- 발췌 사이트와 맞춘 모양 ---- */
 html.ui-dark .chip{color:color-mix(in srgb,var(--tc) 50%,#fff)}
 .chip{color:var(--tc,var(--ink));border-radius:999px;padding:1px 8px}
@@ -307,14 +269,28 @@ html.ui-dark .seg button[aria-pressed="true"]{background:#2d2e34;box-shadow:none
 .colors input[type=color]{border-radius:8px}
 .toast{border-radius:999px;top:70px;bottom:auto;font-family:var(--f-body)}
 
-@media (max-width:680px){
-  .top-in{padding:10px 16px;gap:6px}
-  .logo span{display:none}
-  .svc a{padding:6px 10px}
-  .who h1{font-size:26px}
-  .seg{height:42px}
-  .modal,.modal.narrow{border-radius:0}
-}
+html.L-mo .top-in{padding:10px 16px;gap:6px}html.L-mo .logo span{display:none}html.L-mo .svc a{padding:6px 10px}html.L-mo .who h1{font-size:26px}html.L-mo .seg{height:42px}html.L-mo .modal,html.L-mo .modal.narrow{border-radius:0}
+/* tag picker + tag manager */
+.tagpick{display:flex;flex-wrap:wrap;gap:6px}
+.tagopt{border:1px solid color-mix(in srgb,var(--tc) 45%,transparent);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px;font-size:13px;min-height:32px}
+.tagopt::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--tc);margin-right:6px;vertical-align:1px}
+.tagopt[aria-pressed="true"]{background:var(--tc);border-color:var(--tc);color:#fff;font-weight:700}
+.tagopt[aria-pressed="true"]::before{background:#fff}
+.tm-row{border:1px solid var(--rule);border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:8px;background:var(--surface)}
+.tm-top{display:flex;align-items:center;gap:6px}
+.tm-top input{flex:1;min-width:0;border:0;border-bottom:1px solid var(--dash);background:none;padding:5px 2px;font-weight:600}
+.tm-dot{width:12px;height:12px;border-radius:50%;flex:none}
+.tm-count{white-space:nowrap}
+.tm-row .cdot{width:22px;height:22px}
+.tagbtn.manage{border-style:dashed !important;color:var(--muted)}
+/* stacking: the detail window sits above the sticky app bar */
+.overlay{z-index:50}
+.lb{z-index:60}
+.toast{z-index:70}
+/* 모바일 레이아웃을 PC에서 골랐을 때: 가운데 좁은 열 */
+html.L-mo .wrap,html.L-mo .head-in,html.L-mo .top-in{max-width:560px}
+html.L-mo .modal,html.L-mo .modal.narrow{max-width:560px}
+html.L-mo .overlay{justify-content:center}
 </style>
 </head>
 <body>
@@ -325,6 +301,8 @@ html.ui-dark .seg button[aria-pressed="true"]{background:#2d2e34;box-shadow:none
   <div class="uipop"><button class="tbtn" id="uiBtn" type="button" aria-expanded="false" aria-controls="uiMenu">화면</button>
     <div class="uimenu" id="uiMenu"><small>화면 모드 · 발췌 화면에도 같이 적용돼요</small>
       <div class="seg" id="uiSeg" role="group" aria-label="화면 모드"><button type="button" data-ui="system">시스템</button><button type="button" data-ui="light">라이트</button><button type="button" data-ui="dark">다크</button></div>
+      <small>화면 크기 · 발췌 화면에도 같이 적용돼요</small>
+      <div class="seg" id="laySeg" role="group" aria-label="화면 크기"><button type="button" data-lay="pc">PC</button><button type="button" data-lay="mo">모바일</button></div>
     </div></div>
 </div></div>
 <header id="banner"></header>
@@ -387,12 +365,6 @@ function toast(m){ const t=$("toast"); t.textContent=m; t.classList.add("show");
 function lsGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); return true; }catch(e){ return false; } }
 function hash(s){ let h=0; for(const c of String(s)) h=(h*31+c.charCodeAt(0))|0; return Math.abs(h); }
-function tagColor(t){
-  const key = (settings.tagColors||{})[t];
-  if(key && TAG_COLORS[key]) return TAG_COLORS[key];
-  const keys = ["green","blue","pink","purple","orange","teal"];
-  return TAG_COLORS[keys[hash(t)%keys.length]];
-}
 function heartSvg(c,size){ return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path fill="${esc(c)}" d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.3C19.5 16.4 12 21 12 21z"/></svg>`; }
 function dday(d){
   if(!d) return null;
@@ -511,11 +483,74 @@ function pickFiles(multiple){
   });
 }
 
+/* ---------- tags: order, colors, manager ---------- */
+const TAG_PALETTE = [["회색","#71717a"],["빨강","#dc2626"],["주황","#ea580c"],["노랑","#ca8a04"],["초록","#16a34a"],["청록","#0d9488"],["하늘","#0284c7"],["파랑","#2563eb"],["보라","#7c3aed"],["분홍","#db2777"],["갈색","#92400e"],["검정","#18181b"]];
+function tagColor(t){
+  const v = (settings.tagColors||{})[t];
+  if(v && /^#[0-9a-f]{6}$/i.test(v)) return v;
+  if(v && TAG_COLORS[v]) return TAG_COLORS[v][0];
+  const auto = [7,4,9,8,2,5,6,1];
+  return TAG_PALETTE[auto[hash(t)%auto.length]][1];
+}
+function sortTags(ts){ const o = allTags(); return (ts||[]).slice().sort((a,b)=>o.indexOf(a)-o.indexOf(b)); }
+let tagDraft = null;
+function openTagManager(){
+  editingSettings = true;
+  const l = list();
+  tagDraft = allTags().map(t=>({orig:t, name:t, color:tagColor(t), count:l.filter(c=>(c.tags||[]).includes(t)).length, confirm:false}));
+  renderTagManager(false);
+}
+function readTagNames(){ document.querySelectorAll("[data-tname]").forEach(el=>{ const t=tagDraft[+el.dataset.tname]; if(t) t.name=el.value; }); }
+function renderTagManager(keep){
+  const m = $("modal"), y = m.scrollTop;
+  const rows = tagDraft.map((t,i)=>`<div class="tm-row">
+      <div class="tm-top">
+        <button class="icon-btn" type="button" data-tmove="${i}:-1" aria-label="위로" ${i===0?"disabled":""}>↑</button>
+        <button class="icon-btn" type="button" data-tmove="${i}:1" aria-label="아래로" ${i===tagDraft.length-1?"disabled":""}>↓</button>
+        <span class="tm-dot" style="background:${esc(t.color)}"></span>
+        <input type="text" id="tn-${i}" data-tname="${i}" value="${esc(t.name)}" aria-label="태그 이름">
+        <span class="busy tm-count">${t.count}명</span>
+        ${t.confirm ? `<button class="btn danger" type="button" data-tdel="${i}">${t.count?`${t.count}명에서 빼고 삭제`:"삭제"}</button>` : `<button class="icon-btn" type="button" data-tdelask="${i}" aria-label="태그 삭제">✕</button>`}
+      </div>
+      <div class="colors">${TAG_PALETTE.map(([n,h])=>`<button type="button" class="cdot" style="background:${h}" data-tcolor="${i}|${h}" aria-pressed="${t.color.toLowerCase()===h}" aria-label="${n}" title="${n}"></button>`).join("")}<input type="color" data-tcustom="${i}" value="${esc(t.color)}" aria-label="직접 고르기" title="직접 고르기"></div>
+    </div>`).join("");
+  openModal(`<div class="mtop"><span>태그 관리</span><div class="acts"><button class="mbtn x" type="button" data-act="close" aria-label="닫기">✕</button></div></div>
+    <div class="form">
+      <p class="busy" style="margin:0">위에서부터 순서대로 태그 줄과 카드에 보여요. 이름을 바꾸거나 지우면 모든 캐릭터에 같이 적용돼요.</p>
+      ${rows || `<div class="busy">아직 태그가 없어요. 아래에서 만들어 보세요.</div>`}
+      <div class="addrow"><input type="text" id="t-new" placeholder="새 태그 이름" style="flex:1;min-width:140px;border:1px solid var(--rule);border-radius:10px;padding:8px 11px;background:var(--surface)"><button class="btn" type="button" data-act="tAdd">+ 추가</button></div>
+      <div class="foot"><button class="btn" type="button" data-act="close">취소</button><button class="btn dark" type="button" data-act="tSave">저장</button></div>
+    </div>`);
+  if(keep) m.scrollTop = y;
+}
+async function saveTags(){
+  readTagNames();
+  const live = tagDraft.map(t=>({...t, name:t.name.trim()})).filter(t=>t.name);
+  const names = live.map(t=>t.name);
+  if(new Set(names).size !== names.length){ toast("같은 이름의 태그가 있어요. 이름을 바꿔 주세요."); return; }
+  const rename = {}; live.forEach(t=>{ if(t.orig && t.orig!==t.name) rename[t.orig]=t.name; });
+  const keep = new Set(live.filter(t=>t.orig).map(t=>t.orig));
+  const removed = allTags().filter(t=>!keep.has(t));
+  const s = JSON.parse(JSON.stringify(settings));
+  s.tagOrder = names; s.tagColors = {}; live.forEach(t=>{ s.tagColors[t.name]=t.color; });
+  for(const c of chars.slice()){
+    if(!(c.tags||[]).some(t=>rename[t] || removed.includes(t))) continue;
+    const nc = JSON.parse(JSON.stringify(c));
+    nc.tags = nc.tags.filter(t=>!removed.includes(t)).map(t=>rename[t]||t).filter((v,i,a)=>a.indexOf(v)===i);
+    nc.updatedAt = Date.now();
+    await saveChar(nc);
+  }
+  if(filt.tag && (removed.includes(filt.tag) || rename[filt.tag])) filt.tag = rename[filt.tag] || null;
+  await saveSettings(s);
+  closeModal(); render(); toast("태그를 저장했어요");
+}
+
 /* ---------- derived ---------- */
 function list(){ return chars.length ? chars : EXAMPLES; }
 function allTags(){
-  const seen=[]; list().slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(c=>(c.tags||[]).forEach(t=>{ if(!seen.includes(t)) seen.push(t); }));
-  return seen;
+  const order = (settings.tagOrder||[]).slice();
+  const used=[]; list().slice().sort((a,b)=>(a.order||0)-(b.order||0)).forEach(c=>(c.tags||[]).forEach(t=>{ if(!used.includes(t)) used.push(t); }));
+  return order.concat(used.filter(t=>!order.includes(t)));
 }
 function filtered(){
   const q = filt.q.trim().toLowerCase();
@@ -560,7 +595,7 @@ function linkify(h){ return h.replace(/https?:\/\/[^\s<]+/g, u=>`<a href="${u}" 
 function richText(t){
   return linkify(esc(t)).replace(/#([0-9A-Fa-f]{6})\b/g, (m,h)=>`<span class="sw" style="background:#${h}"></span>${m}`);
 }
-function chipHtml(t){ return `<span class="chip" style="--tc:${tagColor(t)[0]}">${esc(t)}</span>`; }
+function chipHtml(t){ return `<span class="chip" style="--tc:${tagColor(t)}">${esc(t)}</span>`; }
 function numberOf(id){
   const l = list().slice().sort((a,b)=>(a.order||0)-(b.order||0) || (a.createdAt||0)-(b.createdAt||0));
   return String(l.findIndex(x=>x.id===id)+1).padStart(3,"0");
@@ -577,7 +612,8 @@ function render(){
   const l0 = list();
   const tags = allTags();
   $("tagrow").innerHTML = `<button class="tagbtn" type="button" data-tag="" aria-pressed="${!filt.tag}">ALL<span class="n">${String(l0.length).padStart(2,"0")}</span></button>` +
-    tags.map(t=>`<button class="tagbtn" type="button" data-tag="${esc(t)}" aria-pressed="${filt.tag===t}">${esc(t)}<span class="n">${String(l0.filter(c=>(c.tags||[]).includes(t)).length).padStart(2,"0")}</span></button>`).join("");
+    tags.map(t=>`<button class="tagbtn" type="button" data-tag="${esc(t)}" aria-pressed="${filt.tag===t}">${esc(t)}<span class="n">${String(l0.filter(c=>(c.tags||[]).includes(t)).length).padStart(2,"0")}</span></button>`).join("") +
+    (canEdit ? `<button class="tagbtn manage" type="button" data-act="tags">태그 관리</button>` : "");
   document.querySelectorAll("#sortSeg [data-sort]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.sort===filt.sort));
   const n = [];
   if(!chars.length) n.push(`<div class="note">지금 보이는 카드 3장은 예시예요.${canEdit?` 첫 항목을 추가하면 사라져요. <button class="add-btn" type="button" data-act="add">+ 새 항목</button>`:""}</div>`);
@@ -597,14 +633,14 @@ function card(c){
     <div class="info">
       <div class="nm"><h2>${esc(c.name||"이름 없음")}</h2>${c.sub?`<span>${esc(c.sub)}</span>`:""}</div>
       ${c.hashtags?`<div class="hash">${esc(c.hashtags)}</div>`:""}
-      ${(c.tags||[]).length?`<div class="chips">${c.tags.map(chipHtml).join("")}</div>`:""}
+      ${(c.tags||[]).length?`<div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>`:""}
     </div></article>`;
 }
 
 /* ---------- modal: view ---------- */
 function findChar(id){ return chars.find(x=>x.id===id) || EXAMPLES.find(x=>x.id===id); }
 function openModal(html, wide){ const m=$("modal"); m.className="modal"+(wide?"":" narrow"); m.innerHTML=html; $("ov").classList.add("open"); m.scrollTop=0; }
-function closeModal(){ $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; }
+function closeModal(){ $("ov").classList.remove("open"); openId=null; draft=null; editingSettings=false; tagDraft=null; }
 function row(label, inner){ return `<div class="rowx"><div class="lbl">${label}</div><div class="val">${inner}</div></div>`; }
 function viewChar(id){
   const c = findChar(id); if(!c) return closeModal();
@@ -613,7 +649,7 @@ function viewChar(id){
   const cover = c.cover ? `<div class="cover"><img src="${esc(src(c.cover))}" alt="${esc(c.name)}" data-zoom="${esc(c.cover)}"></div>`
     : `<div class="cover">${phHtml(c,true)}</div>`;
   const rows = [];
-  if((c.tags||[]).length) rows.push(row("분류", `<div class="chips">${c.tags.map(chipHtml).join("")}</div>`));
+  if((c.tags||[]).length) rows.push(row("분류", `<div class="chips">${sortTags(c.tags).map(chipHtml).join("")}</div>`));
   let lastTagRow = -1; const tagBlocks = [];
   (c.blocks||[]).forEach(b=>{
     const label = esc(b.label||"");
@@ -663,7 +699,8 @@ function editChar(id){
   if(draft.example){ draft.wasExample = true; }
   openId = draft.id; renderEditor();
 }
-function renderEditor(){
+function renderEditor(keep){
+  const _m=$("modal"), _y=_m.scrollTop;
   const d = draft;
   const heartBtns = HEARTS.map(h=>`<button type="button" class="cdot" style="background:${h}" data-heart="${h}" aria-pressed="${d.heart===h}" aria-label="하트 색 ${h}"></button>`).join("");
   const blocks = (d.blocks||[]).map((b,i)=>{
@@ -680,7 +717,7 @@ function renderEditor(){
       <button class="icon-btn" type="button" data-bmove="${i}:1" aria-label="아래로" ${i===d.blocks.length-1?"disabled":""}>↓</button>
       <button class="icon-btn" type="button" data-bdel="${i}" aria-label="항목 삭제">✕</button></div>${body}</div>`;
   }).join("");
-  openModal(`<div class="mtop"><button class="mbtn x" type="button" data-act="cancelEdit" aria-label="닫기">×</button></div>
+  openModal(`<div class="mtop"><span></span><button class="mbtn x" type="button" data-act="cancelEdit" aria-label="닫기">×</button></div>
   <div class="mbody"><div class="form">
     <h3>${d._new?"캐릭터 추가":"캐릭터 수정"}</h3>
     <div class="imgpick"><div class="pv">${d.cover?`<img src="${esc(src(d.cover))}" alt="">`:"대표 이미지"}</div>
@@ -692,7 +729,9 @@ function renderEditor(){
       <div class="f"><label for="e-sub">부제 <span class="hint">· 짝, 별칭 등</span></label><input type="text" id="e-sub" data-f="sub" value="${esc(d.sub||"")}" placeholder="제노"></div>
     </div>
     <div class="f"><label for="e-hash">해시태그 <span class="hint">· 카드에 작게 보여요</span></label><input type="text" id="e-hash" data-f="hashtags" value="${esc(d.hashtags||"")}" placeholder="#Heliotrope #CherryPie"></div>
-    <div class="f"><label for="e-tags">분류 태그 <span class="hint">· 쉼표로 구분, 위쪽 ‘태그로 보기’에 나와요</span></label><input type="text" id="e-tags" value="${esc((d.tags||[]).join(", "))}" placeholder="MAIN, CAVEDUCK"></div>
+    <div class="f"><span class="lab">분류 태그 <span class="hint">· 눌러서 고르기, 색과 순서는 ‘태그 관리’에서</span></span>
+      <div class="tagpick" role="group" aria-label="분류 태그">${allTags().concat((d.tags||[]).filter(t=>!allTags().includes(t))).map(t=>`<button type="button" class="tagopt" data-tagpick="${esc(t)}" aria-pressed="${(d.tags||[]).includes(t)}" style="--tc:${tagColor(t)}">${esc(t)}</button>`).join("") || `<span class="busy">아직 태그가 없어요</span>`}</div>
+      <div class="addrow"><input type="text" id="e-newtag" placeholder="새 태그 이름" style="flex:1;min-width:120px;max-width:240px"><button class="btn" type="button" data-act="addTagInEditor">+ 태그 만들기</button></div></div>
     <div class="two">
       <div class="f"><span class="lab">하트 색</span><div class="colors">${heartBtns}<input type="color" id="e-heart" value="${esc(d.heart||HEARTS[0])}" aria-label="직접 고르기"></div></div>
       <div class="f"><label for="e-start">D+ 시작일 <span class="hint">· 비우면 표시 안 함</span></label><input type="date" id="e-start" data-f="start" value="${esc(d.start||"")}"></div>
@@ -704,12 +743,12 @@ function renderEditor(){
     <label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="e-comb" ${d.combined!==false?"checked":""}> 태그 묶음이 2개 이상이면 ‘종합 태그’도 보여주기</label>
     <div class="foot">${!d._new && !d.example?`<button class="btn danger left" type="button" data-act="askDel">삭제</button>`:""}
       <button class="btn" type="button" data-act="cancelEdit">취소</button><button class="btn dark" type="button" data-act="saveEdit">저장</button></div>
-  </div></div>`);
+  </div></div>`, true);
+  if(keep) _m.scrollTop=_y;
 }
 function readEditor(){
   if(!draft) return;
   document.querySelectorAll("[data-f]").forEach(el=>draft[el.dataset.f]=el.value.trim());
-  const t=$("e-tags"); if(t) draft.tags = splitTags(t.value).filter((v,i,a)=>a.indexOf(v)===i);
   const o=$("e-order"); if(o) draft.order = Number(o.value)||0;
   const cb=$("e-comb"); if(cb) draft.combined = cb.checked;
   document.querySelectorAll("[data-blabel]").forEach(el=>{ const b=draft.blocks.find(x=>x.id===el.dataset.blabel); if(b) b.label=el.value; });
@@ -732,9 +771,7 @@ function openSettings(){
   editingSettings = true;
   const s = settings;
   const tags = allTags();
-  const tagRows = tags.map(t=>`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="min-width:80px">${chipHtml(t)}</span>
-    ${Object.keys(TAG_COLORS).map(k=>`<button type="button" class="cdot" style="background:${TAG_COLORS[k][0]};width:18px;height:18px" data-tagcolor="${esc(t)}|${k}" aria-pressed="${(s.tagColors||{})[t]===k}" aria-label="${esc(t)} ${k}"></button>`).join("")}</div>`).join("");
-  openModal(`<div class="mtop"><button class="mbtn x" type="button" data-act="close" aria-label="닫기">×</button></div>
+  openModal(`<div class="mtop"><span></span><button class="mbtn x" type="button" data-act="close" aria-label="닫기">×</button></div>
   <div class="mbody"><div class="form">
     <h3>사이트 설정</h3>
     <div class="f"><label for="s-title">사이트 이름</label><input type="text" id="s-title" value="${esc(s.title||"")}" placeholder="페르소나 서랍"></div>
@@ -746,7 +783,7 @@ function openSettings(){
         <div style="display:flex;flex-direction:column;gap:4px"><button class="btn" type="button" data-act="pickAvatar">고르기</button>${s.avatar?`<button class="btn" type="button" data-act="rmAvatar">빼기</button>`:""}</div></div></div>
     </div>
     <span class="busy" id="busy-set"></span>
-    ${tags.length?`<div class="f"><span class="lab">태그 색</span>${tagRows}</div>`:""}
+    <div class="f"><span class="lab">태그</span><div class="addrow"><button class="btn" type="button" data-act="tags">태그 관리 (추가·이름·순서·색)</button></div></div>
     <div class="f"><span class="lab">백업</span><div class="addrow"><button class="btn" type="button" data-act="export">내보내기 (JSON)</button><button class="btn" type="button" data-act="import">가져오기</button></div>
       <span class="busy">글과 설정이 백업돼요. 이미지는 이 사이트 안에 저장된 것을 가리키는 주소로만 들어가요.</span></div>
     <div class="foot"><button class="btn" type="button" data-act="close">닫기</button><button class="btn dark" type="button" data-act="saveSettings">저장</button></div>
@@ -757,7 +794,7 @@ function readSettings(){ const s=Object.assign({},settings); s.title=$("s-title"
 /* ---------- backup ---------- */
 function exportJson(){
   const data = JSON.stringify({app:"persona-gallery",version:2,exportedAt:new Date().toISOString(),settings,chars},null,2);
-  openModal(`<div class="mtop"><button class="mbtn x" type="button" data-act="settings" aria-label="뒤로">×</button></div><div class="mbody"><div class="form">
+  openModal(`<div class="mtop"><span></span><button class="mbtn x" type="button" data-act="settings" aria-label="뒤로">×</button></div><div class="mbody"><div class="form">
     <h3>백업 내보내기</h3>
     <div class="f"><span class="lab">내 주소(깃허브 페이지 등)에 올릴 때</span>
       <div class="addrow"><button class="btn dark" type="button" data-act="exportSite">data.json 받기 (이미지 포함)</button></div>
@@ -800,7 +837,7 @@ async function exportSite(){
   catch(e){ toast("파일 저장이 취소됐어요."); }
 }
 function importJsonView(){
-  openModal(`<div class="mtop"><button class="mbtn x" type="button" data-act="settings" aria-label="뒤로">×</button></div><div class="mbody"><div class="form">
+  openModal(`<div class="mtop"><span></span><button class="mbtn x" type="button" data-act="settings" aria-label="뒤로">×</button></div><div class="mbody"><div class="form">
     <h3>가져오기</h3><span class="busy">백업 JSON을 붙여넣거나 파일을 고르세요. 같은 캐릭터는 덮어쓰고, 새 캐릭터는 추가돼요.</span>
     <div class="f"><textarea id="imp" style="min-height:200px;font-family:var(--f-mono);font-size:12px" placeholder='{"chars":[...]}'></textarea></div>
     <div class="foot"><button class="btn" type="button" data-act="settings">뒤로</button><button class="btn" type="button" data-act="pickJson">파일 선택</button><button class="btn dark" type="button" data-act="doImport">가져오기</button></div></div></div>`);
@@ -860,6 +897,11 @@ document.addEventListener("click", async e=>{
   if(ds.sort){ filt.sort=ds.sort; render(); return; }
   if(ds.copytags){ const c=findChar(openId); const b=c&&c.blocks.find(x=>x.id===ds.copytags); if(b) copy(splitTags(b.text).join(", ")); return; }
   if(ds.copytext){ const c=findChar(openId); const b=c&&c.blocks.find(x=>x.id===ds.copytext); if(b) copy(b.text); return; }
+  if(ds.tagpick!==undefined){ const tg=ds.tagpick; draft.tags=draft.tags||[]; const on=!draft.tags.includes(tg); if(on) draft.tags.push(tg); else draft.tags=draft.tags.filter(x=>x!==tg); t.setAttribute("aria-pressed",on); return; }
+  if(ds.tmove){ readTagNames(); const [i,dir]=ds.tmove.split(":").map(Number); const j=i+dir; if(j>=0&&j<tagDraft.length){ [tagDraft[i],tagDraft[j]]=[tagDraft[j],tagDraft[i]]; } renderTagManager(true); return; }
+  if(ds.tcolor){ readTagNames(); const [i,h]=ds.tcolor.split("|"); tagDraft[+i].color=h; renderTagManager(true); return; }
+  if(ds.tdelask!==undefined){ readTagNames(); tagDraft.forEach(x=>x.confirm=false); tagDraft[+ds.tdelask].confirm=true; renderTagManager(true); return; }
+  if(ds.tdel!==undefined){ readTagNames(); tagDraft.splice(+ds.tdel,1); renderTagManager(true); return; }
   if(ds.heart){ readEditor(); draft.heart=ds.heart; renderEditor(); return; }
   if(ds.addblock){ readEditor(); draft.blocks.push({id:newId(),type:ds.addblock,label:ds.addblock==="tags"?"태그":ds.addblock==="images"?"갤러리":"",text:"",images:[]}); renderEditor(); const m=$("modal"); m.scrollTop=m.scrollHeight; return; }
   if(ds.bmove){ readEditor(); const [i,dir]=ds.bmove.split(":").map(Number); const a=draft.blocks; const j=i+dir; if(j>=0&&j<a.length){ [a[i],a[j]]=[a[j],a[i]]; } renderEditor(); return; }
@@ -888,6 +930,20 @@ document.addEventListener("click", async e=>{
     case "confirmDel": { const id=draft.id; closeModal(); await deleteChar(id); toast("삭제했어요"); break; }
     case "copyAllTags": { const c=findChar(openId); if(c) copy((c.blocks||[]).filter(b=>b.type==="tags").flatMap(b=>splitTags(b.text)).join(", ")); break; }
     case "settings": openSettings(); break;
+    case "tags": openTagManager(); break;
+    case "tSave": t.disabled=true; await saveTags(); break;
+    case "tAdd": {
+      readTagNames(); const v=$("t-new").value.trim(); if(!v) return;
+      if(tagDraft.some(x=>x.name.trim()===v)){ toast("이미 있는 태그예요."); return; }
+      const used=tagDraft.map(x=>x.color); const pick=(TAG_PALETTE.find(([n,h])=>!used.includes(h))||TAG_PALETTE[0])[1];
+      tagDraft.push({orig:null,name:v,color:pick,count:0,confirm:false}); renderTagManager(true); const m=$("modal"); m.scrollTop=m.scrollHeight; const ni=$("t-new"); if(ni) ni.focus();
+      break;
+    }
+    case "addTagInEditor": {
+      readEditor(); const v=($("e-newtag").value||"").trim(); if(!v) return;
+      draft.tags=draft.tags||[]; if(!draft.tags.includes(v)) draft.tags.push(v);
+      renderEditor(true); break;
+    }
     case "saveSettings": await saveSettings(readSettings()); closeModal(); toast("설정을 저장했어요"); break;
     case "pickBanner": case "pickAvatar": {
       const s=readSettings(); settings=s; const [f]=await pickFiles(false); if(!f) return;
@@ -917,12 +973,15 @@ document.addEventListener("click", async e=>{
   }
 });
 document.addEventListener("input", e=>{
+  if(e.target.dataset && e.target.dataset.tcustom!==undefined && tagDraft){ const i=+e.target.dataset.tcustom; tagDraft[i].color=e.target.value; const row=e.target.closest(".tm-row"); if(row){ row.querySelector(".tm-dot").style.background=e.target.value; row.querySelectorAll(".cdot").forEach(b=>b.setAttribute("aria-pressed","false")); } }
   if(e.target.id==="e-heart" && draft){ draft.heart=e.target.value; document.querySelectorAll("[data-heart]").forEach(b=>b.setAttribute("aria-pressed","false")); }
 });
 $("jsonIn").addEventListener("change", async e=>{ const f=e.target.files[0]; if(!f) return; const txt=await f.text(); e.target.value=""; const ta=$("imp"); if(ta) ta.value=txt; });
 $("ov").addEventListener("click", e=>{ if(e.target===$("ov") && !draft && !editingSettings) closeModal(); });
 $("lb").addEventListener("click", ()=>$("lb").classList.remove("open"));
 document.addEventListener("keydown", e=>{
+  if(e.key==="Enter" && e.target.id==="t-new"){ e.preventDefault(); const b=document.querySelector('[data-act="tAdd"]'); if(b) b.click(); return; }
+  if(e.key==="Enter" && e.target.id==="e-newtag"){ e.preventDefault(); const b=document.querySelector('[data-act="addTagInEditor"]'); if(b) b.click(); return; }
   if(e.key==="Escape"){ if($("lb").classList.contains("open")) $("lb").classList.remove("open"); else if($("ov").classList.contains("open") && !draft) closeModal(); }
   if((e.key==="Enter"||e.key===" ") && e.target.dataset && e.target.dataset.open){ e.preventDefault(); viewChar(e.target.dataset.open); }
 });
@@ -1073,7 +1132,11 @@ $("authBtn").addEventListener("click", authClick);
 
 /* ---------- shared screen mode (same key as 발췌) ---------- */
 function uiPref(){ try{ return localStorage.getItem("excerpt-ui")||"system"; }catch(e){ return "system"; } }
-function syncUi(){ document.querySelectorAll("#uiSeg [data-ui]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.ui===uiPref())); }
+function syncUi(){
+  document.querySelectorAll("#uiSeg [data-ui]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.ui===uiPref()));
+  document.querySelectorAll("#laySeg [data-lay]").forEach(b=>b.setAttribute("aria-pressed", b.dataset.lay===window.__layout));
+}
+$("laySeg").addEventListener("click", e=>{ const b=e.target.closest("[data-lay]"); if(!b) return; try{ localStorage.setItem("excerpt-layout", b.dataset.lay); }catch(_){} if(window.__applyLayout) window.__applyLayout(); syncUi(); });
 $("uiBtn").addEventListener("click", e=>{ e.stopPropagation(); const m=$("uiMenu"); const on=!m.classList.contains("on"); m.classList.toggle("on",on); $("uiBtn").setAttribute("aria-expanded",on); syncUi(); });
 $("uiSeg").addEventListener("click", e=>{ const b=e.target.closest("[data-ui]"); if(!b) return; try{ localStorage.setItem("excerpt-ui", b.dataset.ui); }catch(_){} if(window.__applyUI) window.__applyUI(); syncUi(); });
 document.addEventListener("click", e=>{ if(!e.target.closest(".uipop")){ $("uiMenu").classList.remove("on"); $("uiBtn").setAttribute("aria-expanded","false"); } });
