@@ -359,6 +359,7 @@ details.acc .acc-b>label.f:first-child{margin-top:0}
 .sg.add{border-style:dashed;background:#fff;color:var(--sub);font-size:12.5px;flex-direction:column;font-family:inherit}
 #sheet .msgs.mix{margin:1.2em 0}
 #sheet .msgs.mix:first-child{margin-top:0}#sheet .msgs.mix:last-child{margin-bottom:0}
+#sheet .pgfirst{margin-top:0!important}#sheet .pglast{margin-bottom:0!important}#sheet .pghide{display:none!important}
 #sheet .msgs.mix .row{margin-top:8px}#sheet .msgs.mix .row:first-child{margin-top:0}#sheet .msgs.mix .row.cont{margin-top:4px}
 #sheet .msgs.mix .av{width:30px;height:30px;border-radius:50%;font-size:12px}
 #sheet .msgs.mix .nm{font-size:.72em}
@@ -970,7 +971,7 @@ html.ui-dark .fabb{color:#111}
   </div>
   <p style="margin:22px 0 8px">작업 화면 색</p>
   <div class="seg" id="uiSeg" style="max-width:360px;margin:0 auto"><button data-ui="system">시스템 설정 따라가기</button><button data-ui="light">라이트</button><button data-ui="dark">다크</button></div>
-  <p class="hint" id="verTag" style="text-align:center;margin-top:10px">V.1.2</p>
+  <p class="hint" id="verTag" style="text-align:center;margin-top:10px">V.1.3</p>
   <button class="btn ghost" id="chClose" style="margin-top:16px;max-width:360px">닫기</button>
 </div></div>
 <div class="split" id="splitH" aria-label="크기 조절"><i></i></div>
@@ -2431,6 +2432,10 @@ $('#pbBar').addEventListener('click',e=>{const b=e.target.closest('[data-pb]');i
   else if(a==='done'){pbEdit(false);splitModal()}
   else if(a==='make'){pbEdit(false);const o=Object.assign({ratio:'4/5',num:true,head:false,credit:true},S.splitOpt||{});if(o.ratio==='auto'&&!pageUnits().some(u=>u.dataset.pb)){toast('나눌 곳을 먼저 정해주세요');return}makePages(o)}});
 $('#splitBtn').onclick=()=>{if(typeof html2canvas!=='function'){toast('이미지 도구를 불러오지 못했어요');return}if(!pageUnits().length){toast('발췌할 내용이 없어요');return}splitModal()};
+function markPage(){body.querySelectorAll('.pgfirst,.pglast,.pghide').forEach(x=>x.classList.remove('pgfirst','pglast','pghide'));
+  body.querySelectorAll('.msgs.mix').forEach(m=>{if(![...m.children].some(c=>c.style.display!=='none'))m.classList.add('pghide');else{const v=[...m.children].filter(c=>c.style.display!=='none');v[0].classList.add('pgfirst');v[v.length-1].classList.add('pglast')}});
+  let host=body;if(S.mode==='photo'||S.mode==='mix')host=body.querySelector('.ptext')||body;if(S.mode==='chat')host=body.querySelector('.msgs')||body;
+  const vis=[...host.children].filter(c=>c.style.display!=='none'&&!c.classList.contains('pghide')&&getComputedStyle(c).display!=='none');if(vis.length){vis[0].classList.add('pgfirst');vis[vis.length-1].classList.add('pglast')}}
 async function makePages(o){
   if(selStk){selStk=null;renderStickers()}
   getSelection().removeAllRanges();if(document.activeElement&&document.activeElement.blur)document.activeElement.blur();
@@ -2450,17 +2455,17 @@ async function makePages(o){
     units.forEach(u=>u.style.display='none');pg.textContent='00 / 00';
     let i=0;
     while(i<units.length){const page=[];setPage(pages.length,false);
-      while(i<units.length){const u=units[i];u.style.display=orig[i][1];if(!page.length)u.classList.remove('cont','tlsub');layoutPhoto();
+      while(i<units.length){const u=units[i];u.style.display=orig[i][1];if(!page.length)u.classList.remove('cont','tlsub');markPage();layoutPhoto();
         if(page.length&&(u.dataset.pb||sheet.offsetHeight>H+1)){u.style.display='none';u.className=orig[i][2];break}page.push(i);i++}
       page.forEach(k=>units[k].style.display='none');pages.push(page)}
     // last page credit check: if credit only on last page makes it overflow, fine
     const imgs=[];
     for(let p=0;p<pages.length;p++){const last=p===pages.length-1;setPage(p,last);pg.textContent=`${p+1} / ${pages.length}`;
-      units.forEach((u,k)=>{u.style.display=pages[p].includes(k)?orig[k][1]:'none';u.className=orig[k][2]});const f=units[pages[p][0]];f.classList.remove('cont','tlsub');layoutPhoto();try{updAnnos()}catch(e){}
+      units.forEach((u,k)=>{u.style.display=pages[p].includes(k)?orig[k][1]:'none';u.className=orig[k][2]});const f=units[pages[p][0]];f.classList.remove('cont','tlsub');markPage();layoutPhoto();try{updAnnos()}catch(e){}
       const sc2=await snapCanvas();imgs.push(sc2.url);toast(`만드는 중… ${p+1}/${pages.length}`)}
     showPages(imgs);
   }catch(e){console.error('makePages',e&&e.stack||e);toast('여러 장을 만들지 못했어요')}
-  finally{orig.forEach(([u,d,c])=>{u.style.display=d;u.className=c});head.style.display=hD;cr.style.display=cD;if(pic)pic.style.display=picD;pg.style.display='none';
+  finally{orig.forEach(([u,d,c])=>{u.style.display=d;u.className=c});body.querySelectorAll('.pgfirst,.pglast,.pghide').forEach(x=>x.classList.remove('pgfirst','pglast','pghide'));head.style.display=hD;cr.style.display=cD;if(pic)pic.style.display=picD;pg.style.display='none';
     window.__paging=false;S.ratio=keepRatio;sheet.classList.remove('capturing');sheet.style.transform=prevT;sc.style.overflow='';stage.style.overflow='';applyStyle();fitSoon();setTimeout(()=>{histLock=false},500)}
 }
 function u8FromDataURL(u){const b=atob(u.split(',')[1]);const a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
