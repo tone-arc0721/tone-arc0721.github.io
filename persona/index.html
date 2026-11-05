@@ -610,6 +610,29 @@ html.L-mo .grid.compact .mv button{width:24px;height:24px;font-size:10px}
 .lkp-who b{font-size:22px;letter-spacing:-.4px;display:block;margin-bottom:4px}
 html.L-mo .lk-list{max-width:none}
 html.L-mo .lk-in .copy{min-height:36px;padding:6px 16px}
+
+/* 함께하는 캐릭터 고르기 */
+.lp-open{border-style:dashed;border-radius:999px;min-height:32px}
+.lp-panel{margin-top:8px;border:1px solid var(--rule);border-radius:14px;background:var(--bg);padding:12px;display:flex;flex-direction:column;gap:10px}
+.lp-panel input[type=search]{border:1px solid var(--rule);background:var(--surface);border-radius:10px;padding:8px 12px;width:100%}
+.lp-row{display:flex;gap:10px;align-items:flex-start}
+.lp-lab{font-size:12px;font-weight:700;color:var(--muted);min-width:40px;padding-top:5px}
+.lp-fs{display:flex;gap:5px;flex-wrap:wrap;flex:1;min-width:0}
+.lp-f{border:1px solid color-mix(in srgb,var(--tc,var(--muted)) 40%,transparent);background:var(--surface);color:var(--ink);border-radius:999px;padding:3px 10px;font-size:12px}
+.lp-f .n{color:var(--muted);margin-left:4px;font-size:11px}
+.lp-f[aria-pressed="true"]{background:color-mix(in srgb,var(--tc,var(--ink)) 16%,var(--surface));border:1.5px solid var(--tc,var(--ink));font-weight:700}
+.lp-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:6px;max-height:232px;overflow:auto;padding:2px}
+.lp-it{display:flex;align-items:center;gap:7px;border:1px solid var(--rule);background:var(--surface);border-radius:10px;padding:6px 9px;text-align:left;min-height:36px;min-width:0}
+.lp-it .lp-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.lp-it small{font-size:10.5px;color:var(--muted);white-space:nowrap}
+.lp-ck{width:16px;height:16px;border-radius:5px;border:1.5px solid var(--rule);flex:none;display:grid;place-items:center}
+.lp-it[aria-pressed="true"]{border-color:var(--tc);background:color-mix(in srgb,var(--tc) 12%,var(--surface));font-weight:700}
+.lp-it[aria-pressed="true"] .lp-ck{background:var(--tc);border-color:var(--tc)}
+.lp-it[aria-pressed="true"] .lp-ck::after{content:"";width:8px;height:4px;border:2px solid #fff;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.lp-foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+html.L-mo .lp-list{grid-template-columns:repeat(2,minmax(0,1fr));max-height:260px}
+html.L-mo .lp-row{flex-direction:column;gap:4px}
+html.L-mo .lp-lab{padding-top:0}
 </style>
 </head>
 <body>
@@ -1301,14 +1324,65 @@ function kindRows(c){
   { const lk = linkedOf(c); if(lk.length) out.push(row(kind==="mine" ? "함께하는 AI 캐릭터" : "함께하는 내 페르소나", linkedHtml(c, lk))); }
   return out;
 }
+/* 함께하는 캐릭터 고르기: 고른 것만 보이고, ‘+ 고르기’로 찾기·플랫폼·태그 필터 */
+let lp = {open:false, q:"", plat:"", tag:""};
+function lpItems(k){ return (store[k]||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0)); }
+function lpSel(){ return draft ? (kind==="mine" ? (draft._ai||[]) : (draft.with||[])) : []; }
+function lpColor(k, c){ return k==="ai" ? platColor(c.platform||"") : heartOf(c); }
+function lpTags(k, items){
+  const order = (settings[k==="mine" ? "tagOrder" : "tagOrder_"+k]||[]).slice();
+  items.forEach(c=>(c.tags||[]).forEach(t=>{ if(!order.includes(t)) order.push(t); }));
+  return order.filter(t=>items.some(c=>(c.tags||[]).includes(t)));
+}
+function lpFiltered(k){
+  const q = lp.q.trim().toLowerCase();
+  return lpItems(k).filter(c=>(!lp.plat || (lp.plat==="__none" ? !c.platform : c.platform===lp.plat)) && (!lp.tag || (c.tags||[]).includes(lp.tag)) && (!q || `${c.name||""} ${c.sub||""} ${c.hashtags||""}`.toLowerCase().includes(q)));
+}
+function lpListHtml(k){
+  const sel = lpSel(), l = lpFiltered(k);
+  return l.length ? l.map(c=>`<button type="button" class="lp-it" data-lpick="${esc(c.id)}" aria-pressed="${sel.includes(c.id)}" style="--tc:${esc(lpColor(k,c))}"><span class="lp-ck" aria-hidden="true"></span><span class="lp-nm">${esc(c.name||"이름 없음")}</span>${k==="ai"&&c.platform&&!lp.plat?`<small>${esc(c.platform)}</small>`:""}</button>`).join("")
+    : `<span class="busy">조건에 맞는 캐릭터가 없어요</span>`;
+}
+function linkPickHtml(k, sel){
+  const items = lpItems(k), byId = id=>items.find(c=>c.id===id);
+  const picked = sel.map(byId).filter(Boolean);
+  const label = k==="ai" ? "함께하는 AI 캐릭터" : "함께하는 내 페르소나";
+  let panel = "";
+  if(lp.open){
+    const plats = k==="ai" ? allPlatforms().filter(p=>items.some(c=>c.platform===p)) : [];
+    const tags = lpTags(k, items);
+    const chip = (attr, v, cur, text, n, color)=>`<button type="button" class="lp-f" ${attr}="${esc(v)}" aria-pressed="${cur===v}"${color?` style="--tc:${esc(color)}"`:""}>${esc(text)}<span class="n">${n}</span></button>`;
+    panel = `<div class="lp-panel">
+      <input type="search" id="lp-q" placeholder="이름으로 찾기" value="${esc(lp.q)}" autocomplete="off">
+      ${plats.length>1?`<div class="lp-row"><span class="lp-lab">플랫폼</span><div class="lp-fs">${chip("data-lpplat","",lp.plat,"전체",items.length)}${plats.map(p=>chip("data-lpplat",p,lp.plat,p,items.filter(c=>c.platform===p).length,platColor(p))).join("")}</div></div>`:""}
+      ${tags.length?`<div class="lp-row"><span class="lp-lab">분류</span><div class="lp-fs">${chip("data-lptag","",lp.tag,"전체",items.length)}${tags.map(t=>chip("data-lptag",t,lp.tag,t,items.filter(c=>(c.tags||[]).includes(t)).length,tagColor(t))).join("")}</div></div>`:""}
+      <div class="lp-list" id="lp-list">${lpListHtml(k)}</div>
+      <div class="lp-foot"><span class="busy">${picked.length}명 골랐어요</span><button class="btn dark" type="button" data-lpopen>다 골랐어요</button></div>
+    </div>`;
+  }
+  return `<div class="f" id="lpick" data-lpk="${k}"><span class="lab">${label} <span class="hint">· ${k==="ai"?"AI 캐릭터":"내 페르소나"} 쪽에도 같이 연결돼요</span></span>
+    <div class="tagpick">${picked.map(c=>`<button type="button" class="tagopt" data-lpick="${esc(c.id)}" aria-pressed="true" style="--tc:${esc(lpColor(k,c))}" title="눌러서 빼기">${esc(c.name||"이름 없음")} ✕</button>`).join("")}
+      ${items.length ? `<button type="button" class="btn lp-open" data-lpopen aria-expanded="${lp.open}">${lp.open?"접기 ▲":(picked.length?"+ 더 고르기":"+ 고르기")}</button>` : `<span class="busy">${k==="ai"?"AI 캐릭터":"내 페르소나"}가 아직 없어요</span>`}</div>
+    ${panel}</div>`;
+}
+function drawLinkPick(){ const el=$("lpick"); if(el) el.outerHTML = linkPickHtml(el.dataset.lpk, lpSel()); }
+document.addEventListener("click", e=>{
+  const b = e.target.closest("[data-lpopen],[data-lpick],[data-lpplat],[data-lptag]"); if(!b || !draft) return;
+  const d = b.dataset;
+  if(d.lpopen!==undefined){ lp.open = !lp.open; if(!lp.open){ lp.q=""; } drawLinkPick(); if(lp.open){ const q=$("lp-q"); if(q && !isMo()) q.focus(); } return; }
+  if(d.lpplat!==undefined){ lp.plat = d.lpplat; drawLinkPick(); return; }
+  if(d.lptag!==undefined){ lp.tag = d.lptag; drawLinkPick(); return; }
+  if(d.lpick){ const key = kind==="mine" ? "_ai" : "with"; const w = draft[key]||[]; draft[key] = w.includes(d.lpick) ? w.filter(x=>x!==d.lpick) : [...w, d.lpick];
+    const y = $("lp-list") ? $("lp-list").scrollTop : 0; drawLinkPick(); if($("lp-list")) $("lp-list").scrollTop = y; return; }
+});
+document.addEventListener("input", e=>{ if(e.target.id==="lp-q"){ lp.q = e.target.value; const l=$("lp-list"); const k=$("lpick").dataset.lpk; if(l) l.innerHTML = lpListHtml(k); } });
 function kindEditorHtml(d){
   if(kind==="mine"){
     if(!store.ai) return "";
-    const ais = store.ai.slice().sort((a,b)=>(a.order||0)-(b.order||0));
-    return `<div class="f"><span class="lab">함께하는 AI 캐릭터 <span class="hint">· 눌러서 고르기, AI 캐릭터 쪽에도 같이 연결돼요</span></span><div class="tagpick">${ais.length ? ais.map(a=>`<button type="button" class="tagopt" data-kai="${esc(a.id)}" aria-pressed="${(d._ai||[]).includes(a.id)}" style="--tc:${esc(platColor(a.platform||""))}">${esc(a.name||"이름 없음")}${a.platform?` <small style="opacity:.6;font-weight:500">${esc(a.platform)}</small>`:""}</button>`).join("") : `<span class="busy">AI 캐릭터가 아직 없어요</span>`}</div></div>`;
+    return linkPickHtml("ai", d._ai||[]);
   }
   const mine = (store.mine||[]).slice().sort((a,b)=>(a.order||0)-(b.order||0));
-  const withPick = `<div class="f"><span class="lab">함께하는 내 페르소나 <span class="hint">· 눌러서 고르기</span></span><div class="tagpick">${mine.length ? mine.map(m=>`<button type="button" class="tagopt" data-kwith="${esc(m.id)}" aria-pressed="${(d.with||[]).includes(m.id)}" style="--tc:${esc(heartOf(m))}">${esc(m.name||"이름 없음")}</button>`).join("") : `<span class="busy">내 페르소나가 아직 없어요</span>`}</div></div>`;
+  const withPick = linkPickHtml("mine", d.with||[]);
   if(kind==="friend") return `<div class="kbox"><div class="kbox-t">친구 정보</div>
     <div class="f"><label for="k-owner">주인 <span class="hint">· 친구 닉네임이나 SNS 주소</span></label><input type="text" id="k-owner" data-f="owner" value="${esc(d.owner||"")}" placeholder="@친구닉네임"></div></div>`;
   const plats = Array.from(new Set((store.ai||[]).map(c=>c.platform).filter(Boolean).concat(["CRACK","ZETA","CAVEDUCK"])));
@@ -1940,12 +2014,12 @@ async function copy(t){ try{ await navigator.clipboard.writeText(t); toast("복�
 const AI_LABEL_FIX = {"노벨AI용":"Novel AI 용","니지저니용":"niji · journey","PixAI용":"Pix AI 용"};
 function fixLabel(l){ return AI_LABEL_FIX[l] || l; }
 function editChar(id){
-  fpOpenFor = null;
+  fpOpenFor = null; lp = {open:false, q:"", plat:"", tag:""};
   const base = id ? findChar(id) : null;
   const maxOrder = chars.reduce((m,c)=>Math.max(m,c.order||0),0);
   draft = base ? JSON.parse(JSON.stringify(base)) : {
     id:newId(), name:"", sub:"", hashtags:"", tags: filt.tag?[filt.tag]:[], heart:HEARTS[hash(Date.now())%6], start:"", order:maxOrder+1,
-    blocks: kind==="friend" ? [newFp()] : kind==="ai" ? [{id:newId(),type:"tags",label:"Novel AI 용",text:""},{id:newId(),type:"tags",label:"niji · journey",text:""},{id:newId(),type:"tags",label:"Pix AI 용",text:""}] : [{id:newId(),type:"tags",label:"외형",text:""},{id:newId(),type:"tags",label:"의상",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
+    blocks: kind==="friend" ? [newFp()] : kind==="ai" ? [{id:newId(),type:"tags",label:"Novel AI 용",text:""},{id:newId(),type:"tags",label:"niji · journey",text:""},{id:newId(),type:"tags",label:"Pix AI 용",text:""}] : [{id:newId(),type:"tags",label:"Novel AI 용",text:""},{id:newId(),type:"tags",label:"niji · journey",text:""},{id:newId(),type:"tags",label:"Pix AI 용",text:""},{id:newId(),type:"text",label:"프로필",text:""}], _new:true
   };
   if(draft.example){ draft.wasExample = true; }
   if(kind==="mine") draft._ai = (store.ai||[]).filter(a=>(a.with||[]).includes(draft.id)).map(a=>a.id);
@@ -1995,7 +2069,7 @@ function renderEditor(keep){
     </div>`}
     <div class="f"><span class="lab">상세 항목</span></div>
     ${blocks || `<div class="busy">아직 항목이 없어요.</div>`}
-    <div class="addrow"><button class="btn" type="button" data-addblock="pair">+ 페어</button><button class="btn" type="button" data-addblock="tags">+ 태그 묶음</button><button class="btn" type="button" data-addblock="text">+ 텍스트</button><button class="btn" type="button" data-addblock="images">+ 이미지</button></div>
+    <div class="addrow"><button class="btn" type="button" data-addblock="pair">+ 페어</button><button class="btn" type="button" data-addblock="tags">+ 태그 묶음</button>${kind==="friend"?"":`<button class="btn" type="button" data-addtags="외형">+ 외형</button><button class="btn" type="button" data-addtags="의상">+ 의상</button>`}<button class="btn" type="button" data-addblock="text">+ 텍스트</button><button class="btn" type="button" data-addblock="images">+ 이미지</button></div>
     <label style="font-size:13px;display:flex;gap:6px;align-items:center"><input type="checkbox" id="e-comb" ${d.combined!==false?"checked":""}> 태그 묶음이 2개 이상이면 ‘종합 태그’도 보여주기</label>
     <div class="foot">${!d._new && !d.example?`<button class="btn danger left" type="button" data-act="askDel">삭제</button>`:""}
       <button class="btn" type="button" data-act="cancelEdit">취소</button><button class="btn dark" type="button" data-act="saveEdit">저장</button></div>
@@ -2184,6 +2258,7 @@ document.addEventListener("click", async e=>{
     const [bid,k]=ds.copypair.split("|"); const c=findChar(openId); const b=c&&(c.blocks||[]).find(x=>x.id===bid); if(!b) return;
     const p=pairData(c,b); copy((k==="all"?p.full:k==="couple"?p.coupleItems:(p.groups[+k]||{items:[]}).items).join(", ")); return;
   }
+  if(ds.addtags){ readEditor(); draft.blocks.push({id:newId(),type:"tags",label:ds.addtags,text:""}); renderEditor(); const m=$("modal"); m.scrollTop=m.scrollHeight; return; }
   if(ds.addblock){ readEditor(); draft.blocks.push({id:newId(),type:ds.addblock,label:ds.addblock==="tags"?"태그":ds.addblock==="images"?"갤러리":"",text:"",images:[]}); renderEditor(); const m=$("modal"); m.scrollTop=m.scrollHeight; return; }
   if(ds.bmove){ readEditor(); const [i,dir]=ds.bmove.split(":").map(Number); const a=draft.blocks; const j=i+dir; if(j>=0&&j<a.length){ [a[i],a[j]]=[a[j],a[i]]; } renderEditor(); return; }
   if(ds.bdel){ readEditor(); draft.blocks.splice(Number(ds.bdel),1); renderEditor(); return; }
