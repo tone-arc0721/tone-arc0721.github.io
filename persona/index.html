@@ -549,6 +549,24 @@ html.L-mo .grid.compact .card-top,html.L-mo .grid.compact .kline{display:none}
 html.L-mo .grid.compact .ph b{font-size:18px}
 html.L-mo .ph-name b{font-size:calc(var(--fs) * .6)}
 html.L-mo .grid.compact .ph-name b{font-size:calc(var(--fs) * .42)}
+
+/* 플랫폼 줄 = 밑줄 탭(A) */
+#platrow{gap:2px;border-bottom:1px solid var(--dash);border-radius:0;padding-bottom:0;margin-bottom:-2px}
+#platrow .tagbtn{border:0 !important;border-bottom:2.5px solid transparent !important;border-radius:0;background:none !important;padding:7px 10px 8px;margin-bottom:-1px;color:var(--muted);font-weight:500;font-size:13.5px}
+#platrow .tagbtn:hover{color:var(--ink)}
+#platrow .tagbtn[aria-pressed="true"]{color:var(--ink) !important;font-weight:700;border-bottom-color:var(--ink) !important}
+#platrow .tagbtn[aria-pressed="true"][style*="--tc"]{border-bottom-color:var(--tc) !important}
+#platrow .tagbtn[aria-pressed="true"][style*="--tc"]::before{background:var(--tc)}
+#platrow .tagbtn[aria-pressed="true"] .n{color:var(--muted) !important;opacity:1}
+#platrow .tagbtn.manage{font-size:12px;color:var(--muted);margin-left:6px}
+/* 분류 태그 줄 = 색 테두리 칩(C) */
+#tagrow .tagbtn[style*="--tc"]{border:1px solid color-mix(in srgb,var(--tc) 45%,transparent) !important;color:color-mix(in srgb,var(--tc) 80%,var(--ink));background:none}
+#tagrow .tagbtn[style*="--tc"]::before{display:none}
+#tagrow .tagbtn[style*="--tc"] .n{color:inherit;opacity:.7}
+#tagrow .tagbtn[aria-pressed="true"][style*="--tc"]{background:color-mix(in srgb,var(--tc) 16%,transparent);border:1.5px solid var(--tc) !important;color:color-mix(in srgb,var(--tc) 80%,var(--ink));font-weight:700;padding:5.5px 12.5px}
+#tagrow .tagbtn[aria-pressed="true"][style*="--tc"] .n{color:inherit;opacity:.8}
+#tagrow .tagbtn[data-tag=""][aria-pressed="true"]{background:var(--soft);color:var(--ink);border:1.5px solid var(--ink) !important;font-weight:700;padding:5.5px 12.5px}
+#tagrow .tagbtn[data-tag=""][aria-pressed="true"] .n{color:var(--muted);opacity:1}
 </style>
 </head>
 <body>
